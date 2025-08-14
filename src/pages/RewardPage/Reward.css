@@ -1,0 +1,17 @@
+.first-to-third-pace-box {
+  background: linear-gradient(180deg, rgba(25, 32, 60, 0.7) 0%, #304689 100%);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes borderBlink {
+  0%, 100% {
+    border-color: #FFD700; /* 노란색 */
+  }
+  50% {
+    border-color: #FFFFFF; /* 중간에 흰색으로 반짝 */
+  }
+}
+
+.border-blink {
+  animation: borderBlink 1s infinite;
+}
