@@ -4,6 +4,7 @@ import { FaStar } from "react-icons/fa6";
 import Images from "@/shared/assets/images";
 import ReactCardFlip from "react-card-flip";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "@/shared/api/axiosInstance";
 
 const COLORS: ("RED" | "BLACK")[] = ["RED", "BLACK"];
 const SUITS = [
@@ -797,8 +798,10 @@ const CardGameResultDialog = ({
 
 const CardGameModal = ({ onClose }: any) => {
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [betAmount, setBetAmount] = useState(500);
-  const [myPoint, setMyPoint] = useState(12345);
+  const [betAmount, setBetAmount] = useState(0);
+  const [myPoint, setMyPoint] = useState(0);
+  const [allowedBetting, setAllowedBetting] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [result, setResult] = useState({ win: false, reward: 0, answer: null });
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [mode, setMode] = useState<"color" | "suit" | null>(null);
@@ -807,6 +810,31 @@ const CardGameModal = ({ onClose }: any) => {
   );
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
+
+  // 베팅 가능 금액을 가져오는 함수
+  const fetchBettingInfo = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/bettingAmount");
+      if (response.data.code === "OK") {
+        const { starCount, allowedBetting: allowed } = response.data.data;
+        setMyPoint(starCount);
+        setAllowedBetting(allowed);
+      }
+    } catch (error) {
+      console.error("Error fetching betting info:", error);
+      // 에러 발생 시 기본값 설정
+      setMyPoint(0);
+      setAllowedBetting(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 베팅 정보 가져오기
+  useEffect(() => {
+    fetchBettingInfo();
+  }, []);
 
   return (
     <div
@@ -834,7 +862,11 @@ const CardGameModal = ({ onClose }: any) => {
         }}
         className="shadow-2xl overflow-hidden"
       >
-        {!isGameStarted ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-white text-xl">로딩 중...</div>
+          </div>
+        ) : !isGameStarted ? (
           <CardBettingModal
             myPoint={myPoint}
             onStart={(amount: React.SetStateAction<number>) => {
@@ -846,11 +878,11 @@ const CardGameModal = ({ onClose }: any) => {
         ) : (
           <CardGameBoard
             betAmount={betAmount}
-            onResult={(win: boolean, reward: number, answer: any) => {
+            onResult={async (win: boolean, reward: number, answer: any) => {
               setResult({ win, reward, answer });
               setIsResultOpen(true);
-              if (win) setMyPoint((p: number) => p + reward);
-              else setMyPoint((p: number) => p - betAmount);
+              // 게임 결과 후 베팅 정보 새로고침
+              await fetchBettingInfo();
             }}
             onCancel={onClose}
           />

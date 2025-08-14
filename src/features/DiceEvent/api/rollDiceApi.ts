@@ -2,17 +2,16 @@
 
 import api from '@/shared/api/axiosInstance';
 
-// RollDiceResponseData 인터페이스 정의 및 export
+// RollDiceResponseData 인터페이스 정의 및 export (새로운 API 구조에 맞게 수정)
 export interface RollDiceResponseData {
   rank: number;
   star: number;
-  ticket: number;
+  key: number;        // ticket에서 key로 변경
   dice: number;
-  slToken: number;
   diceResult: number;
   tileSequence: number;
-  level: number; // 추가된 속성
-  exp: number;    // 추가된 속성
+  level: number;
+  exp: number;
 }
 
 export const rollDiceAPI = async (gauge: number, sequence: number): Promise<RollDiceResponseData> => {

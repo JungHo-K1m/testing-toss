@@ -34,7 +34,6 @@ export const useDiceGame = () => {
     isAuto, // isAuto 상태 추가
     setIsAuto,
     boards, // boards 디스트럭처링 추가
-    items, // items 디스트럭처링 추가
     setUserLv, // 추가
    setPet, // 추가
   } = useUserStore();
@@ -47,9 +46,10 @@ export const useDiceGame = () => {
   const [tileSequence, setTileSequence] = useState<number>(position);
   const { playSfx, stopSfx } = useSound();
 
-  // RPS 게임 및 스핀 게임 상태
+  // RPS 게임, 스핀 게임, 카드 게임 상태
   const [isRPSGameActive, setIsRPSGameActive] = useState(false);
   const [isSpinGameActive, setIsSpinGameActive] = useState(false);
+  const [isCardGameActive, setIsCardGameActive] = useState(false);
 
   // 주사위 굴리는 중인지 상태
   const [isRolling, setIsRolling] = useState<boolean>(false);
@@ -173,13 +173,12 @@ export const useDiceGame = () => {
       const previousPosition = position; // 이전 위치 저장
       const newPosition = data.tileSequence; // 서버에서 받은 새로운 위치
 
-      // 서버 응답 데이터를 상태에 업데이트
+      // 서버 응답 데이터를 상태에 업데이트 (새로운 API 구조에 맞게 수정)
       setRank(data.rank);
       setStarPoints(data.star);
-      setLotteryCount(data.ticket);
+      setLotteryCount(data.key);        // ticket에서 key로 변경
       setDiceCount(data.dice);
-      setSlToken(data.slToken);
-      setPosition(newPosition); // 여기서 position 업데이트
+      setPosition(newPosition); // 여기서 position 업데이트 (slToken은 더 이상 제공되지 않음)
 
       setUserLv(data.level);
       setPet({
@@ -215,7 +214,7 @@ export const useDiceGame = () => {
           playSfx(Audios.island);
         }
 
-        if (isAuto && [5, 15, 18].includes(finalPosition)) {
+        if (isAuto && [5, 10, 15, 18].includes(finalPosition)) {
           // Auto 모드이고 특정 타일에 도착했을 때 게임을 활성화하지 않음
           // console.log(`Auto 모드: 타일 ${finalPosition} 도착, 게임 활성화 건너뜀`);
           setButtonDisabled(false);
@@ -225,6 +224,9 @@ export const useDiceGame = () => {
             case 5:
               setIsRPSGameActive(true);
               rpsGameStore.fetchAllowedBetting();
+              break;
+            case 10:
+              setIsCardGameActive(true);
               break;
             case 15:
               setIsSpinGameActive(true);
@@ -288,26 +290,33 @@ export const useDiceGame = () => {
         const data = await anywhereAPI(tileId);
         // console.log('Move via airplane successful:', data);
 
-        // 서버로부터 받은 데이터로 상태 업데이트
+        // 서버로부터 받은 데이터로 상태 업데이트 (새로운 API 구조에 맞게 수정)
         setRank(data.rank);
-        setLotteryCount(data.ticket);
+        setLotteryCount(data.key);        // ticket에서 key로 변경
         setDiceCount(data.dice);
-        setSlToken(data.slToken);
         setRolledValue(data.diceResult);
         setPosition(data.tileSequence);
+        // slToken은 여전히 포함되지만 UserState에서 제거되었으므로 업데이트하지 않음
 
         // 필요한 경우 추가적인 보상 처리
         // applyReward(tileId); // 제거
 
-        // 타일 5와 15에 따른 게임 활성화
+        // 타일 5, 10, 15에 따른 게임 활성화
         if (tileId === 5) {
           setIsRPSGameActive(true); // RPSGame 활성화
           setIsSpinGameActive(false); // SpinGame 비활성화
+          setIsCardGameActive(false); // CardGame 비활성화
           rpsGameStore.fetchAllowedBetting(); // RPSGame의 베팅 가능 금액 가져오기
           // console.log("RPSGame 활성화됨 (타일 5 클릭).");
+        } else if (tileId === 10) {
+          setIsCardGameActive(true); // CardGame 활성화
+          setIsRPSGameActive(false); // RPSGame 비활성화
+          setIsSpinGameActive(false); // SpinGame 비활성화
+          // console.log("CardGame 활성화됨 (타일 10 클릭).");
         } else if (tileId === 15) {
           setIsSpinGameActive(true); // SpinGame 활성화
           setIsRPSGameActive(false); // RPSGame 비활성화
+          setIsCardGameActive(false); // CardGame 비활성화
           // console.log("SpinGame 활성화됨 (타일 15 클릭).");
         }
 
@@ -369,6 +378,14 @@ export const useDiceGame = () => {
     setMoving(false);
   }, []);
 
+  // 카드 게임 종료 처리 함수
+  const handleCardGameEnd = useCallback(() => {
+    setIsCardGameActive(false);
+    setSelectingTile(false);
+    setButtonDisabled(false);
+    setMoving(false);
+  }, []);
+
   const handleMouseDown = useCallback(() => {
     if (!buttonDisabled && diceCount > 0) {
       setIsHolding(true);
@@ -410,8 +427,10 @@ export const useDiceGame = () => {
     setButtonDisabled,
     isRPSGameActive,
     isSpinGameActive,
+    isCardGameActive,
     handleRPSGameEnd, // 노출
     handleSpinGameEnd,
+    handleCardGameEnd,
     rollDice,
     setDiceCount,
     setLotteryCount,

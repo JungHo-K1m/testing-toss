@@ -10,14 +10,14 @@ import { completeTutorialAPI} from '@/features/DiceEvent/api/completeTutorialApi
 import { useSoundStore } from '@/shared/store/useSoundStore';
 import { fetchLeaderTabAPI } from '@/entities/Leaderboard/api/leaderboardAPI';
 
-
-// 월간 보상 정보 인터페이스
-interface MonthlyPrize {
-  year: number;
-  month: number;
-  prizeType: string;
-  amount: number;
-  eventFinishTime: string; // 추가된 부분: 이벤트 종료 시간
+// 팝업 정보 인터페이스 (새로 추가)
+interface PopUp {
+  id: number;
+  title: string;
+  content: string;
+  url: string | null;
+  imgUrl: string | null;
+  isOpen: boolean;
 }
 
 // 주간 출석 정보 인터페이스
@@ -36,8 +36,8 @@ interface UserState {
   // 사용자 관련 상태들
   nickName: string | null;
   setNickName: (nickName: string | null) => void;
-  uid: number | null;
-  setUid: (uid: number | null) => void;
+  uid: string | null; // number에서 string으로 변경
+  setUid: (uid: string | null) => void; // number에서 string으로 변경
   walletAddress: string | null;
   setWalletAddress: (walletAddress: string | null) => void;
 
@@ -76,9 +76,6 @@ interface UserState {
 
   previousRank : number;
 
-  monthlyPrize: MonthlyPrize;
-  setMonthlyPrize: (monthlyPrize: MonthlyPrize) => void;
-
   weekAttendance: WeekAttendance;
   setWeekAttendance: (weekAttendance: WeekAttendance) => void;
 
@@ -106,9 +103,6 @@ interface UserState {
   diceRefilledAt: string | null;
   setDiceRefilledAt: (value: string | null) => void;
 
-  items: Items;
-  setItems: (items: Items) => void;
-
   boards: Board[];
   setBoards: (boards: Board[]) => void;
 
@@ -121,6 +115,9 @@ interface UserState {
 
   completeTutorialFunc: () => Promise<void>;
 
+  // 팝업 관련 상태 (새로 추가)
+  popUps: PopUp[];
+  setPopUps: (popUps: PopUp[]) => void;
 
   // **추가된 함수들**
   addGoldItem: () => Promise<void>;
@@ -163,18 +160,6 @@ interface UserState {
 }
 
 // 필요한 인터페이스 정의
-interface Items {
-  goldCount: number;
-  silverCount: number;
-  bronzeCount: number;
-  timeDiceTimes: number;
-  boardRewardTimes: number;
-  ticketTimes: number;
-  spinTimes: number; // 추가된 필드
-  autoNftCount: number; // 추가된 필드
-  rewardNftCount: number; // 추가된 필드
-}
-
 export interface Board {
   rewardAmount: number | null;
   tileType: 'HOME' | 'REWARD' | 'SPIN' | 'RPS' | 'MOVE' | 'JAIL';
@@ -232,6 +217,9 @@ export const useUserStore = create<UserState>((set, get) => ({
   redirect: false,
   setRedirect: (redirect) => set({ redirect }),
 
+  // 팝업 상태 추가 (새로 추가)
+  popUps: [],
+  setPopUps: (popUps) => set({ popUps }),
 
   pet : {
     type: null,
@@ -250,7 +238,7 @@ export const useUserStore = create<UserState>((set, get) => ({
    // 새 필드 추가: nickName, uid, walletAddress
    nickName: null,
    setNickName: (nickName) => set({ nickName }),
-   uid: null,
+   uid: null, // string으로 변경
    setUid: (uid) => set({ uid }),
    walletAddress: null,
    // 기존의 setWalletAddress는 walletStore와 혼동되므로, 사용자용 walletAddress도 분리해서 관리합니다.
@@ -260,10 +248,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   setReferrerId: (referrerId) => set({ referrerId }), // 추가된 부분
 
   isAuto: false, // 추가된 부분: 초기값 설정
-  setIsAuto: (isAuto: boolean) =>
-    set((state) => ({
-      isAuto: state.items.autoNftCount > 0 ? isAuto : false,
-    })),// 추가된 부분
+  setIsAuto: (isAuto: boolean) => set({ isAuto }), // items.autoNftCount 의존성 제거
 
   position: 0,
   setPosition: (value: number | ((prev: number) => number)) =>
@@ -313,15 +298,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   previousRank: 0,
 
-  monthlyPrize: {
-    year: 0,
-    month: 0,
-    prizeType: '',
-    amount: 0,
-    eventFinishTime: "",
-  },
-  setMonthlyPrize: (monthlyPrize) => set({ monthlyPrize }),
-
   weekAttendance: {
     mon: null,
     tue: null,
@@ -351,15 +327,15 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       const data = await rollDiceAPI(gauge, sequence);
   
-      // 서버 응답에서 level과 exp를 상태에 직접 설정
+      // 서버 응답에서 level과 exp를 상태에 직접 설정 (새로운 API 구조에 맞게 수정)
       set((state) =>({
         previousRank: state.rank, // 이전 랭크 저장
         rank: data.rank,
         starPoints: data.star,
-        lotteryCount: data.ticket,
+        lotteryCount: data.key,        // ticket에서 key로 변경
         diceCount: data.dice,
-        slToken: data.slToken,
-        userLv: data.level, // 레벨 업데이트
+        position: data.tileSequence,   // tileSequence로 position 업데이트
+        userLv: data.level,            // 레벨 업데이트
         pet: {
           ...get().pet,
           level: data.level,
@@ -380,19 +356,6 @@ export const useUserStore = create<UserState>((set, get) => ({
   diceRefilledAt: null,
   setDiceRefilledAt: (value) => set({ diceRefilledAt: value }),
 
-  items: {
-    goldCount: 0,
-    silverCount: 0,
-    bronzeCount: 0,
-    timeDiceTimes: 1,
-    boardRewardTimes: 1,
-    ticketTimes: 1,
-    spinTimes: 1, // 추가된 필드 초기값 설정
-    autoNftCount: 0, // 추가된 필드 초기값 설정
-    rewardNftCount: 0, // 추가된 필드 초기값 설정
-  },
-  setItems: (items) => set({ items }),
-
   boards: [],
   setBoards: (boards) => set({ boards }),
 
@@ -408,65 +371,45 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
       }
 
-      // 서버 응답에서 필요한 데이터 추출
+      // 서버 응답에서 필요한 데이터 추출 (새로운 구조에 맞게 수정)
       const {
         user,
         nowDice,
         rank,
         pet,
-        monthlyPrize,
         weekAttendance,
-        items,
         boards,
+        popUps, // 새로 추가
         bgm
       } = data.data;
   
       set({
-        // userId를 nickName으로 대체
+        // 사용자 정보
         nickName: user.nickName,
-        uid: user.uid,
-        walletAddress: user.walletAddress,
-        referrerId: user.referrerId, // 추가된 부분: referrerId 설정
-        isAuto: items.autoNftCount > 0 ? user.isAuto : false, // 추가된 부분: isAuto 설정
+        uid: user.uid, // string으로 변경
+        walletAddress: null, // 백엔드에서 제거됨
+        referrerId: user.referrerId,
+        isAuto: false, // 백엔드에서 제거됨
         completeTutorial: user.completeTutorial,
-        timeZone: user.timeZone,
-        suspend: user.suspended, // 추가된 부분: suspend 값 저장
+        timeZone: null, // 백엔드에서 제거됨
+        suspend: user.suspended,
         redirect: user.redirect,
   
+        // 게임 진행 상태
         position: nowDice.tileSequence,
         diceCount: nowDice.dice,
         starPoints: rank.star,
         lotteryCount: rank.ticket,
-        userLv: pet.level || 100, // 서버에서 받은 레벨 설정, 기본값 1
-        characterType: pet.type ? pet.type.toLowerCase() as 'dog' | 'cat' : null, // 수정된 부분: pet.type이 null일 수 있음
+        userLv: pet.level || 100,
+        characterType: pet.type ? pet.type.toLowerCase() as 'dog' | 'cat' : null,
   
-        slToken: rank.slToken,
+        slToken: 0, // 백엔드에서 제거됨
         rank: rank.rank,
         previousRank: rank.rank,
-        diceRefilledAt: rank.diceRefilledAt, // 추가된 부분: diceRefilledAt 설정
+        diceRefilledAt: rank.diceRefilledAt,
   
-        items: {
-          goldCount: items.goldCount || 0,
-          silverCount: items.silverCount || 0,
-          bronzeCount: items.bronzeCount || 0,
-          timeDiceTimes: items.timeDiceTimes || 1,
-          boardRewardTimes: items.boardRewardTimes || 1,
-          ticketTimes: items.ticketTimes || 1,
-          spinTimes: items.spinTimes || 1, // 추가된 필드 설정
-          autoNftCount: items.autoNftCount || 0, // 추가된 필드 설정
-          rewardNftCount: items.rewardNftCount || 0, // 추가된 필드 설정
-        },
-  
+        // 게임 보드 및 출석
         boards: boards,
-  
-        monthlyPrize: {
-          year: monthlyPrize.year,
-          month: monthlyPrize.month,
-          prizeType: monthlyPrize.prizeType,
-          amount: monthlyPrize.amount,
-          eventFinishTime: monthlyPrize.eventFinishTime, // 추가된 부분: eventFinish
-        },
-  
         weekAttendance: {
           mon: weekAttendance.mon,
           tue: weekAttendance.tue,
@@ -477,15 +420,21 @@ export const useUserStore = create<UserState>((set, get) => ({
           sun: weekAttendance.sun,
         },
   
+        // 펫 정보
         pet: {
           type: pet.type ? pet.type.toLowerCase() as 'DOG' | 'CAT' : null,
-          level: pet.level || 1, // 서버에서 받은 레벨 설정, 기본값 1
-          exp: pet.exp || 0, // 서버에서 받은 경험치 설정, 기본값 0
+          level: pet.level || 1,
+          exp: pet.exp || 0,
         },
+
+        // 팝업 정보 (새로 추가)
+        popUps: popUps || [],
   
         isLoading: false,
         error: null,
       });
+
+      // 사운드 설정
       const soundStore = useSoundStore.getState();
 
       soundStore.setMasterVolume((bgm.masterVolume / 10) * 0.3);
@@ -598,13 +547,6 @@ export const useUserStore = create<UserState>((set, get) => ({
       characterType: null, // 수정된 부분: characterType 초기화
       slToken: 0,
       rank: 0,
-      monthlyPrize: {
-        year: 0,
-        month: 0,
-        prizeType: '',
-        amount: 0,
-        eventFinishTime: "",
-      },
       weekAttendance: {
         mon: null,
         tue: null,
@@ -617,18 +559,8 @@ export const useUserStore = create<UserState>((set, get) => ({
       currentMiniGame: '',
       isLoading: false,
       error: null,
-      items: {
-        goldCount: 0,
-        silverCount: 0,
-        bronzeCount: 0,
-        timeDiceTimes: 0,
-        boardRewardTimes: 0,
-        ticketTimes: 0,
-        spinTimes: 0, // 추가된 필드 초기화
-        autoNftCount: 0, // 추가된 필드 초기화
-        rewardNftCount: 0, // 추가된 필드 초기화
-      },
       boards: [],
+      popUps: [], // 새로 추가
     });
   },
 
@@ -721,246 +653,78 @@ export const useUserStore = create<UserState>((set, get) => ({
   
     
 
-   // 테스트용 아이템 추가 함수들
+   // 테스트용 아이템 추가 함수들 (백엔드에서 items가 제거되어 주석 처리)
    addGoldItem: async () => {
-    try {
-      const response = await api.get('/test/items/gold');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('골드 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '골드 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('골드 아이템 추가 실패:', error);
-      set({ error: error.message || '골드 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
-  },
+    console.warn('addGoldItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
+    // try {
+    //   const response = await api.get('/test/items/gold');
+    //   if (response.data.code === 'OK') {
+    //     set({ items: response.data.data });
+    //     // console.log('골드 아이템 추가 성공:', response.data.data);
+    //   } else {
+    //     throw new Error(response.data.message || '골드 아이템 추가 실패');
+    //   }
+    // } catch (error: any) {
+    //   // console.error('골드 아이템 추가 실패:', error);
+    //   set({ error: error.message || '골드 아이템 추가에 실패했습니다.' });
+    //   throw error;
+    // }
+   },
 
   removeGoldItem: async () => {
-    try {
-      const response = await api.get('/test/items/gold/delete');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('골드 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '골드 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('골드 아이템 삭제 실패:', error);
-      set({ error: error.message || '골드 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeGoldItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addSilverItem: async () => {
-    try {
-      const response = await api.get('/test/items/silver');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('실버 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '실버 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('실버 아이템 추가 실패:', error);
-      set({ error: error.message || '실버 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addSilverItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeSilverItem: async () => {
-    try {
-      const response = await api.get('/test/items/silver/delete');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('실버 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '실버 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('실버 아이템 삭제 실패:', error);
-      set({ error: error.message || '실버 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeSilverItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addBronzeItem: async () => {
-    try {
-      const response = await api.get('/test/items/bronze');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('브론즈 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '브론즈 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('브론즈 아이템 추가 실패:', error);
-      set({ error: error.message || '브론즈 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addBronzeItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeBronzeItem: async () => {
-    try {
-      const response = await api.get('/test/items/bronze/delete');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('브론즈 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '브론즈 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('브론즈 아이템 삭제 실패:', error);
-      set({ error: error.message || '브론즈 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeBronzeItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addRewardItem: async () => {
-    try {
-      const response = await api.get('/test/items/reward');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('스핀/말판 리워드 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '스핀/말판 리워드 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('스핀/말판 리워드 아이템 추가 실패:', error);
-      set({ error: error.message || '스핀/말판 리워드 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addRewardItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeRewardItem: async () => {
-    try {
-      const response = await api.get('/test/items/reward/delete');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('스핀/말판 리워드 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '스핀/말판 리워드 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('스핀/말판 리워드 아이템 삭제 실패:', error);
-      set({ error: error.message || '스핀/말판 리워드 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeRewardItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addAutoItem: async () => {
-    try {
-      const response = await api.get('/test/items/auto');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('오토 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '오토 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('오토 아이템 추가 실패:', error);
-      set({ error: error.message || '오토 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addAutoItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeAutoItem: async () => {
-    try {
-      const response = await api.get('/test/items/auto/delete');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('오토 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '오토 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('오토 아이템 삭제 실패:', error);
-      set({ error: error.message || '오토 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeAutoItem: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addAllItems: async () => {
-    try {
-      const response = await api.get('/test/items/all');
-      if (response.data.code === 'OK') {
-        set({ items: response.data.data });
-        // console.log('전체 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '전체 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('전체 아이템 추가 실패:', error);
-      set({ error: error.message || '전체 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addAllItems: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
-  addDice: async () => {
-    try {
-      const response = await api.get('/test/items/dice');
-      if (response.data.code === 'OK') {
-        set({ diceCount: response.data.data.diceCount });
-        // console.log('주사위 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '주사위 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('주사위 아이템 추가 실패:', error);
-      set({ error: error.message || '주사위 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+  addDice : async () => {
+    console.warn('addDice: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeDice: async () => {
-    try {
-      const response = await api.get('/test/items/dice/delete');
-      if (response.data.code === 'OK') {
-
-        set({ diceCount: response.data.data.diceCount });
-        // console.log('주사위 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || '주사위 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('주사위 아이템 삭제 실패:', error);
-      set({ error: error.message || '주사위 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeDice: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   addSLToken: async () => {
-    try {
-      const response = await api.get('/test/items/sl');
-      if (response.data.code === 'OK') {
-        set({ slToken: response.data.data.slCount });
-        // console.log('SL 토큰 아이템 추가 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || 'SL 토큰 아이템 추가 실패');
-      }
-    } catch (error: any) {
-      // console.error('SL 토큰 아이템 추가 실패:', error);
-      set({ error: error.message || 'SL 토큰 아이템 추가에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('addSLToken: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   removeSLToken: async () => {
-    try {
-      const response = await api.get('/test/items/sl/delete');
-      if (response.data.code === 'OK') {
-        set({ slToken: response.data.data.slCount });
-        // console.log('SL 토큰 아이템 삭제 성공:', response.data.data);
-      } else {
-        throw new Error(response.data.message || 'SL 토큰 아이템 삭제 실패');
-      }
-    } catch (error: any) {
-      // console.error('SL 토큰 아이템 삭제 실패:', error);
-      set({ error: error.message || 'SL 토큰 아이템 삭제에 실패했습니다.' });
-      throw error;
-    }
+    console.warn('removeSLToken: 백엔드에서 items 필드가 제거되어 사용할 수 없습니다.');
   },
 
   modalRank: null,

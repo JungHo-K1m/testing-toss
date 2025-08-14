@@ -9,11 +9,13 @@ interface AnywhereRequest {
 interface AnywhereResponseData {
   rank: number;
   star: number;
-  ticket: number;
+  key: number;        // ticket에서 key로 변경
   dice: number;
-  slToken: number;
+  slToken: number;    // slToken은 여전히 포함됨
   diceResult: number;
   tileSequence: number;
+  level: number;      // level 필드 추가
+  exp: number;        // exp 필드 추가
 }
 
 interface AnywhereResponse {

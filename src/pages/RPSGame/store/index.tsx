@@ -1,6 +1,6 @@
 // src/pages/RPSGame/store/index.tsx
 
-import {create} from "zustand";
+import { create } from "zustand";
 import api from "@/shared/api/axiosInstance";
 import { useUserStore } from "@/entities/User/model/userModel";
 
@@ -59,7 +59,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
   setBetAmount: (amount: number) => {
     set({ betAmount: amount });
   },
-  
+
   setAllowedBetting: (amount: number) => set({ allowedBetting: amount }),
 
   startGame: () => {
@@ -108,7 +108,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
 
   fetchAllowedBetting: async () => {
     try {
-      const response = await api.get("/rps/star");
+      const response = await api.get("/bettingAmount");
       if (response.data.code === "OK") {
         const { starCount, allowedBetting } = response.data.data;
         set({ allowedBetting });
@@ -130,7 +130,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
       const response = await api.post("/play-rps", requestData);
 
       if (response.data.code === "OK") {
-        const { reward, result, pcValue } = response.data.data;
+        const { reward, result, pcValue, rank, starCount } = response.data.data;
         const computerChoice =
           pcValue === 1 ? "rock" : pcValue === 2 ? "paper" : "scissors";
 
@@ -142,9 +142,19 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
           newConsecutiveWins += 1;
           newWinMultiplier = Math.pow(3, newConsecutiveWins);
           winnings = bettingAmount * 3;
-          useUserStore.getState().setStarPoints(
-            useUserStore.getState().starPoints + winnings
-          );
+
+          // 서버 응답으로 받은 rank와 starCount를 UserStore에 업데이트
+          if (rank !== undefined) {
+            useUserStore.getState().setRank(rank);
+          }
+          if (starCount !== undefined) {
+            useUserStore.getState().setStarPoints(starCount);
+          } else {
+            // starCount가 없는 경우 기존 방식으로 업데이트
+            useUserStore
+              .getState()
+              .setStarPoints(useUserStore.getState().starPoints + winnings);
+          }
           set({
             gameResult: "win",
             consecutiveWins: newConsecutiveWins,
@@ -168,9 +178,19 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
           newConsecutiveWins = 0;
           newWinMultiplier = 1;
           winnings = -bettingAmount;
-          useUserStore.getState().setStarPoints(
-            useUserStore.getState().starPoints + winnings
-          );
+
+          // 서버 응답으로 받은 rank와 starCount를 UserStore에 업데이트
+          if (rank !== undefined) {
+            useUserStore.getState().setRank(rank);
+          }
+          if (starCount !== undefined) {
+            useUserStore.getState().setStarPoints(starCount);
+          } else {
+            // starCount가 없는 경우 기존 방식으로 업데이트
+            useUserStore
+              .getState()
+              .setStarPoints(useUserStore.getState().starPoints + winnings);
+          }
           set({
             gameResult: "lose",
             consecutiveWins: newConsecutiveWins,
@@ -195,7 +215,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
       return null;
     }
   },
-  
+
   handleRPSGameEnd: (result: "win" | "lose", winnings: number) => {
     set({
       isDialogOpen: false,

@@ -307,11 +307,13 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
   const [prizeData, setPrizeData] = useState<{
     spinType: string;
     amount: number;
+    rank?: number;
+    starCount?: number;
   } | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { playSfx } = useSound();
 
-  const { setStarPoints, setDiceCount, setSlToken, setLotteryCount, items } =
+  const { setStarPoints, setDiceCount, setSlToken, setLotteryCount, setRank } =
     useUserStore();
 
   const handleSpinClick = async () => {
@@ -324,28 +326,59 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
 
       playSfx(Audios.spin_game);
 
-      // /play-spin API 호출
+      // /api/play-spin API 호출
       const response = await api.get("/play-spin");
       // console.log("Server response:", response.data);
       if (response.data.code === "OK") {
-        const { spinType, amount, baseAmount } = response.data.data;
-        // console.log("Received spinType:", spinType,"amount:",amount,"baseAmount:",baseAmount);
+        const { bettingAmount, reward, result, pcValue, rank, starCount } =
+          response.data.data;
+        // console.log("Received data:", { bettingAmount, reward, result, pcValue, rank, starCount });
 
-        // data 배열에서 spinType과 baseAmount 가 모두 일치하는 인덱스 찾기
-        const foundIndex = data.findIndex(
-          (item) =>
-            item.prize.type === spinType.toUpperCase() &&
-            item.prize.amount === baseAmount
-        );
+        // 새로운 API 응답 구조에 맞게 처리
+        // result가 WIN인 경우에만 보상 지급
+        if (result === 1) {
+          // WIN
+          // reward 값에 따라 적절한 보상 타입 결정
+          let spinType = "STAR";
+          let amount = reward;
 
-        if (foundIndex !== -1) {
-          // console.log("Prize index found:", foundIndex);
-          setPrizeNumber(foundIndex);
-          setPrizeData({ spinType, amount });
-          setMustSpin(true);
+          // reward 값에 따라 보상 타입 분류 (예시)
+          if (reward >= 1000 && reward <= 5000) {
+            spinType = "STAR";
+          } else if (reward === 1) {
+            spinType = "DICE";
+          } else if (reward === 10) {
+            spinType = "SL";
+          } else if (reward === 1) {
+            spinType = "TICKET";
+          }
+
+          // data 배열에서 해당 보상 타입과 일치하는 인덱스 찾기
+          const foundIndex = data.findIndex(
+            (item) => item.prize.type === spinType
+          );
+
+          if (foundIndex !== -1) {
+            // console.log("Prize index found:", foundIndex);
+            setPrizeNumber(foundIndex);
+            setPrizeData({ spinType, amount, rank, starCount });
+            setMustSpin(true);
+          } else {
+            // 기본값으로 첫 번째 보상 설정
+            setPrizeNumber(0);
+            setPrizeData({ spinType: "STAR", amount: reward, rank, starCount });
+            setMustSpin(true);
+          }
         } else {
-          // console.error("No matching prize found for given spinType and baseAmount");
-          window.location.reload();
+          // DEFEAT인 경우 BOOM 보상
+          const boomIndex = data.findIndex(
+            (item) => item.prize.type === "BOOM"
+          );
+          if (boomIndex !== -1) {
+            setPrizeNumber(boomIndex);
+            setPrizeData({ spinType: "BOOM", amount: 0, rank, starCount });
+            setMustSpin(true);
+          }
         }
       } else {
         // console.error("Error in play-spin API:", response.data.message);
@@ -378,8 +411,16 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         playSfx(Audios.reward);
       }
 
+      // 서버 응답으로 받은 rank와 starCount를 UserStore에 업데이트
+      if (prizeData.rank !== undefined) {
+        setRank(prizeData.rank);
+      }
+      if (prizeData.starCount !== undefined) {
+        setStarPoints(prizeData.starCount);
+      }
+
       if (normalizedSpinType === "STAR") {
-        setStarPoints((prev: number) => prev + amount);
+        // 이미 starCount로 업데이트했으므로 추가 업데이트 불필요
       } else if (normalizedSpinType === "DICE") {
         setDiceCount((prev: number) => prev + amount);
       } else if (normalizedSpinType === "SL") {
@@ -674,7 +715,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                       WebkitTextStroke: "1px #000000",
                     }}
                   >
-                    돌림판 보상 업그레이드 : x{items.spinTimes}
+                    돌림판 보상 업그레이드 : x1
                   </p>
                 </div>
               </div>

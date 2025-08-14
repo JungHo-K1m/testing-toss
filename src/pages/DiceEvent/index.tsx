@@ -13,6 +13,7 @@ import GameBoard from "./GameBoard";
 import { Board } from "@/features/DiceEvent";
 import RPSGame from "../RPSGame";
 import SpinGame from "../SpinGame";
+import CardGameModal from "../CardGame/CardGameModal";
 import { useUserStore } from "@/entities/User/model/userModel";
 import LoadingSpinner from "@/shared/components/ui/loadingSpinner";
 import {
@@ -30,9 +31,6 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import getRewardPoints from "@/entities/Mission/api/fromRewardPoint";
-import updateTimeZone from "@/entities/User/api/updateTimeZone";
-import useWalletStore from "@/shared/store/useWalletStore";
-import getKaiaRedirection from "@/entities/User/api/getKaiaRedirect";
 import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
 import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
 import BottomNav from "@/widgets/BottomNav/BottomNav";
@@ -75,13 +73,11 @@ const DiceEventPage: React.FC = () => {
     userLv,
     characterType,
     position,
-    monthlyPrize,
     isAuto,
     pet,
     suspend,
     setSuspend,
     redirect,
-    items,
   } = useUserStore();
 
   const game = useDiceGame();
@@ -145,51 +141,42 @@ const DiceEventPage: React.FC = () => {
     }
   }, []);
 
-  // 소유한 아이템 갯수에 따른 목록 표시 함수
+  // 소유한 아이템 갯수에 따른 목록 표시 함수 - 백엔드에서 items 필드가 제거되어 더 이상 사용되지 않음
   const getItemLabel = (label: string, count: number) => {
-    if (count === 0) {
-      return <span className="text-[#737373]">{label}</span>;
-    } else if (count === 1) {
-      return <span className="text-white">{label}</span>;
-    } else {
-      return (
-        <span className="text-white">
-          {label} x{count}
-        </span>
-      );
-    }
+    // 백엔드 API 변경으로 인해 모든 아이템 카운트가 0으로 설정됨
+    return <span className="text-[#737373]">{label}</span>;
   };
 
-  // 아이템 목록에 적용
+  // 아이템 목록 - 백엔드에서 items 필드가 제거되어 더 이상 표시할 수 없음
   const itemList = [
     {
       label: "GOLD PASS",
       icon: Images.GoldIcon,
-      count: items.goldCount,
+      count: 0, // items.goldCount 제거됨
       gradient: "linear-gradient(180deg, #FDE047 0%, #FFFFFF 100%)",
     },
     {
       label: "SILVER PASS",
       icon: Images.SilverIcon,
-      count: items.silverCount,
+      count: 0, // items.silverCount 제거됨
       gradient: "linear-gradient(180deg, #22C55E 0%, #FFFFFF 100%)",
     },
     {
       label: "BRONZE PASS",
       icon: Images.BronzeIcon,
-      count: items.bronzeCount,
+      count: 0, // items.bronzeCount 제거됨
       gradient: "linear-gradient(180deg, #F59E0B 0%, #FFFFFF 100%)",
     },
     {
       label: "AUTO ITEM",
       icon: Images.AutoIcon,
-      count: items.autoNftCount,
+      count: 0, // items.autoNftCount 제거됨
       gradient: "linear-gradient(180deg, #0147E5 0%, #FFFFFF 100%)",
     },
     {
       label: "REWARD BOOSTER",
       icon: Images.RewardIcon,
-      count: items.rewardNftCount,
+      count: 0, // items.rewardNftCount 제거됨
       gradient: "linear-gradient(180deg, #FF4F4F 0%, #FFFFFF 100%)",
     },
   ];
@@ -370,7 +357,11 @@ const DiceEventPage: React.FC = () => {
   const [showRaffleBoxOpenModal, setShowRaffleBoxOpenModal] = useState(false);
   const [isVibrating, setIsVibrating] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [boxResult, setBoxResult] = useState<{ type: string; value: number; image: string } | null>(null);
+  const [boxResult, setBoxResult] = useState<{
+    type: string;
+    value: number;
+    image: string;
+  } | null>(null);
 
   if (isLoading) {
     return <LoadingSpinner className="h-screen" />;
@@ -389,26 +380,27 @@ const DiceEventPage: React.FC = () => {
     setIsVibrating(false);
     setShowResult(false);
     setBoxResult(null);
-    
+
     // 2초 후 진동 시작
     setTimeout(() => {
       setIsVibrating(true);
       playSfx(Audios.button_click);
-      
+
       // 2초 진동 후 결과 표시
       setTimeout(() => {
         setIsVibrating(false);
         setShowResult(true);
-        
+
         // 랜덤 결과 생성 (예시)
         const results = [
           { type: "포인트", value: 1000, image: Images.StarpointIcon },
           { type: "다이스", value: 50, image: Images.DiceIcon },
           { type: "티켓", value: 5, image: Images.LotteryTicket },
         ];
-        const randomResult = results[Math.floor(Math.random() * results.length)];
+        const randomResult =
+          results[Math.floor(Math.random() * results.length)];
         setBoxResult(randomResult);
-        
+
         // 자동 닫기 제거 - 사용자가 "받기" 버튼을 클릭해야 닫힘
       }, 2000);
     }, 500);
@@ -433,355 +425,302 @@ const DiceEventPage: React.FC = () => {
       />
       {/* 메인 컨텐츠를 위한 z-index 설정 */}
       <div className="relative z-10 w-full h-full flex flex-col items-center">
-      {game.isRPSGameActive ? (
-        <RPSGame
-          onGameEnd={handleRPSGameEnd}
-          onCancel={() => handleRPSGameEnd("lose", 0)}
-        />
-      ) : game.isSpinGameActive ? (
-        <SpinGame onSpinEnd={game.handleSpinGameEnd} />
-      ) : (
-        <>
-          <div className="w-full flex justify-center mb-4 mt-8 gap-[10px]">
-            {/* 현재 캐릭터 레벨 및 AlertIcon 클릭 시 레벨 별 보상 다이얼로그 표시 */}
-            <div
-              onClick={(e) => {
-                // AlertIcon 영역 클릭인지 확인 (좌측 상단 20x20 영역)
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
+        {game.isRPSGameActive ? (
+          <RPSGame
+            onGameEnd={handleRPSGameEnd}
+            onCancel={() => handleRPSGameEnd("lose", 0)}
+          />
+        ) : game.isSpinGameActive ? (
+          <SpinGame onSpinEnd={game.handleSpinGameEnd} />
+        ) : game.isCardGameActive ? (
+          <CardGameModal onClose={game.handleCardGameEnd} />
+        ) : (
+          <>
+            <div className="w-full flex justify-center mb-4 mt-8 gap-[10px]">
+              {/* 현재 캐릭터 레벨 및 AlertIcon 클릭 시 레벨 별 보상 다이얼로그 표시 */}
+              <div
+                onClick={(e) => {
+                  // AlertIcon 영역 클릭인지 확인 (좌측 상단 20x20 영역)
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const clickX = e.clientX - rect.left;
+                  const clickY = e.clientY - rect.top;
 
-                // AlertIcon은 좌측 상단 15px, 15px 위치에 20x20 크기
-                if (
-                  clickX >= 15 &&
-                  clickX <= 35 &&
-                  clickY >= 15 &&
-                  clickY <= 35
-                ) {
-                  // AlertIcon 영역 클릭이면 navigation 방지
-                  return;
-                }
+                  // AlertIcon은 좌측 상단 15px, 15px 위치에 20x20 크기
+                  if (
+                    clickX >= 15 &&
+                    clickX <= 35 &&
+                    clickY >= 15 &&
+                    clickY <= 35
+                  ) {
+                    // AlertIcon 영역 클릭이면 navigation 방지
+                    return;
+                  }
 
-                // 다른 영역 클릭이면 inventory로 이동
-                // navigate("/inventory", { state: { charactorImageSrc } });
-              }}
-              className="cursor-pointer"
-              role="button"
-              tabIndex={0}
-              aria-label="Go to inventory"
-              // onKeyDown={(e) => {
-              //   if (e.key === "Enter" || e.key === " ") navigate("/inventory");
-              // }}
-            >
-              <UserLevel
-                userLv={userLv || 1}
-                charactorImageSrc={charactorImageSrc || Images.Cat1}
-                exp={pet?.exp || 0}
-                characterType={characterType || "cat"}
-                equippedItems={equippedItems}
-                onAlertClick={() => {
-                  playSfx(Audios.button_click);
-                  setShowLevelRewardsDialog(true);
+                  // 다른 영역 클릭이면 inventory로 이동
+                  // navigate("/inventory", { state: { charactorImageSrc } });
                 }}
+                className="cursor-pointer"
+                role="button"
+                tabIndex={0}
+                aria-label="Go to inventory"
+                // onKeyDown={(e) => {
+                //   if (e.key === "Enter" || e.key === " ") navigate("/inventory");
+                // }}
+              >
+                <UserLevel
+                  userLv={userLv || 1}
+                  charactorImageSrc={charactorImageSrc || Images.Cat1}
+                  exp={pet?.exp || 0}
+                  characterType={characterType || "cat"}
+                  equippedItems={equippedItems}
+                  onAlertClick={() => {
+                    playSfx(Audios.button_click);
+                    setShowLevelRewardsDialog(true);
+                  }}
+                />
+              </div>
+
+              {/* 이번 달 보상 내용 - 백엔드에서 monthlyPrize 필드가 제거되어 기본값 사용 */}
+              <MonthlyPrize
+                month={1} // monthlyPrize?.month 제거됨
+                prizeType={""} // monthlyPrize?.prizeType 제거됨
+                amount={0} // monthlyPrize?.amount 제거됨
+                eventFinishTime={""} // monthlyPrize?.eventFinishTime 제거됨
               />
             </div>
 
-            {/* 이번 달 보상 내용 */}
-            <MonthlyPrize
-              month={monthlyPrize?.month || 1}
-              prizeType={monthlyPrize?.prizeType || ""}
-              amount={monthlyPrize?.amount || 0}
-              eventFinishTime={monthlyPrize?.eventFinishTime || ""}
+            <GameBoard
+              position={position || 0}
+              selectingTile={game?.selectingTile || false}
+              handleTileClick={game?.handleTileClick || (() => {})}
+              gaugeValue={game?.gaugeValue || 0}
+              diceCount={game?.diceCount || 0}
+              showDiceValue={game?.showDiceValue || false}
+              rolledValue={game?.rolledValue || 0}
+              buttonDisabled={game?.buttonDisabled || false}
+              diceRef={game?.diceRef || null}
+              handleRollComplete={game?.handleRollComplete || (() => {})}
+              reward={game?.reward || null}
+              isHolding={game?.isHolding || false}
+              handleMouseDown={game?.handleMouseDown || (() => {})}
+              handleMouseUp={game?.handleMouseUp || (() => {})}
+              isLuckyVisible={game?.isLuckyVisible || false}
+              rollDice={game?.rollDice || (() => {})}
             />
-          </div>
-
-          <GameBoard
-            position={position || 0}
-            selectingTile={game?.selectingTile || false}
-            handleTileClick={game?.handleTileClick || (() => {})}
-            gaugeValue={game?.gaugeValue || 0}
-            diceCount={game?.diceCount || 0}
-            showDiceValue={game?.showDiceValue || false}
-            rolledValue={game?.rolledValue || 0}
-            buttonDisabled={game?.buttonDisabled || false}
-            diceRef={game?.diceRef || null}
-            handleRollComplete={game?.handleRollComplete || (() => {})}
-            reward={game?.reward || null}
-            isHolding={game?.isHolding || false}
-            handleMouseDown={game?.handleMouseDown || (() => {})}
-            handleMouseUp={game?.handleMouseUp || (() => {})}
-            isLuckyVisible={game?.isLuckyVisible || false}
-            rollDice={game?.rollDice || (() => {})}
-          />
-          {/* anywhere 시 표시되는 비행기 */}
-          {game.selectingTile && !isAuto && (
-            <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-20 pointer-events-none">
-              <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
-              <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl">
-                <img
-                  src={Images.Airplane}
-                  alt="airplane"
-                  className="h-20 md:h-28"
-                />
-                타일을 선택하세요.
+            {/* anywhere 시 표시되는 비행기 */}
+            {game.selectingTile && !isAuto && (
+              <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-50 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
+                <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl">
+                  <img
+                    src={Images.Airplane}
+                    alt="airplane"
+                    className="h-20 md:h-28"
+                  />
+                  타일을 선택하세요.
+                </div>
               </div>
-            </div>
-          )}
-          <Board
-            position={position || 0}
-            charactorImageSrc={charactorImageSrc || Images.Cat1}
-            initialX={initialX}
-            initialY={initialY}
-            delta={delta}
-            equippedItems={equippedItems}
-            characterType={characterType || "cat"}
-          />
-          <br />
+            )}
+            <Board
+              position={position || 0}
+              charactorImageSrc={charactorImageSrc || Images.Cat1}
+              initialX={initialX}
+              initialY={initialY}
+              delta={delta}
+              equippedItems={equippedItems}
+              characterType={characterType || "cat"}
+            />
+            <br />
 
-          {/* 랜덤박스스 아이콘 */}
-          <div className="w-full max-w-[332px] md:max-w-full flex justify-center">
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-start",
-                alignItems: "center",
-                gap: 12,
-                margin: "0 0 8px 0",
-              }}
-            >
+            {/* 랜덤박스스 아이콘 */}
+            <div className="w-full max-w-[332px] md:max-w-full flex justify-center">
               <div
                 style={{
+                  width: "100%",
                   display: "flex",
-                  flexDirection: "column",
+                  justifyContent: "flex-start",
                   alignItems: "center",
+                  gap: 12,
+                  margin: "0 0 8px 0",
                 }}
               >
-                <button
-                  onClick={() => setShowRaffleBoxModal(true)}
+                <div
                   style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: "20px",
-                    background: "rgba(255,255,255,0.65)",
-                    boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
-                    backdropFilter: "blur(10px)",
-                    WebkitBackdropFilter: "blur(10px)",
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "center",
-                    padding: 0,
-                    marginBottom: 2,
                   }}
                 >
-                  <img
-                    src={Images.RandomBox}
-                    alt="Random Box"
-                    style={{ width: 40, height: 40, objectFit: "contain" }}
-                  />
-                </button>
-                <p
-                  className="text-center mt-1"
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "12px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                    WebkitTextStroke: "1px #2A294E",
-                  }}
-                >
-                  랜덤 박스
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* my-rank 위젯 표시 */}
-          <Dialog>
-            <DialogTrigger
-              className="w-full flex justify-center"
-              onClick={() => playSfx(Audios.button_click)}
-            >
-              <InlineRanking />
-            </DialogTrigger>
-            <DialogContent className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto"
-              style={{
-                background: `url(${Images.BackgroundLobby})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-              }}
-            >
-                  <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-               <div 
-                 className="absolute inset-0 z-0"
-                 style={{
-                   backgroundColor: "#42617D",
-                   opacity: 0.6,
-                 }}
-               />
-              <div className="relative z-10 flex flex-col h-full">
-              <DialogHeader className="flex w-full items-end">
-                <DialogClose>
-                  <HiX className="w-5 h-5" />
-                </DialogClose>
-              </DialogHeader>
-              <ModalRanking />
-              <NewMyRanking />
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* 레벨별 보상 다이얼로그 */}
-          <Dialog
-            open={showLevelRewardsDialog}
-            onOpenChange={setShowLevelRewardsDialog}
-          >
-            <DialogContent
-              className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
-              style={{
-                background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-              }}
-            >
-              <DialogTitle className="sr-only">레벨별 보상</DialogTitle>
-              <LevelRewards currentLevel={userLv} />
-            </DialogContent>
-          </Dialog>
-
-          {/* 레벨 업 시 다이얼로그: 이전보다 레벨이 올라갔을 때만 표시 */}
-          <Dialog open={showLevelUpDialog}>
-            <DialogContent
-              className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
-              style={{
-                background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-              }}
-            >
-              <div className="flex flex-col items-center justify-around">
-                <div className=" flex flex-col items-center gap-2">
-                  <h1
-                    className="text-center"
+                  <button
+                    onClick={() => setShowRaffleBoxModal(true)}
                     style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "30px",
-                      fontWeight: 400,
-                      color: "#FDE047",
-                      WebkitTextStroke: "2px #000000",
+                      width: 50,
+                      height: 50,
+                      borderRadius: "20px",
+                      background: "rgba(255,255,255,0.65)",
+                      boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
+                      marginBottom: 2,
                     }}
                   >
-                    레벨 업
-                  </h1>
-                  <div className="relative w-[250px] h-[204px]">
                     <img
-                      src={Images.LevelUpBase}
-                      alt="levelupEffect"
-                      className="w-[250px] h-[204px]"
+                      src={Images.RandomBox}
+                      alt="Random Box"
+                      style={{ width: 40, height: 40, objectFit: "contain" }}
                     />
-                    <div
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "40px",
-                        fontWeight: 400,
-                        background:
-                          "radial-gradient(circle, #FDE047 0%, #F56800 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                        WebkitTextStroke: "2px #000000",
-                        textAlign: "center",
-                        lineHeight: "1.2",
-                      }}
-                    >
-                      {userLv}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-6">
+                  </button>
                   <p
-                    className="text-center"
+                    className="text-center mt-1"
                     style={{
                       fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "18px",
+                      fontSize: "12px",
                       fontWeight: 400,
                       color: "#FFFFFF",
-                      WebkitTextStroke: "1px #000000",
+                      WebkitTextStroke: "1px #2A294E",
                     }}
                   >
-                    지금 바로 당신의 보상을 챙기세요!
+                    랜덤 박스
                   </p>
-                  {currentReward && (
-                    <div
-                      className="flex flex-row items-center justify-center gap-6"
+                </div>
+              </div>
+            </div>
+
+            {/* my-rank 위젯 표시 */}
+            <Dialog>
+              <DialogTrigger
+                className="w-full flex justify-center"
+                onClick={() => playSfx(Audios.button_click)}
+              >
+                <InlineRanking />
+              </DialogTrigger>
+              <DialogContent
+                className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto"
+                style={{
+                  background: `url(${Images.BackgroundLobby})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              >
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+                <div
+                  className="absolute inset-0 z-0"
+                  style={{
+                    backgroundColor: "#42617D",
+                    opacity: 0.6,
+                  }}
+                />
+                <div className="relative z-10 flex flex-col h-full">
+                  <DialogHeader className="flex w-full items-end">
+                    <DialogClose>
+                      <HiX className="w-5 h-5" />
+                    </DialogClose>
+                  </DialogHeader>
+                  <ModalRanking />
+                  <NewMyRanking />
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* 레벨별 보상 다이얼로그 */}
+            <Dialog
+              open={showLevelRewardsDialog}
+              onOpenChange={setShowLevelRewardsDialog}
+            >
+              <DialogContent
+                className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                }}
+              >
+                <DialogTitle className="sr-only">레벨별 보상</DialogTitle>
+                <LevelRewards currentLevel={userLv} />
+              </DialogContent>
+            </Dialog>
+
+            {/* 레벨 업 시 다이얼로그: 이전보다 레벨이 올라갔을 때만 표시 */}
+            <Dialog open={showLevelUpDialog}>
+              <DialogContent
+                className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                }}
+              >
+                <div className="flex flex-col items-center justify-around">
+                  <div className=" flex flex-col items-center gap-2">
+                    <h1
+                      className="text-center"
                       style={{
-                        width: "70vw",
-                        height: "120px",
-                        background: "rgba(194, 213, 232, 0.1)",
-                        border: "2px solid #B4CADA",
-                        borderRadius: "20px",
-                        padding: "16px",
-                        boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-                        backdropFilter: "blur(15px)",
-                        WebkitBackdropFilter: "blur(15px)",
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: 400,
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
                       }}
                     >
+                      레벨 업
+                    </h1>
+                    <div className="relative w-[250px] h-[204px]">
+                      <img
+                        src={Images.LevelUpBase}
+                        alt="levelupEffect"
+                        className="w-[250px] h-[204px]"
+                      />
                       <div
-                        className="rounded-xl w-20 h-20 flex flex-col items-center gap-2 justify-center"
+                        className="absolute inset-0 flex items-center justify-center"
                         style={{
-                          background: "rgba(194, 213, 232, 0.5)",
-                          border: "2px solid #B4CADA",
-                          boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.04)",
-                          backdropFilter: "blur(10px)",
-                          WebkitBackdropFilter: "blur(10px)",
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "40px",
+                          fontWeight: 400,
+                          background:
+                            "radial-gradient(circle, #FDE047 0%, #F56800 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          WebkitTextStroke: "2px #000000",
+                          textAlign: "center",
+                          lineHeight: "1.2",
                         }}
                       >
-                        <img
-                          src={Images.Dice}
-                          alt="dice"
-                          className="w-10 h-10"
-                        />
-                        <p
-                          className=" font-semibold text-xs"
-                          style={{
-                            fontFamily: "'ONE Mobile POP', sans-serif",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#FFFFFF",
-                            WebkitTextStroke: "1px #000000",
-                          }}
-                        >
-                          +{currentReward.dice}
-                        </p>
+                        {userLv}
                       </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    <p
+                      className="text-center"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "18px",
+                        fontWeight: 400,
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                    >
+                      지금 바로 당신의 보상을 챙기세요!
+                    </p>
+                    {currentReward && (
                       <div
-                        className="rounded-xl w-20 h-20 flex flex-col items-center gap-2 justify-center"
+                        className="flex flex-row items-center justify-center gap-6"
                         style={{
-                          background: "rgba(194, 213, 232, 0.5)",
+                          width: "70vw",
+                          height: "120px",
+                          background: "rgba(194, 213, 232, 0.1)",
                           border: "2px solid #B4CADA",
-                          boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.04)",
-                          backdropFilter: "blur(10px)",
-                          WebkitBackdropFilter: "blur(10px)",
+                          borderRadius: "20px",
+                          padding: "16px",
+                          boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                          backdropFilter: "blur(15px)",
+                          WebkitBackdropFilter: "blur(15px)",
                         }}
                       >
-                        <img
-                          src={Images.StarpointIcon}
-                          alt="star"
-                          className="w-10 h-10"
-                        />
-
-                        <p
-                          className=" font-semibold text-xs"
-                          style={{
-                            fontFamily: "'ONE Mobile POP', sans-serif",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            color: "#FFFFFF",
-                            WebkitTextStroke: "1px #000000",
-                          }}
-                        >
-                          +{formatNumber(currentReward.points)}
-                        </p>
-                      </div>
-                      {currentReward.tickets && (
                         <div
                           className="rounded-xl w-20 h-20 flex flex-col items-center gap-2 justify-center"
                           style={{
@@ -793,8 +732,8 @@ const DiceEventPage: React.FC = () => {
                           }}
                         >
                           <img
-                            src={Images.LotteryTicket}
-                            alt="rapple"
+                            src={Images.Dice}
+                            alt="dice"
                             className="w-10 h-10"
                           />
                           <p
@@ -807,48 +746,109 @@ const DiceEventPage: React.FC = () => {
                               WebkitTextStroke: "1px #000000",
                             }}
                           >
-                            +{currentReward.tickets}
+                            +{currentReward.dice}
                           </p>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowLevelUpDialog(false)}
-                  className="rounded-[10px] w-[250px] h-14 relative"
-                  style={{
-                    background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                    border: "2px solid #76C1FF",
-                    outline: "2px solid #000000",
-                    boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                    color: "#FFFFFF",
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "18px",
-                    fontWeight: "400",
-                    WebkitTextStroke: "1px #000000",
-                    opacity: 1,
-                  }}>
-                   <img
-                    src={Images.ButtonPointBlue}
-                    alt="button-point-blue"
-                    style={{
-                      position: "absolute",
-                      top: "3px",
-                      left: "3px",
-                      width: "8.47px",
-                      height: "6.3px",
-                      pointerEvents: "none",
-                    }}
-                  />
-                  확인
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
+                        <div
+                          className="rounded-xl w-20 h-20 flex flex-col items-center gap-2 justify-center"
+                          style={{
+                            background: "rgba(194, 213, 232, 0.5)",
+                            border: "2px solid #B4CADA",
+                            boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.04)",
+                            backdropFilter: "blur(10px)",
+                            WebkitBackdropFilter: "blur(10px)",
+                          }}
+                        >
+                          <img
+                            src={Images.StarpointIcon}
+                            alt="star"
+                            className="w-10 h-10"
+                          />
 
-          {/* 사용 중지 다이얼로그 */}
-          {/* <Dialog open={suspend}>
+                          <p
+                            className=" font-semibold text-xs"
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "12px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            +{formatNumber(currentReward.points)}
+                          </p>
+                        </div>
+                        {currentReward.tickets && (
+                          <div
+                            className="rounded-xl w-20 h-20 flex flex-col items-center gap-2 justify-center"
+                            style={{
+                              background: "rgba(194, 213, 232, 0.5)",
+                              border: "2px solid #B4CADA",
+                              boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.04)",
+                              backdropFilter: "blur(10px)",
+                              WebkitBackdropFilter: "blur(10px)",
+                            }}
+                          >
+                            <img
+                              src={Images.LotteryTicket}
+                              alt="rapple"
+                              className="w-10 h-10"
+                            />
+                            <p
+                              className=" font-semibold text-xs"
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 400,
+                                color: "#FFFFFF",
+                                WebkitTextStroke: "1px #000000",
+                              }}
+                            >
+                              +{currentReward.tickets}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowLevelUpDialog(false)}
+                    className="rounded-[10px] w-[250px] h-14 relative"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                      border: "2px solid #76C1FF",
+                      outline: "2px solid #000000",
+                      boxShadow:
+                        "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                      color: "#FFFFFF",
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "18px",
+                      fontWeight: "400",
+                      WebkitTextStroke: "1px #000000",
+                      opacity: 1,
+                    }}
+                  >
+                    <img
+                      src={Images.ButtonPointBlue}
+                      alt="button-point-blue"
+                      style={{
+                        position: "absolute",
+                        top: "3px",
+                        left: "3px",
+                        width: "8.47px",
+                        height: "6.3px",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    확인
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* 사용 중지 다이얼로그 */}
+            {/* <Dialog open={suspend}>
             <DialogTitle></DialogTitle>
             <DialogContent className=" bg-[#21212F] border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]">
               <div className="relative">
@@ -899,304 +899,324 @@ const DiceEventPage: React.FC = () => {
             </DialogContent>
           </Dialog> */}
 
-          {/* Random Box 모달 */}
-          <Dialog
-            open={showRaffleBoxModal}
-            onOpenChange={setShowRaffleBoxModal}
-          >
-            <DialogContent 
-              className="rounded-[24px]  max-w-[90%] md:max-w-md p-6 border-none"
-              style={{
-                background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                boxShadow:
-                  "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-              }}>
-              <div className="flex flex-col items-center w-full">
-                <h2 
-                  className="font-bold text-lg mb-4"
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                    WebkitTextStroke: "1px #000000",
-                  }}>
+            {/* Random Box 모달 */}
+            <Dialog
+              open={showRaffleBoxModal}
+              onOpenChange={setShowRaffleBoxModal}
+            >
+              <DialogContent
+                className="rounded-[24px]  max-w-[90%] md:max-w-md p-6 border-none"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  boxShadow:
+                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                }}
+              >
+                <div className="flex flex-col items-center w-full">
+                  <h2
+                    className="font-bold text-lg mb-4"
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "24px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "1px #000000",
+                    }}
+                  >
                     랜덤 박스
-                </h2>
-                <div 
-                  className="flex items-center justify-center px-6 py-2 mb-6"
-                  style={{
-                    width: "165px",
-                    height: "56px",
-                    borderRadius: "62px",
-                    background: "#0088FFBF",
-                    backdropFilter: "blur(10px)",
-                    WebkitBackdropFilter: "blur(10px)",
-                    boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
-                  }}
-                >
-                  <img
-                    src={Images.KeyIcon}
-                    className="w-[44px] h-[44px] mr-2"
-                    alt="ticket"
-                  />
-                  <span className="font-semibold text-lg"
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "18px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                  }}>1000</span>
-                </div>
-                <div className="flex flex-col gap-4 w-full">
-                  {/* 랜덤 박스 */}
-                  <div className="flex items-center justify-between px-1 py-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        style={{
-                          width: 70,
-                          height: 70,
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 13,
-                          border: "2px solid #B4CADA",
-                          padding: 5,
-                        }}
-                      >
-                        {/* Background layer with blur effect */}
+                  </h2>
+                  <div
+                    className="flex items-center justify-center px-6 py-2 mb-6"
+                    style={{
+                      width: "165px",
+                      height: "56px",
+                      borderRadius: "62px",
+                      background: "#0088FFBF",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      boxShadow:
+                        "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
+                    }}
+                  >
+                    <img
+                      src={Images.KeyIcon}
+                      className="w-[44px] h-[44px] mr-2"
+                      alt="ticket"
+                    />
+                    <span
+                      className="font-semibold text-lg"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "18px",
+                        fontWeight: 400,
+                        color: "#FFFFFF",
+                      }}
+                    >
+                      1000
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-4 w-full">
+                    {/* 랜덤 박스 */}
+                    <div className="flex items-center justify-between px-1 py-3">
+                      <div className="flex items-center gap-3">
                         <div
                           style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: 11,
-                            background: "#C2D5E8",
-                            opacity: 0.5,
-                            backdropFilter: "blur(10px)",
-                            boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.04)",
-                          }}
-                        />
-                        {/* Image layer without blur */}
-                        <img
-                          src={Images.RandomBox}
-                          style={{ 
-                            width: 60, 
-                            height: 60,
+                            width: 70,
+                            height: 70,
                             position: "relative",
-                            zIndex: 1
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 13,
+                            border: "2px solid #B4CADA",
+                            padding: 5,
                           }}
-                          alt="bronze"
-                        />
-                      </div>
-                      <div>
-                        <div 
-                          className="font-semibold text-base"
-                          style={{
-                            fontFamily: "'ONE Mobile POP', sans-serif",
-                            fontSize: "14px",
-                            fontWeight: 400,
-                            color: "#FFFFFF",
-                            WebkitTextStroke: "1px #000000",
-                          }}>
-                          럭키 랜덤박스
+                        >
+                          {/* Background layer with blur effect */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: 11,
+                              background: "#C2D5E8",
+                              opacity: 0.5,
+                              backdropFilter: "blur(10px)",
+                              boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.04)",
+                            }}
+                          />
+                          {/* Image layer without blur */}
+                          <img
+                            src={Images.RandomBox}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              position: "relative",
+                              zIndex: 1,
+                            }}
+                            alt="bronze"
+                          />
                         </div>
-                        <div 
-                          className="flex items-center gap-1"
-                          style={{
+                        <div>
+                          <div
+                            className="font-semibold text-base"
+                            style={{
                               fontFamily: "'ONE Mobile POP', sans-serif",
                               fontSize: "14px",
                               fontWeight: 400,
                               color: "#FFFFFF",
                               WebkitTextStroke: "1px #000000",
-                            }}>
-                          <img
-                            src={Images.KeyIcon}
-                            className="w-[30px] h-[30px]"
-                            alt="ticket"
-                          />
-                          100
+                            }}
+                          >
+                            럭키 랜덤박스
+                          </div>
+                          <div
+                            className="flex items-center gap-1"
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            <img
+                              src={Images.KeyIcon}
+                              className="w-[30px] h-[30px]"
+                              alt="ticket"
+                            />
+                            100
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <button
-                      onClick={handleOpenRaffleBox}
-                      className="w-[80px] h-14 rounded-[10px] flex items-center justify-center relative"
-                      style={{
-                        background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                        border: "2px solid #76C1FF",
-                        outline: "2px solid #000000",
-                        boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                        color: "#FFFFFF",
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "18px",
-                        fontWeight: "400",
-                        WebkitTextStroke: "1px #000000",
-                        opacity: 1,
-                      }}
-                    >
-                    <img
-                      src={Images.ButtonPointBlue}
-                      alt="button-point-blue"
-                      style={{
-                        position: "absolute",
-                        top: "3px",
-                        left: "3px",
-                        width: "8.47px",
-                        height: "6.3px",
-                        pointerEvents: "none",
-                      }}
-                    />
-                    열기
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          
-          {/* Random Box 열기 모달 */}
-          <Dialog
-            open={showRaffleBoxOpenModal}
-            onOpenChange={setShowRaffleBoxOpenModal}
-          >
-            <DialogContent 
-              className="rounded-[24px] max-w-[90%] md:max-w-md p-6 border-none"
-              style={{
-                background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                boxShadow:
-                  "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-              }}>
-              <div className="flex flex-col items-center w-full">
-                <h2 
-                  className="font-bold text-lg mb-6"
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "24px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                    WebkitTextStroke: "1px #000000",
-                  }}>
-                  {showResult ? "축하합니다!" : "랜덤 박스"}
-                </h2>
-                
-                                 {/* 랜덤박스 이미지 컨테이너 - 결과가 표시되지 않을 때만 보임 */}
-                 {!showResult && (
-                   <div 
-                     className="relative mb-6"
-                     style={{
-                       width: 160,
-                       height: 165,
-                       display: "flex",
-                       alignItems: "center",
-                       justifyContent: "center",
-                     }}
-                   >
-                     {/* 배경 레이어 */}
-                     <div
-                       style={{
-                         position: "absolute",
-                         top: 0,
-                         left: 0,
-                         width: "100%",
-                         height: "100%",
-                         opacity: 0.5,
-                       }}
-                     />
-                     
-                     {/* 랜덤박스 이미지 */}
-                     <img
-                       src={Images.RandomBox}
-                       style={{
-                         width: "100%",
-                         height: "100%",
-                         position: "relative",
-                         zIndex: 1,
-                         animation: isVibrating ? "vibrate 0.1s infinite" : "none",
-                       }}
-                       alt="random-box"
-                     />
-                   </div>
-                 )}
-
-                {/* 결과 표시 */}
-                {showResult && boxResult && (
-                  <div className="flex flex-col items-center mb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <img
-                        src={boxResult.image}
-                        style={{ width: 40, height: 40 }}
-                        alt={boxResult.type}
-                      />
-                      <span
+                      <button
+                        onClick={handleOpenRaffleBox}
+                        className="w-[80px] h-14 rounded-[10px] flex items-center justify-center relative"
                         style={{
-                          fontFamily: "'ONE Mobile POP', sans-serif",
-                          fontSize: "20px",
-                          fontWeight: 400,
+                          background:
+                            "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                          border: "2px solid #76C1FF",
+                          outline: "2px solid #000000",
+                          boxShadow:
+                            "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
                           color: "#FFFFFF",
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "18px",
+                          fontWeight: "400",
                           WebkitTextStroke: "1px #000000",
+                          opacity: 1,
                         }}
                       >
-                        {boxResult.value} {boxResult.type}
-                      </span>
+                        <img
+                          src={Images.ButtonPointBlue}
+                          alt="button-point-blue"
+                          style={{
+                            position: "absolute",
+                            top: "3px",
+                            left: "3px",
+                            width: "8.47px",
+                            height: "6.3px",
+                            pointerEvents: "none",
+                          }}
+                        />
+                        열기
+                      </button>
                     </div>
-                    <p
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "16px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "0.5px #000000",
-                      }}
-                    >
-                      획득하셨습니다!
-                    </p>
                   </div>
-                )}
+                </div>
+              </DialogContent>
+            </Dialog>
 
-                {/* 받기 버튼 - 결과가 표시될 때만 보임 */}
-                {showResult && (
-                  <button
-                    onClick={() => {
-                      setShowRaffleBoxOpenModal(false);
-                      setShowResult(false);
-                      setBoxResult(null);
-                    }}
-                    className="w-32 h-10 rounded-[10px] flex items-center justify-center"
+            {/* Random Box 열기 모달 */}
+            <Dialog
+              open={showRaffleBoxOpenModal}
+              onOpenChange={setShowRaffleBoxOpenModal}
+            >
+              <DialogContent
+                className="rounded-[24px] max-w-[90%] md:max-w-md p-6 border-none"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  boxShadow:
+                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                }}
+              >
+                <div className="flex flex-col items-center w-full">
+                  <h2
+                    className="font-bold text-lg mb-6"
                     style={{
-                      background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                      border: "2px solid #76C1FF",
-                      outline: "2px solid #000000",
-                      boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                      color: "#FFFFFF",
                       fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "16px",
-                      fontWeight: "400",
+                      fontSize: "24px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
                       WebkitTextStroke: "1px #000000",
                     }}
                   >
-                    받기
-                  </button>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+                    {showResult ? "축하합니다!" : "랜덤 박스"}
+                  </h2>
 
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <div className="hidden md:block md:mb-40"> &nbsp;</div>
-        </>
-      )}
-      
-      {/* BottomNav - SpinGame이 활성화되지 않을 때만 표시 */}
-      {!game.isSpinGameActive && !game.isRPSGameActive && <BottomNav />}
+                  {/* 랜덤박스 이미지 컨테이너 - 결과가 표시되지 않을 때만 보임 */}
+                  {!showResult && (
+                    <div
+                      className="relative mb-6"
+                      style={{
+                        width: 160,
+                        height: 165,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {/* 배경 레이어 */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          opacity: 0.5,
+                        }}
+                      />
+
+                      {/* 랜덤박스 이미지 */}
+                      <img
+                        src={Images.RandomBox}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          position: "relative",
+                          zIndex: 1,
+                          animation: isVibrating
+                            ? "vibrate 0.1s infinite"
+                            : "none",
+                        }}
+                        alt="random-box"
+                      />
+                    </div>
+                  )}
+
+                  {/* 결과 표시 */}
+                  {showResult && boxResult && (
+                    <div className="flex flex-col items-center mb-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <img
+                          src={boxResult.image}
+                          style={{ width: 40, height: 40 }}
+                          alt={boxResult.type}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "'ONE Mobile POP', sans-serif",
+                            fontSize: "20px",
+                            fontWeight: 400,
+                            color: "#FFFFFF",
+                            WebkitTextStroke: "1px #000000",
+                          }}
+                        >
+                          {boxResult.value} {boxResult.type}
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "16px",
+                          fontWeight: 400,
+                          color: "#FFFFFF",
+                          WebkitTextStroke: "0.5px #000000",
+                        }}
+                      >
+                        획득하셨습니다!
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 받기 버튼 - 결과가 표시될 때만 보임 */}
+                  {showResult && (
+                    <button
+                      onClick={() => {
+                        setShowRaffleBoxOpenModal(false);
+                        setShowResult(false);
+                        setBoxResult(null);
+                      }}
+                      className="w-32 h-10 rounded-[10px] flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                        border: "2px solid #76C1FF",
+                        outline: "2px solid #000000",
+                        boxShadow:
+                          "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                        color: "#FFFFFF",
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "16px",
+                        fontWeight: "400",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                    >
+                      받기
+                    </button>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <div className="hidden md:block md:mb-40"> &nbsp;</div>
+          </>
+        )}
+
+        {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
+        {!game.isSpinGameActive &&
+          !game.isRPSGameActive &&
+          !game.isCardGameActive && <BottomNav />}
       </div>
     </div>
   );
