@@ -4,7 +4,7 @@ import UserLevel from "@/entities/User/components/UserLevel";
 import "@/features/DiceEvent/DiceEvent.css";
 import Images from "@/shared/assets/images";
 import { MonthlyPrize } from "@/entities/MonthlyPrize";
-import Attendance from "@/widgets/Attendance";
+// import Attendance from "@/widgets/Attendance";
 import MyRankingWidget from "@/widgets/MyRanking/MyRankingWidget";
 import MissionWidget from "@/widgets/MissionWidget/MissionWidget";
 import { useNavigate } from "react-router-dom";

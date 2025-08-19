@@ -1,6 +1,6 @@
 // src/entities/PreviousRewards/model/airdropEntityModel.ts
 
-import create from 'zustand';
+import { create } from 'zustand';
 import { fetchAirdropAPI, AirdropWinner, AirdropMyReward } from '@/entities/PreviousRewards/api/airdropApi';
 
 interface AirdropEntityState {

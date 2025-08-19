@@ -1,6 +1,6 @@
 // src/entities/RewardPage/model/rewardModel.ts
 
-import create from 'zustand';
+import { create } from 'zustand';
 import { fetchLeaderHomeAPI } from '../api/rewardsAPI';
 import { LeaderHomeData, RankingAward, DrawAward } from '../types';
 

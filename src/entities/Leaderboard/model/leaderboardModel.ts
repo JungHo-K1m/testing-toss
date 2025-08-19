@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import { fetchLeaderTabAPI, fetchLeaderboardPageAPI } from '../api/leaderboardAPI';
 import { LeaderBoardEntry, LeaderTabData, LeaderboardPage } from '../types';
 

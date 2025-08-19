@@ -1,6 +1,6 @@
 // src/entities/PreviousRewards/model/raffleUSDTEntityModel.ts
 
-import create from 'zustand';
+import { create } from 'zustand';
 import { fetchInitialRaffleUSDTAPI, RaffleInitialUSDTDataResponse } from '../api/raffleUSDTApi';
 import { PlayerData } from '@/features/PreviousRewards/types/PlayerData';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import SelectCharacter from './SelectCharacter';
-import chooseCharacter from '@/entities/User/api/chooseCharacter';
+import { chooseCharacter } from '@/entities/User/api/chooseCharacter';
 import { useNavigate } from 'react-router-dom';
 import Images from '@/shared/assets/images';
 

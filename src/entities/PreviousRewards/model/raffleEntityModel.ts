@@ -1,10 +1,10 @@
 // src/entities/PreviousRewards/model/raffleEntityModel.ts
-import create from 'zustand';
+import { create } from 'zustand';
 import { fetchInitialRaffleAPI, RaffleInitialDataResponse } from '../api/raffleApi';
 import { PlayerData } from '@/features/PreviousRewards/types/PlayerData';
 
 interface RaffleEntityState {
-  myRankings: PlayerData[] | null;
+  myRankings: PlayerData[] | null;  
   topRankings: PlayerData[];
   isLoadingInitialRaffle: boolean;
   errorInitialRaffle: string | null;

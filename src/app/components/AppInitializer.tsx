@@ -20,7 +20,7 @@ interface AppInitializerProps {
 const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false); // 자동 초기화 비활성화
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
     null
   );
@@ -36,155 +36,161 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     isInitial?: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [manualLoginMode, setManualLoginMode] = useState(false);
+  const [manualAuthCode, setManualAuthCode] = useState("");
+  const [manualReferrer, setManualReferrer] = useState("");
   const { fetchUserData } = useUserStore();
 
-  // 페이지 최초 진입 시 자동 초기화
-  useEffect(() => {
-    console.log("[AppInitializer] 페이지 최초 진입 - 자동 초기화 시작");
-    handleAutoInitialization();
-  }, []);
+  // 페이지 최초 진입 시 자동 초기화 비활성화
+  // useEffect(() => {
+  //   console.log("[AppInitializer] 페이지 최초 진입 - 자동 초기화 시작");
+  //   handleAutoInitialization();
+  // }, []);
 
-  // 자동 초기화 핸들러
-  const handleAutoInitialization = async () => {
-    try {
-      setIsInitializing(true);
+  // 자동 초기화 핸들러 (주석처리)
+  // const handleAutoInitialization = async () => {
+  //   try {
+  //     setIsInitializing(true);
+  //     setError(null); // 에러 초기화
 
-      // 0. 로컬스토리지에 액세스토큰 확인
-      const accessToken = localStorage.getItem("accessToken");
-      console.log(
-        "[AppInitializer] 액세스 토큰 확인:",
-        accessToken ? "존재함" : "존재하지 않음"
-      );
+  //     // 0. 로컬스토리지에 액세스토큰 확인
+  //     const accessToken = localStorage.getItem("accessToken");
+  //     console.log(
+  //       "[AppInitializer] 액세스 토큰 확인:",
+  //       accessToken ? "존재함" : "존재하지 않음"
+  //     );
 
-      if (accessToken) {
-        // 2. 액세스 토큰이 존재하는 경우
-        console.log("[AppInitializer] 기존 액세스 토큰으로 자동 로그인 시도");
-        await handleExistingTokenLogin();
-      } else {
-        // 1. 액세스 토큰이 존재하지 않는 경우
-        console.log("[AppInitializer] 액세스 토큰 없음 - 토스 로그인 필요");
-        await handleNewTokenLogin();
-      }
-    } catch (error) {
-      console.error("[AppInitializer] 자동 초기화 중 오류:", error);
-      setError("자동 초기화 중 오류가 발생했습니다.");
-    } finally {
-      setIsInitializing(false);
-    }
-  };
+  //     if (accessToken) {
+  //       // 2. 액세스 토큰이 존재하는 경우
+  //       console.log("[AppInitializer] 기존 액세스 토큰으로 자동 로그인 시도");
+  //       await handleExistingTokenLogin();
+  //     } else {
+  //       // 1. 액세스 토큰이 존재하지 않는 경우
+  //       console.log("[AppInitializer] 액세스 토큰 없음 - 토스 로그인 필요");
+  //       await handleNewTokenLogin();
+  //     }
+  //   } catch (error) {
+  //     console.error("[AppInitializer] 자동 초기화 중 오류:", error);
+  //     setError("자동 초기화 중 오류가 발생했습니다.");
+  //   } finally {
+  //     setIsInitializing(false);
+  //   }
+  // };
 
-  // 기존 토큰으로 로그인 처리
-  const handleExistingTokenLogin = async () => {
-    try {
-      // 초기화 플래그 true로 설정
-      localStorage.setItem("isInitialized", "true");
-      console.log("[AppInitializer] 초기화 플래그 설정 완료");
+  // 기존 토큰으로 로그인 처리 (주석처리)
+  // const handleExistingTokenLogin = async () => {
+  //   try {
+  //     // 초기화 플래그 true로 설정
+  //     localStorage.setItem("isInitialized", "true");
+  //     console.log("[AppInitializer] 초기화 플래그 설정 완료");
 
-      // fetchUserData 호출하여 사용자 데이터 확인
-      await handleFetchUserDataWithRetry();
-    } catch (error) {
-      console.error("[AppInitializer] 기존 토큰 로그인 실패:", error);
-      // 기존 토큰이 유효하지 않은 경우 새로 로그인
-      await handleNewTokenLogin();
-    }
-  };
+  //     // fetchUserData 호출하여 사용자 데이터 확인
+  //     await handleFetchUserDataWithRetry();
+  //   } catch (error) {
+  //     console.error("[AppInitializer] 기존 토큰 로그인 실패:", error);
+  //     // 기존 토큰이 유효하지 않은 경우 새로 로그인
+  //     await handleNewTokenLogin();
+  //   }
+  // };
 
-  // fetchUserData 재시도 로직을 포함한 처리
-  const handleFetchUserDataWithRetry = async (isRetry: boolean = false) => {
-    try {
-      console.log(
-        `[AppInitializer] fetchUserData ${isRetry ? "재시도" : "시도"}`
-      );
-      await fetchUserData();
+  // fetchUserData 재시도 로직을 포함한 처리 (주석처리)
+  // const handleFetchUserDataWithRetry = async (isRetry: boolean = false) => {
+  //   try {
+  //     console.log(
+  //       `[AppInitializer] fetchUserData ${isRetry ? "재시도" : "시도"}`
+  //     );
+  //     await fetchUserData();
 
-      // fetchUserData 성공 시 사용자 상태 확인
-      const { uid, nickName, characterType } = useUserStore.getState();
+  //     // fetchUserData 성공 시 사용자 상태 확인
+  //     const { uid, nickName, characterType } = useUserStore.getState();
 
-      if (uid && nickName) {
-        console.log("[AppInitializer] fetchUserData 성공:", {
-          uid,
-          nickName,
-          characterType,
-        });
+  //     if (uid && nickName) {
+  //       console.log("[AppInitializer] fetchUserData 성공:", {
+  //         uid,
+  //         nickName,
+  //         characterType,
+  //       });
 
-        // 사용자 데이터를 잘 가져온 경우 적절한 페이지로 이동
-        await handleNavigationAfterLogin();
-      } else {
-        throw new Error("사용자 데이터가 불완전합니다.");
-      }
-    } catch (error: any) {
-      console.error(
-        `[AppInitializer] fetchUserData ${isRetry ? "재시도" : ""} 실패:`,
-        error
-      );
+  //       // 사용자 데이터를 잘 가져온 경우 적절한 페이지로 이동
+  //       await handleNavigationAfterLogin();
+  //     } else {
+  //       throw new Error("사용자 데이터가 불완전합니다.");
+  //     }
+  //   } catch (error: any) {
+  //     console.error(
+  //       `[AppInitializer] fetchUserData ${isRetry ? "재시도" : ""} 실패:`,
+  //       error
+  //     );
 
-      if (!isRetry) {
-        // 첫 번째 실패 시 1회 재시도
-        console.log("[AppInitializer] fetchUserData 1회 재시도");
-        await handleFetchUserDataWithRetry(true);
-      } else {
-        // 재시도도 실패한 경우 리프레시 토큰으로 액세스 토큰 재발급
-        console.log(
-          "[AppInitializer] fetchUserData 재시도 실패, 리프레시 토큰으로 재발급 시도"
-        );
-        await handleRefreshTokenAndRetry();
-      }
-    }
-  };
+  //     if (!isRetry) {
+  //       // 첫 번째 실패 시 1회 재시도
+  //       console.log("[AppInitializer] fetchUserData 1회 재시도");
+  //       await handleFetchUserDataWithRetry(true);
+  //     } else {
+  //       // 재시도도 실패한 경우 리프레시 토큰으로 액세스 토큰 재발급
+  //       console.log(
+  //         "[AppInitializer] fetchUserData 재시도 실패, 리프레시 토큰으로 재발급 시도"
+  //       );
+  //       await handleRefreshTokenAndRetry();
+  //     }
+  //   }
+  // };
 
-  // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도
-  const handleRefreshTokenAndRetry = async () => {
-    try {
-      console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시작");
+  // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도 (주석처리)
+  // const handleRefreshTokenAndRetry = async () => {
+  //   try {
+  //     console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시작");
 
-      // TODO: 리프레시 토큰 API 호출 (추후 구현 예정)
-      // const newAccessToken = await refreshAccessToken();
-      // localStorage.setItem('accessToken', newAccessToken);
+  //     // TODO: 리프레시 토큰 API 호출 (추후 구현 예정)
+  //     // const newAccessToken = await refreshAccessToken();
+  //     // localStorage.setItem('accessToken', newAccessToken);
 
-      console.log(
-        "[AppInitializer] 액세스 토큰 재발급 완료, fetchUserData 재시도"
-      );
+  //     console.log(
+  //       "[AppInitializer] 액세스 토큰 재발급 완료, fetchUserData 재시도"
+  //     );
 
-      // 재발급된 토큰으로 fetchUserData 재시도
-      await handleFetchUserDataWithRetry();
-    } catch (error: any) {
-      console.error("[AppInitializer] 액세스 토큰 재발급 실패:", error);
-      setError("토큰 재발급에 실패했습니다. 다시 로그인해주세요.");
+  //     // 재발급된 토큰으로 fetchUserData 재시도
+  //     await handleFetchUserDataWithRetry();
+  //   } catch (error: any) {
+  //     console.error("[AppInitializer] 액세스 토큰 재발급 실패:", error);
+  //     setError("토큰 재발급에 실패했습니다. 다시 로그인해주세요.");
 
-      // 재발급 실패 시 로그아웃 처리
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("isInitialized");
-    }
-  };
+  //     // 재발급 실패 시 로그아웃 처리
+  //     localStorage.removeItem("accessToken");
+  //     localStorage.removeItem("refreshToken");
+  //     localStorage.removeItem("isInitialized");
+  //   }
+  // };
 
-  // 로그인 후 적절한 페이지로 이동하는 로직
-  const handleNavigationAfterLogin = async () => {
-    try {
-      const { characterType } = useUserStore.getState();
+  // 로그인 후 적절한 페이지로 이동하는 로직 (주석처리)
+  // const handleNavigationAfterLogin = async () => {
+  //   try {
+  //     const { characterType } = useUserStore.getState();
 
-      if (!characterType) {
-        // 캐릭터가 선택되지 않은 경우 (신규 사용자)
-        console.log("[AppInitializer] 신규 사용자 - /choose-character로 이동");
-        navigate("/choose-character");
-      } else {
-        // 캐릭터가 선택된 경우 (기존 사용자)
-        console.log("[AppInitializer] 기존 사용자 - /dice-event로 이동");
-        navigate("/dice-event");
-      }
+  //     if (!characterType) {
+  //       // 캐릭터가 선택되지 않은 경우 (신규 사용자)
+  //       console.log("[AppInitializer] 신규 사용자 - /choose-character로 이동");
+  //       navigate("/choose-character");
+  //     } else {
+  //       // 캐릭터가 선택된 경우 (기존 사용자)
+  //       console.log("[AppInitializer] 기존 사용자 - /dice-event로 이동");
+  //       navigate("/dice-event");
+  //     }
 
-      // 초기화 완료 처리
-      onInitialized();
-    } catch (error) {
-      console.error("[AppInitializer] 페이지 이동 중 오류:", error);
-      setError("페이지 이동 중 오류가 발생했습니다.");
-    }
-  };
+  //     // 초기화 완료 처리
+  //     onInitialized();
+  //   } catch (error) {
+  //     console.error("[AppInitializer] 페이지 이동 중 오류:", error);
+  //     setError("페이지 이동 중 오류가 발생했습니다.");
+  //   }
+  // };
 
   // 새로운 토큰으로 로그인 처리
   const handleNewTokenLogin = async () => {
     try {
       console.log("[AppInitializer] 토스 로그인 시작");
+      setIsLoading(true);
+      setError(null);
 
       // 토스 앱 환경 확인
       if (!window.ReactNativeWebView) {
@@ -228,8 +234,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         );
       }
 
-      // 서버 로그인 진행
-      await handleServerLogin(authorizationCode, referrer);
+      // 서버 로그인 진행 (주석처리 - 로그인 테스트만 진행)
+      // await handleServerLogin(authorizationCode, referrer);
+      
+      console.log("[AppInitializer] 토스 로그인 완료 - 서버 로그인은 별도 테스트 필요");
     } catch (error: any) {
       console.error("[AppInitializer] 토스 로그인 실패:", error);
       setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
@@ -244,6 +252,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           })
         );
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -251,6 +261,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const handleServerLogin = async (authCode: string, ref: string) => {
     try {
       console.log("[AppInitializer] 서버 로그인 시작");
+      setIsLoading(true);
+      setError(null);
 
       const loginSuccess = await tossLogin(authCode, ref);
       console.log("[AppInitializer] tossLogin 응답:", loginSuccess);
@@ -263,13 +275,27 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         localStorage.setItem("isInitialized", "true");
         console.log("[AppInitializer] 초기화 플래그 설정 완료");
 
-        // 로컬 스토리지에서 사용자 정보 가져오기
-        const userId = localStorage.getItem("userId") || undefined;
-        const userName = localStorage.getItem("userName") || undefined;
-        const referrerId = localStorage.getItem("referrerId") || undefined;
+        // 로컬 스토리지에서 사용자 정보 가져오기 (tossLogin에서 저장된 데이터)
+        const userId = localStorage.getItem("userId");
+        const userName = localStorage.getItem("userName");
+        const referrerId = localStorage.getItem("referrerId");
         const isInitial = localStorage.getItem("isInitial") === "true";
+        const accessToken = localStorage.getItem("accessToken");
 
-        setServerLoginResult({ userId, userName, referrerId, isInitial });
+        console.log("[AppInitializer] localStorage에서 가져온 데이터:", {
+          userId,
+          userName,
+          referrerId,
+          isInitial,
+          accessToken: accessToken ? '저장됨' : '없음'
+        });
+
+        setServerLoginResult({ 
+          userId: userId || undefined, 
+          userName: userName || undefined, 
+          referrerId: referrerId || undefined, 
+          isInitial 
+        });
 
         console.log("[AppInitializer] 서버 로그인 성공:", {
           userId,
@@ -292,19 +318,21 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           );
         }
 
-        // isInitial 값에 따른 분기 처리
-        if (isInitial) {
-          // 1. 신규 사용자인 경우 - 캐릭터 선택 페이지로 이동
-          console.log(
-            "[AppInitializer] 신규 사용자 - /choose-character로 이동"
-          );
-          navigate("/choose-character");
-          onInitialized();
-        } else {
-          // 2. 기존 사용자인 경우 - fetchUserData 호출 후 적절한 페이지로 이동
-          console.log("[AppInitializer] 기존 사용자 - fetchUserData 호출");
-          await handleFetchUserDataWithRetry();
-        }
+        // isInitial 값에 따른 분기 처리 (주석처리 - 단계별 테스트를 위해)
+        // if (isInitial) {
+        //   // 1. 신규 사용자인 경우 - 캐릭터 선택 페이지로 이동
+        //   console.log(
+        //     "[AppInitializer] 신규 사용자 - /choose-character로 이동"
+        //   );
+        //   navigate("/choose-character");
+        //   onInitialized();
+        // } else {
+        //   // 2. 기존 사용자인 경우 - fetchUserData 호출 후 적절한 페이지로 이동
+        //   console.log("[AppInitializer] 기존 사용자 - fetchUserData 호출");
+        //   await handleFetchUserDataWithRetry();
+        // }
+        
+        console.log("[AppInitializer] 서버 로그인 완료 - 페이지 이동과 fetchUserData는 별도 테스트 필요");
       } else {
         console.error("[AppInitializer] 서버 로그인 실패");
         setError("서버 로그인에 실패했습니다.");
@@ -334,16 +362,24 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           })
         );
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // 수동 토스 로그인 (테스트용)
-  const handleManualTossLogin = async () => {
+  const handleManualTossLogin = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     await handleNewTokenLogin();
   };
 
   // 수동 서버 로그인 (테스트용)
-  const handleManualServerLogin = async () => {
+  const handleManualServerLogin = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (authorizationCode && referrer) {
       await handleServerLogin(authorizationCode, referrer);
     } else {
@@ -351,32 +387,179 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 수동 초기화 (테스트용)
-  const handleManualInitialization = async () => {
-    await handleAutoInitialization();
+  // 수동 초기화 (테스트용) - 주석처리
+  // const handleManualInitialization = async (e?: React.MouseEvent) => {
+  //   if (e) {
+  //     e.preventDefault();
+  //   }
+  //   await handleAutoInitialization();
+  // };
+
+  // 수동 인증 코드와 리퍼러로 서버 로그인 (주석처리)
+  // const handleManualAuthCodeLogin = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+    
+  //   if (!manualAuthCode.trim() || !manualReferrer.trim()) {
+  //     setError("인증 코드와 리퍼러를 모두 입력해주세요.");
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsLoading(true);
+  //     setError(null);
+      
+  //     await handleServerLogin(manualAuthCode.trim(), manualReferrer.trim());
+      
+  //       // 성공 시 입력 필드 초기화
+  //       setManualAuthCode("");
+  //       setManualReferrer("");
+  //   } catch (error) {
+  //     console.error("[AppInitializer] 수동 인증 코드 로그인 실패:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // 에러 메시지 지우기
+  const clearError = () => {
+    setError(null);
   };
 
-  // 로딩 중 표시
-  if (isInitializing) {
-    return (
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          maxWidth: "400px",
-          margin: "20px auto",
-          textAlign: "center",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px", color: "#333" }}>🔄 초기화 중...</h2>
-        <div style={{ color: "#666" }}>
-          자동으로 로그인을 진행하고 있습니다.
-        </div>
-      </div>
-    );
-  }
+  // 샌드박스 디버깅 정보 출력
+  const showSandboxDebugInfo = () => {
+    console.log('🔍 [Sandbox Debug] 환경 정보 확인');
+    console.log('🔍 [Sandbox Debug] 현재 환경:', import.meta.env.MODE);
+    console.log('🔍 [Sandbox Debug] VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+    console.log('🔍 [Sandbox Debug] 기본 API URL:', import.meta.env.VITE_API_BASE_URL || 'https://28d8c99bdda5.ngrok-free.app/api/');
+    console.log('🔍 [Sandbox Debug] localStorage 액세스 토큰:', localStorage.getItem('accessToken') ? '존재함' : '없음');
+    console.log('🔍 [Sandbox Debug] 쿠키 정보:', document.cookie);
+    
+    // API 설정 테스트
+    const testUrl = `${import.meta.env.VITE_API_BASE_URL || 'https://28d8c99bdda5.ngrok-free.app/api/'}home`;
+    console.log('🌐 [Sandbox Debug] 테스트 URL:', testUrl);
+    
+    // 환경 변수 전체 확인
+    console.log('⚙️ [Sandbox Debug] 모든 환경 변수:', {
+      MODE: import.meta.env.MODE,
+      DEV: import.meta.env.DEV,
+      PROD: import.meta.env.PROD,
+      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+      NODE_ENV: import.meta.env.NODE_ENV
+    });
+    
+    // 현재 프론트엔드 실행 URL 정보
+    console.log('🏠 [Sandbox Debug] 프론트엔드 실행 정보:', {
+      currentURL: window.location.href,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      port: window.location.port,
+      pathname: window.location.pathname,
+      origin: window.location.origin
+    });
+    
+    // Vite 개발 서버 정보
+    console.log('⚡ [Sandbox Debug] Vite 개발 서버 정보:', {
+      isLocalhost: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+      isDevelopment: import.meta.env.DEV,
+      vitePort: window.location.port || '기본 포트 (80/443)'
+    });
+  };
+
+  // OPTIONS preflight 요청 테스트 함수
+  const testOptionsPreflight = async () => {
+    try {
+      console.log('🚨 [OPTIONS Test] CORS preflight 요청 테스트 시작');
+      
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://28d8c99bdda5.ngrok-free.app/api/';
+      const testUrl = `${baseURL}home`;
+      
+      console.log('🚨 [OPTIONS Test] 테스트 URL:', testUrl);
+      console.log('🚨 [OPTIONS Test] Authorization 헤더 포함 요청 시도');
+      
+      // fetch API를 사용하여 OPTIONS 요청 시뮬레이션
+      const response = await fetch(testUrl, {
+        method: 'OPTIONS',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || 'test-token'}`,
+          'Content-Type': 'application/json',
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'Authorization, Content-Type',
+          'ngrok-skip-browser-warning': 'true', // ngrok 경고 우회
+        }
+      });
+      
+      console.log('✅ [OPTIONS Test] OPTIONS 요청 성공:', response);
+      console.log('✅ [OPTIONS Test] 응답 상태:', response.status);
+      console.log('✅ [OPTIONS Test] 응답 헤더:', response.headers);
+      
+    } catch (error: any) {
+      console.error('❌ [OPTIONS Test] OPTIONS 요청 실패:', error);
+      console.error('❌ [OPTIONS Test] 에러 타입:', error.name);
+      console.error('❌ [OPTIONS Test] 에러 메시지:', error.message);
+      
+      if (error.message.includes('CORS') || error.message.includes('Network Error')) {
+        console.error('🚨 [OPTIONS Test] CORS 에러로 판단됨');
+        console.error('🚨 [OPTIONS Test] 서버에서 OPTIONS 요청에 대한 응답이 없거나 CORS 헤더 부족');
+      }
+    }
+  };
+
+  // 쿼리 파라미터로 토큰 전달하는 /home API 테스트
+  const testHomeApiWithQueryToken = async () => {
+    try {
+      console.log('🔍 [Query Token Test] 쿼리 파라미터로 토큰 전달하는 /home API 테스트');
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('액세스 토큰이 없습니다. 먼저 로그인해주세요.');
+        return;
+      }
+      
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://28d8c99bdda5.ngrok-free.app/api/';
+      const testUrl = `${baseURL}home?token=${encodeURIComponent(token)}`;
+      
+      console.log('🌐 [Query Token Test] 테스트 URL:', testUrl);
+      
+      const response = await fetch(testUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/plain', // 단순 요청으로 만들기
+          'ngrok-skip-browser-warning': 'true', // ngrok 경고 우회
+        },
+        mode: 'cors',
+      });
+      
+      const data = await response.json();
+      console.log('✅ [Query Token Test] /home API 성공:', data);
+      setError(null);
+      
+    } catch (error: any) {
+      console.error('❌ [Query Token Test] /home API 실패:', error);
+      setError(`쿼리 파라미터 테스트 실패: ${error.message || "알 수 없는 오류"}`);
+    }
+  };
+
+  // 로딩 중 표시 (자동 초기화 비활성화로 인해 제거)
+  // if (isInitializing) {
+  //   return (
+  //     <div
+  //       style={{
+  //         padding: "20px",
+  //         backgroundColor: "white",
+  //         borderRadius: "8px",
+  //         boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+  //         maxWidth: "400px",
+  //         margin: "20px auto",
+  //         textAlign: "center",
+  //       }}
+  //     >
+  //       <h2 style={{ marginBottom: "20px", color: "#333" }}>🔄 초기화 중...</h2>
+  //       <div style={{ color: "#666" }}>
+  //         자동으로 로그인을 진행하고 있습니다.
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div
@@ -385,65 +568,181 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         backgroundColor: "white",
         borderRadius: "8px",
         boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        maxWidth: "400px",
+        maxWidth: "500px",
         margin: "20px auto",
       }}
     >
       <h2 style={{ marginBottom: "20px", color: "#333", textAlign: "center" }}>
-        토스 앱 로그인 테스트
+        토스 앱 로그인 테스트 (토스 + 서버 로그인 + fetchUserData)
       </h2>
 
-      {/* 수동 테스트 버튼들 */}
-      <button
-        onClick={handleManualInitialization}
-        style={{
-          padding: "15px 30px",
-          fontSize: "18px",
-          backgroundColor: "#28a745",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          width: "100%",
-          marginBottom: "20px",
-        }}
-      >
-        🔄 수동 초기화
-      </button>
-
+      {/* 수동 테스트 버튼들 - 토스 로그인 + 서버 로그인 활성화 */}
       <button
         onClick={handleManualTossLogin}
+        disabled={isLoading}
         style={{
           padding: "15px 30px",
           fontSize: "18px",
-          backgroundColor: "#007bff",
+          backgroundColor: isLoading ? "#6c757d" : "#007bff",
           color: "white",
           border: "none",
           borderRadius: "8px",
-          cursor: "pointer",
+          cursor: isLoading ? "not-allowed" : "pointer",
           width: "100%",
           marginBottom: "20px",
+          opacity: isLoading ? 0.7 : 1,
         }}
       >
-        토스 로그인
+        {isLoading ? "🔄 처리 중..." : "1️⃣ 토스 로그인 테스트"}
       </button>
 
       <button
         onClick={handleManualServerLogin}
+        disabled={isLoading || !authorizationCode || !referrer}
         style={{
           padding: "15px 30px",
           fontSize: "18px",
-          backgroundColor: "#6c757d",
+          backgroundColor: isLoading || !authorizationCode || !referrer ? "#6c757d" : "#28a745",
           color: "white",
           border: "none",
           borderRadius: "8px",
+          cursor: isLoading || !authorizationCode || !referrer ? "not-allowed" : "pointer",
+          width: "100%",
+          marginBottom: "20px",
+          opacity: isLoading || !authorizationCode || !referrer ? 0.7 : 1,
+        }}
+      >
+        {isLoading ? "🔄 처리 중..." : "2️⃣ 서버 로그인 테스트"}
+      </button>
+
+      {/* fetchUserData 테스트 버튼 */}
+      <button
+        onClick={async (e) => {
+          if (e) e.preventDefault();
+          try {
+            console.log("[AppInitializer] fetchUserData 테스트 시작");
+            setIsLoading(true);
+            setError(null);
+            
+            await fetchUserData();
+            
+            // fetchUserData 성공 시 사용자 상태 확인
+            const { uid, nickName, characterType } = useUserStore.getState();
+            
+            if (uid && nickName) {
+              console.log("[AppInitializer] fetchUserData 성공:", {
+                uid,
+                nickName,
+                characterType,
+              });
+              
+              // 성공 메시지 표시
+              setError(null);
+            } else {
+              throw new Error("사용자 데이터가 불완전합니다.");
+            }
+          } catch (error: any) {
+            console.error("[AppInitializer] fetchUserData 실패:", error);
+            setError(`fetchUserData 실패: ${error.message || "알 수 없는 오류"}`);
+          } finally {
+            setIsLoading(false);
+          }
+        }}
+        disabled={isLoading || !localStorage.getItem("accessToken")}
+        style={{
+          padding: "15px 30px",
+          fontSize: "18px",
+          backgroundColor: isLoading || !localStorage.getItem("accessToken") ? "#6c757d" : "#17a2b8",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          cursor: isLoading || !localStorage.getItem("accessToken") ? "not-allowed" : "pointer",
+          width: "100%",
+          marginBottom: "20px",
+          opacity: isLoading || !localStorage.getItem("accessToken") ? 0.7 : 1,
+        }}
+      >
+        {isLoading ? "🔄 처리 중..." : "3️⃣ fetchUserData 테스트"}
+      </button>
+
+      {/* 샌드박스 디버깅 버튼 */}
+      <button
+        onClick={showSandboxDebugInfo}
+        style={{
+          padding: "10px 20px",
+          fontSize: "14px",
+          backgroundColor: "#6c757d",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
           cursor: "pointer",
           width: "100%",
           marginBottom: "20px",
+          opacity: 0.8,
         }}
       >
-        우리 서버 로그인
+        🔍 샌드박스 디버깅 정보 출력
       </button>
+
+      {/* OPTIONS preflight 테스트 버튼 */}
+      <button
+        onClick={testOptionsPreflight}
+        style={{
+          padding: "10px 20px",
+          fontSize: "14px",
+          backgroundColor: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          width: "100%",
+          marginBottom: "20px",
+          opacity: 0.8,
+        }}
+      >
+        🚨 OPTIONS 프리플라이트 테스트
+      </button>
+
+      {/* 쿼리 파라미터로 토큰 전달하는 /home API 테스트 버튼 */}
+      <button
+        onClick={testHomeApiWithQueryToken}
+        style={{
+          padding: "10px 20px",
+          fontSize: "14px",
+          backgroundColor: "#28a745",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          width: "100%",
+          marginBottom: "20px",
+          opacity: 0.8,
+        }}
+      >
+        🔍 쿼리 파라미터로 토큰 전달하는 /home API 테스트
+      </button>
+
+      {/* 주석처리된 기능들 안내 */}
+      <div
+        style={{
+          marginBottom: "20px",
+          padding: "16px",
+          backgroundColor: "#fff3cd",
+          color: "#856404",
+          borderRadius: "4px",
+          border: "1px solid #ffeaa7",
+        }}
+      >
+        <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          ℹ️ 현재 테스트 모드
+        </div>
+        <div style={{ fontSize: "14px" }}>
+          • 자동 초기화 비활성화됨<br/>
+          • 페이지 이동 기능 비활성화됨<br/>
+          • fetchUserData 기능 활성화됨 ✅<br/>
+          • 토스 로그인 + 서버 로그인 + fetchUserData 테스트 가능
+        </div>
+      </div>
 
       {/* 환경 정보 */}
       <div
@@ -473,6 +772,52 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           : "❌ 미완료"}
       </div>
 
+      {/* 토큰 저장 상태 */}
+      <div
+        style={{
+          marginBottom: "20px",
+          padding: "12px",
+          fontSize: "14px",
+          backgroundColor: "#e3f2fd",
+          color: "#1976d2",
+          borderRadius: "4px",
+          border: "1px solid #bbdefb",
+        }}
+      >
+        <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          🔐 토큰 저장 상태
+        </div>
+        <div style={{ fontSize: "14px" }}>
+          <strong>액세스 토큰:</strong>{" "}
+          {localStorage.getItem("accessToken") ? "✅ localStorage에 저장됨" : "❌ 저장되지 않음"}
+          <br />
+          <strong>리프레시 토큰:</strong>{" "}
+          {localStorage.getItem("refreshToken") ? "✅ localStorage에 저장됨" : "❌ 저장되지 않음"}
+          <br />
+          <strong>사용자 ID:</strong>{" "}
+          {localStorage.getItem("userId") || "❌ 저장되지 않음"}
+          <br />
+          <strong>사용자명:</strong>{" "}
+          {localStorage.getItem("userName") || "❌ 저장되지 않음"}
+        </div>
+        <div style={{ 
+          marginTop: "8px", 
+          padding: "8px", 
+          backgroundColor: "#fff3cd", 
+          color: "#856404", 
+          borderRadius: "4px", 
+          fontSize: "12px" 
+        }}>
+          <strong>💡 리프레시 토큰 저장 방식 변경:</strong>
+          <br />
+          • 이제 응답 바디에서 리프레시 토큰을 추출하여 localStorage에 저장
+          <br />
+          • withCredentials: false로 설정하여 쿠키 대신 localStorage 사용
+          <br />
+          • JavaScript로 직접 접근 가능하여 디버깅 용이
+        </div>
+      </div>
+
       {/* 토스 로그인 결과 */}
       {loginResult && (
         <div
@@ -493,6 +838,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           </div>
           <div style={{ marginBottom: "8px" }}>
             <strong>referrer:</strong> {loginResult.referrer}
+          </div>
+          <div style={{ fontSize: "12px", color: "#666", fontStyle: "italic" }}>
+            토스 로그인 성공! 이제 "2️⃣ 서버 로그인 테스트" 버튼을 클릭하여 서버 로그인을 진행하세요.
           </div>
         </div>
       )}
@@ -526,6 +874,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             <strong>isInitial:</strong>{" "}
             {serverLoginResult.isInitial ? "신규 사용자" : "기존 사용자"}
           </div>
+          <div style={{ fontSize: "12px", color: "#666", fontStyle: "italic" }}>
+            서버 로그인 성공! 이제 fetchUserData와 페이지 이동을 별도로 테스트할 수 있습니다.
+          </div>
         </div>
       )}
 
@@ -539,8 +890,31 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             color: "#c62828",
             borderRadius: "4px",
             border: "1px solid #ef5350",
+            position: "relative",
           }}
         >
+          <button
+            onClick={clearError}
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              background: "none",
+              border: "none",
+              fontSize: "18px",
+              cursor: "pointer",
+              color: "#c62828",
+              padding: "0",
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="에러 메시지 닫기"
+          >
+            ×
+          </button>
           <strong>오류:</strong> {error}
         </div>
       )}

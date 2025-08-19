@@ -56,9 +56,8 @@ const PreviousRanking: React.FC = () => {
   const myData = myRanking && myRanking.length > 0 ? myRanking[0] : null;
   const isReceived = myData?.selectedRewardType === "SL";
 
-  const dialogRankingsPlayerData: PlayerData[] = dialogRankings.map((r: { round: any; nftType: any; selectedRewardType: any; }) => ({
+  const dialogRankingsPlayerData: PlayerData[] = dialogRankings.map((r) => ({
     ...r,
-    round: r.round,
     nftType: r.nftType ?? null,
     selectedRewardType: r.selectedRewardType ?? null,
   }));
@@ -121,7 +120,7 @@ const PreviousRanking: React.FC = () => {
               }
             : null
         }
-        topRankings={topRankings.map((r: { nftType: any; selectedRewardType: any; itsMe: any; }) => ({
+        topRankings={topRankings.map((r) => ({
           ...r,
           nftType: r.nftType ?? null,
           selectedRewardType: r.selectedRewardType ?? null,
