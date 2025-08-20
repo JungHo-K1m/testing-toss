@@ -301,6 +301,8 @@ import QuestionCircle from "./q-circle.png"
 import SpinProp from "./spin-prop.png"
 import ButtonPointBlue from "./button-point-blue.png"
 import ButtonPointRed from "./button-point-red.png"
+import VolumeOff from "./volume-off.png"
+import VolumeOn from "./volume-on.png"
 
 
 const Images = {
@@ -606,6 +608,8 @@ const Images = {
   SpinProp,
   ButtonPointBlue,
   ButtonPointRed,
+  VolumeOff,
+  VolumeOn,
 };
 
 export default Images;

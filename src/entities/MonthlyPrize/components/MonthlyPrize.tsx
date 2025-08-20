@@ -155,7 +155,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
         >
           Toss Point
         </p>
-        <p
+        {/* <p
           className="text-center"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
@@ -166,7 +166,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
           }}
         >
           (총 100만원 상당)
-        </p>
+        </p> */}
       </div>
     </div>
   );

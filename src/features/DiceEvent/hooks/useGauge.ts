@@ -15,9 +15,9 @@ const useGauge = () => {
         setGaugeValue((prevValue) => {
           let newValue = isIncreasing ? prevValue + 0.2 : prevValue - 0.2;
           
-          // Gauge bounds and direction control - ensure full range coverage
-          if (newValue >= 7) {
-            newValue = 7;
+          // Gauge bounds and direction control - ensure full range coverage (0-6)
+          if (newValue >= 6) {
+            newValue = 6;
             setIsIncreasing(false);
           } else if (newValue <= 0) {
             newValue = 0;

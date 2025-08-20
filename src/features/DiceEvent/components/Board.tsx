@@ -80,12 +80,15 @@ const Board: React.FC<BoardProps> = ({
         }}
       ></div>
       <img
-        src={charactorImageSrc}
+        src={Images.CatSmile}
         alt="character"
         className="w-12 h-12 md:w-20 md:h-20 relative z-10"
-        style={flipStyle}
+        style={{
+          ...flipStyle,
+          transform: `${flipStyle.transform || ''} translateX(4px)`.trim(),
+        }}
       />
-      {equippedItems.map((itemType, index) => (
+      {/* {equippedItems.map((itemType, index) => (
         <img
           key={`${itemType}-${index}`}
           src={getItemImage(itemType)}
@@ -93,7 +96,7 @@ const Board: React.FC<BoardProps> = ({
           className="absolute inset-0 w-12 h-12 md:w-20 md:h-20 z-20"
           style={flipStyle}
         />
-      ))}
+      ))} */}
     </motion.div>
   );
 };

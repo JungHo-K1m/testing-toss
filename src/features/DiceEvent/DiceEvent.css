@@ -51,8 +51,8 @@
   content: '';
   position: absolute;
   top: 0%; /* 배경이 중앙에서 회전하도록 위치 조정 */
-  left: 0%;
-  width: 100%; /* 배경 크기를 늘려서 시각적으로 유지 */
+  left: 0%; /* 배경 크기를 늘려서 시각적으로 유지 */
+  width: 100%;
   height: 100%;
   background: url('@/shared/assets/images/base-dice.png') center/cover; /* 배경 이미지 경로 base-dice.png로 변경 */
   /* animation: rotateBackground 10s linear infinite;  애니메이션 제거 */
@@ -136,4 +136,10 @@
   80% { transform: translate(2px, 2px); }
   90% { transform: translate(-2px, -2px); }
   100% { transform: translate(0); }
+}
+
+/* anywhere 이벤트 시 주사위 숨기기 */
+.selecting-tile .dice-container,
+.selecting-tile .dice {
+  display: none;
 }

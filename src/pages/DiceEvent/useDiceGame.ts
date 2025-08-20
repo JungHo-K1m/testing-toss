@@ -49,6 +49,7 @@ export const useDiceGame = () => {
   // RPS 게임 및 스핀 게임 상태
   const [isRPSGameActive, setIsRPSGameActive] = useState(false);
   const [isSpinGameActive, setIsSpinGameActive] = useState(false);
+  const [isCardGameActive, setIsCardGameActive] = useState(false); // 카드게임 상태 추가
 
   // 주사위 굴리는 중인지 상태
   const [isRolling, setIsRolling] = useState<boolean>(false);
@@ -221,10 +222,19 @@ export const useDiceGame = () => {
           switch (finalPosition) {
             case 5:
               setIsRPSGameActive(true);
+              setIsCardGameActive(false);
+              setIsSpinGameActive(false);
               rpsGameStore.fetchAllowedBetting();
+              break;
+            case 10:
+              setIsCardGameActive(true);
+              setIsRPSGameActive(false);
+              setIsSpinGameActive(false);
               break;
             case 15:
               setIsSpinGameActive(true);
+              setIsRPSGameActive(false);
+              setIsCardGameActive(false);
               break;
             case 18:
               setSelectingTile(true);
@@ -294,15 +304,22 @@ export const useDiceGame = () => {
         // 필요한 경우 추가적인 보상 처리
         // applyReward(tileId); // 제거
 
-        // 타일 5와 15에 따른 게임 활성화
+        // 타일 5, 10, 15에 따른 게임 활성화
         if (tileId === 5) {
           setIsRPSGameActive(true); // RPSGame 활성화
           setIsSpinGameActive(false); // SpinGame 비활성화
+          setIsCardGameActive(false); // 카드게임 비활성화
           rpsGameStore.fetchAllowedBetting(); // RPSGame의 베팅 가능 금액 가져오기
           // console.log("RPSGame 활성화됨 (타일 5 클릭).");
+        } else if (tileId === 10) {
+          setIsCardGameActive(true); // 카드게임 활성화
+          setIsRPSGameActive(false); // RPSGame 비활성화
+          setIsSpinGameActive(false); // SpinGame 비활성화
+          // console.log("카드게임 활성화됨 (타일 10 클릭).");
         } else if (tileId === 15) {
           setIsSpinGameActive(true); // SpinGame 활성화
           setIsRPSGameActive(false); // RPSGame 비활성화
+          setIsCardGameActive(false); // 카드게임 비활성화
           // console.log("SpinGame 활성화됨 (타일 15 클릭).");
         }
 
@@ -362,6 +379,14 @@ export const useDiceGame = () => {
     setMoving(false);
   }, []);
 
+  // 카드게임 종료 처리 함수
+  const handleCardGameEnd = useCallback(() => {
+    setIsCardGameActive(false);
+    setSelectingTile(false);
+    setButtonDisabled(false);
+    setMoving(false);
+  }, []);
+
   const handleMouseDown = useCallback(() => {
     if (!buttonDisabled && diceCount > 0) {
       setIsHolding(true);
@@ -403,8 +428,10 @@ export const useDiceGame = () => {
     setButtonDisabled,
     isRPSGameActive,
     isSpinGameActive,
+    isCardGameActive, // 카드게임 상태 노출
     handleRPSGameEnd, // 노출
     handleSpinGameEnd,
+    handleCardGameEnd, // 카드게임 종료 함수 노출
     rollDice,
     setDiceCount,
     setLotteryCount,

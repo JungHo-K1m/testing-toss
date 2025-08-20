@@ -184,6 +184,19 @@ const DiceEventPage: React.FC = () => {
     };
   }, []);
 
+  // 사용자 데이터 초기 로딩
+  useEffect(() => {
+    const initializeUserData = async () => {
+      try {
+        await fetchUserData();
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    initializeUserData();
+  }, [fetchUserData]);
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -454,6 +467,8 @@ const DiceEventPage: React.FC = () => {
               handleMouseUp={game.handleMouseUp}
               isLuckyVisible={game.isLuckyVisible}
               rollDice={game.rollDice}
+              isCardGameActive={game.isCardGameActive}
+              handleCardGameEnd={game.handleCardGameEnd}
             />
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
@@ -543,6 +558,11 @@ const DiceEventPage: React.FC = () => {
               <DialogTrigger
                 className="w-full flex justify-center"
                 onClick={() => playSfx(Audios.button_click)}
+                style={{
+                  backgroundColor: "transparent",
+                  outline: "none",
+                  border: "none",
+                }}
               >
                 <InlineRanking />
               </DialogTrigger>
@@ -585,6 +605,10 @@ const DiceEventPage: React.FC = () => {
                 style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
                 }}
               >
                 <DialogTitle className="sr-only">레벨별 보상</DialogTitle>
@@ -599,6 +623,10 @@ const DiceEventPage: React.FC = () => {
                 style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
                 }}
               >
                 <div className="flex flex-col items-center justify-around">
@@ -797,19 +825,31 @@ const DiceEventPage: React.FC = () => {
 
             {/* Random Box 모달 */}
             <Dialog
-              open={showRaffleBoxModal}
-              onOpenChange={setShowRaffleBoxModal}
-            >
-              <DialogContent
-                className="rounded-[24px]  max-w-[90%] md:max-w-md p-6 border-none"
-                style={{
-                  background:
-                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                  boxShadow:
-                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-                }}
-              >
-                <div className="flex flex-col items-center w-full">
+               open={showRaffleBoxModal}
+               onOpenChange={setShowRaffleBoxModal}
+             >
+               <DialogContent
+                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
+                 style={{
+                   background:
+                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                   boxShadow:
+                     "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                   position: "fixed",
+                   top: "50%",
+                   left: "50%",
+                   transform: "translate(-50%, -50%)",
+                 }}
+               >
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={() => setShowRaffleBoxModal(false)}
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center"
+                >
+                  <HiX className="w-5 h-5 text-white" />
+                </button>
+                 
+                 <div className="flex flex-col items-center w-full">
                   <h2
                     className="font-bold text-lg mb-4"
                     style={{
@@ -930,7 +970,7 @@ const DiceEventPage: React.FC = () => {
                       </div>
                       <button
                         onClick={handleOpenRaffleBox}
-                        className="w-[80px] h-14 rounded-[10px] flex items-center justify-center relative"
+                        className="w-[80px] h-14 rounded-[10px] flex items-center justify-center relative whitespace-nowrap"
                         style={{
                           background:
                             "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
@@ -966,21 +1006,32 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Random Box 열기 모달 */}
-            <Dialog
-              open={showRaffleBoxOpenModal}
-              onOpenChange={setShowRaffleBoxOpenModal}
-            >
-              <DialogContent
-                className="rounded-[24px] max-w-[90%] md:max-w-md p-6 border-none"
-                style={{
-                  background:
-                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                  boxShadow:
-                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-                }}
-              >
-                <div className="flex flex-col items-center w-full">
+              {/* Random Box 열기 모달 */}
+             <Dialog
+               open={showRaffleBoxOpenModal}
+               onOpenChange={setShowRaffleBoxOpenModal}
+             >
+               <DialogContent
+                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
+                 style={{
+                   background:
+                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                   boxShadow:
+                     "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                   position: "fixed",
+                   top: "50%",
+                   left: "50%",
+                   transform: "translate(-50%, -50%)",
+                 }}
+               >
+                  {/* 닫기 버튼 */}
+                  <DialogHeader className="flex w-full items-end">
+                  <DialogClose>
+                    <HiX className="w-5 h-5 text-white" />
+                  </DialogClose>
+                </DialogHeader>
+                 
+                 <div className="flex flex-col items-center w-full">
                   <h2
                     className="font-bold text-lg mb-6"
                     style={{
@@ -1100,13 +1151,17 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            {/* 장착 중인 아이템 모달달 */}
+            {/* 장착 중인 아이템 모달 */}
             <Dialog open={showItemDialog}>
               <DialogContent
                 className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
-                style={{
+                 style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                 }}
               >
                 <div className="relative">
@@ -1184,8 +1239,8 @@ const DiceEventPage: React.FC = () => {
           </>
         )}
 
-        {/* BottomNav - SpinGame이 활성화되지 않을 때만 표시 */}
-        {!game.isSpinGameActive && !game.isRPSGameActive && <BottomNav />}
+        {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
+        {!game.isSpinGameActive && !game.isRPSGameActive && !game.isCardGameActive && <BottomNav />}
       </div>
     </div>
   );

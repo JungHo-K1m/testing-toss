@@ -1,6 +1,6 @@
 // src/pages/DiceEvent/GameBoard.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, backIn } from "framer-motion";
 import Tile from "./tile";
 import { StarTile, DiceTile, AirplaneTile, Gauge } from "@/features/DiceEvent";
 import Dice from "@/widgets/Dice";
@@ -31,6 +31,7 @@ import Audios from "@/shared/assets/audio";
 import { HiVolumeOff, HiVolumeUp } from "react-icons/hi";
 import { useSoundStore } from "@/shared/store/useSoundStore";
 import saveSoundSetting from "@/entities/User/api/saveSoundSetting";
+import CardGameModal from "@/pages/CardGame/CardGameModal";
 
 dayjs.extend(duration);
 dayjs.extend(utc); // UTC 플러그인 적용
@@ -53,6 +54,8 @@ interface GameBoardProps {
   handleMouseUp: () => void;
   isLuckyVisible: boolean;
   rollDice: () => void;
+  isCardGameActive: boolean; // 카드게임 활성화 상태 추가
+  handleCardGameEnd: () => void; // 카드게임 종료 함수 추가
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -72,6 +75,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   handleMouseUp,
   isLuckyVisible,
   rollDice,
+  isCardGameActive,
+  handleCardGameEnd,
 }) => {
   // Zustand 스토어에서 필요한 상태와 함수 가져오기
   const {
@@ -102,6 +107,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   } = useUserStore();
   const [timeUntilRefill, setTimeUntilRefill] = useState("");
   const [isRefilling, setIsRefilling] = useState(false); // 리필 중 상태 관리
+  const [isCardGameOpen, setIsCardGameOpen] = useState(false); // 카드게임 모달 상태
   const { setIsOpen } = useTour();
   const { playSfx } = useSound();
   const {
@@ -359,144 +365,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     );
   };
 
-  // 테스트용 아이템 추가/삭제 핸들러
-  const handleAddGold = async () => {
-    try {
-      await addGoldItem();
-      alert("Gold NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("Gold NFT 추가에 실패했습니다.");
-      // 에러는 useUserStore에서 처리하므로 여기서는 별도 처리 불필요
-    }
-  };
-
-  const handleRemoveGold = async () => {
-    try {
-      await removeGoldItem();
-      alert("Gold NFT가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("Gold NFT 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddSilver = async () => {
-    try {
-      await addSilverItem();
-      alert("Silver NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("Silver NFT 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveSilver = async () => {
-    try {
-      await removeSilverItem();
-      alert("Silver NFT가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("Silver NFT 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddBronze = async () => {
-    try {
-      await addBronzeItem();
-      alert("Bronze NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("Bronze NFT 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveBronze = async () => {
-    try {
-      await removeBronzeItem();
-      alert("Bronze NFT가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("Bronze NFT 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddReward = async () => {
-    try {
-      await addRewardItem();
-      alert("Reward NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("Reward NFT 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveReward = async () => {
-    try {
-      await removeRewardItem();
-      alert("Reward NFT가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("Reward NFT 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddAuto = async () => {
-    try {
-      await addAutoItem();
-      alert("Auto NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("Auto NFT 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveAuto = async () => {
-    try {
-      await removeAutoItem();
-      alert("Auto NFT가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("Auto NFT 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddAll = async () => {
-    try {
-      await addAllItems();
-      alert("모든 NFT가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("모든 NFT 추가에 실패했습니다.");
-    }
-  };
-
-  const handleAddDice = async () => {
-    try {
-      await addDice();
-      alert("주사위가 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("주사위 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveDice = async () => {
-    try {
-      await removeDice();
-      alert("주사위가 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("주사위 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleAddSLToken = async () => {
-    try {
-      await addSLToken();
-      alert("SL Token이 성공적으로 추가되었습니다!");
-    } catch (error) {
-      alert("SL Token 추가에 실패했습니다.");
-    }
-  };
-
-  const handleRemoveSLToken = async () => {
-    try {
-      await removeSLToken();
-      alert("SL Token이 성공적으로 삭제되었습니다!");
-    } catch (error) {
-      alert("SL Token 삭제에 실패했습니다.");
-    }
-  };
-
-
   return (
     <div className="w-full h-full flex items-center justify-center relative">
       {/* 중앙 배경을 absolute로 배치 */}
@@ -544,21 +412,26 @@ const GameBoard: React.FC<GameBoardProps> = ({
           className="col-span-4 row-span-4 flex flex-col items-center justify-evenly bg-center"
           style={{ zIndex: 2, position: "relative" }}
         >
-          <div className="w-full flex justify-center mb-4">
+          <div className="w-full flex justify-center mb-4" style={{ zIndex: 20 }}>
             <Gauge gaugeValue={gaugeValue} />
           </div>
 
           {/* 음소거 버튼 */}
-          {/* <button
+          <button
               onClick={handleMute}
-              className="absolute top-1 left-1 z-50 bg-gray-800 rounded-full flex items-center justify-center"
+              className="absolute top-9 left-5 z-50 bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-0"
+              style={{
+                backgroundColor: "transparent",
+                outline: "none",
+                border: "none",
+              }}
             >
               {masterMuted ? (
-                <HiVolumeOff className="text-white w-5 h-5" />
+                <img src={Images.VolumeOff} alt="Volume Off" className="w-5 h-5" />
               ) : (
-                <HiVolumeUp className="text-white w-5 h-5" />
+                <img src={Images.VolumeOn} alt="Volume On" className="w-5 h-5" />
               )}
-          </button> */}
+          </button>
 
           <div className="relative w-[120px] h-[120px] md:w-44 md:h-44">
             <AnimatePresence>
@@ -578,7 +451,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
-            <AnimatePresence>
+            {/* <AnimatePresence>
               {reward && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0 }}
@@ -596,7 +469,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     <div className="flex flex-col items-center">
                       <img src={Images.Star} alt="star" className="h-6" />
                       <span className="mt-1 ">
-                        +{formatNumber(reward.value * 1)}
+                        +{formatNumber(reward.value * items.boardRewardTimes)}
                       </span>
                     </div>
                   )}
@@ -616,17 +489,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
                         className="h-6"
                       />
                       <span className="mt-1">
-                        +{formatNumber(reward.value * 1)}
+                        +{formatNumber(reward.value * items.ticketTimes)}
                       </span>
                     </div>
                   )}
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AnimatePresence> */}
 
             {/* anywhere 비행기 활성화 시에는 주사위를 숨김 */}
             {!selectingTile && (
-              <div className="flex flex-col w-full h-full items-center justify-center dice-container translate-y-5">
+              <div 
+                className="flex flex-col w-full h-full items-center justify-center dice-container"
+                style={{
+                  transform: 'translateY(20px)'
+                }}
+              >
                 <Dice
                   ref={diceRef}
                   onRollComplete={(value: number, data: RollDiceResponseData) =>
@@ -636,18 +514,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 />
               </div>
             )}
-            <p
-              className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2 z-20"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "18px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #2A294E",
-              }}
-            >
-              x {formatNumber(diceCount)}
-            </p>
+            <div className="absolute bottom-[-30px] left-1/2 transform  z-20">
+              <p
+                className="text-center whitespace-nowrap"
+                style={{
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "18px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  WebkitTextStroke: "1px #2A294E",
+                  transform: 'translateX(-18px)'
+                }}
+              >
+                x {formatNumber(diceCount)}
+              </p>
+            </div>
             {/* "LUCKY" image animation */}
             <AnimatePresence>
               {isLuckyVisible && (
@@ -663,119 +544,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
               )}
             </AnimatePresence>
 
-
-            {/**릴리스용 */}
-            {/* <div onClick={()=>{setIsOpen(true)}} className="absolute cursor-pointer text-white -right-11 -top-8 md:-right-24 md:-top-20 font-semibold text-xs md:text-sm md:space-y-1">
-              <FaBookTanakh  className=" w-5 h-5 md:w-8 md:h-8  " />
-            </div> */}
-
-            {/* *테스트용 마스터 컨텐츠 */}
-            {/* <Dialog>
-              <DialogTrigger>
-                <div className="absolute text-white -right-11 -top-8 md:-right-24 md:-top-20 font-semibold text-xs md:text-sm md:space-y-1">
-                  <FaBookTanakh  className=" w-5 h-5  " />
-                </div>
-              </DialogTrigger>
-              <DialogContent className=" bg-[#21212F] border-none rounded-3xl text-white h-svh md:h-auto overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]">
-                <div className="flex flex-col gap-4 p-4">
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={handleAddDice}
-                      className="bg-green-400 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Dice + 100
-                    </button>
-                    <button
-                      onClick={handleAddSLToken}
-                      className="bg-green-400 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      SL Token + 100
-                    </button>
-                    <button
-                      onClick={handleAddGold}
-                      className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Gold NFT + 1
-                    </button>
-                    <button
-                      onClick={handleAddSilver}
-                      className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Silver NFT + 1
-                    </button>
-                    <button
-                      onClick={handleAddBronze}
-                      className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Bronze NFT + 1
-                    </button>
-                    <button
-                      onClick={handleAddAuto}
-                      className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Auto NFT + 1
-                    </button>
-                    <button
-                      onClick={handleAddReward}
-                      className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                    >
-                      Reward NFT + 1
-                    </button>
-                    <button
-                      onClick={handleAddAll}
-                      className="bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded"
-                    >
-                      All NFTs + 1
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col gap-2 mt-4">
-                    <button
-                      onClick={handleRemoveDice}
-                      className="bg-red-400 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Dice - 100
-                    </button>
-                    <button
-                      onClick={handleRemoveSLToken}
-                      className="bg-red-400 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      SL Token - 100
-                    </button>
-                    <button
-                      onClick={handleRemoveGold}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Gold NFT - 1
-                    </button>
-                    <button
-                      onClick={handleRemoveSilver}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Silver NFT - 1
-                    </button>
-                    <button
-                      onClick={handleRemoveBronze}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Bronze NFT - 1
-                    </button>
-                    <button
-                      onClick={handleRemoveAuto}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Auto NFT - 1
-                    </button>
-                    <button
-                      onClick={handleRemoveReward}
-                      className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-                    >
-                      Reward NFT - 1
-                    </button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog> */}
           </div>
           <div
             id="third-step"
@@ -784,9 +552,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
             {/* Auto 스위치 부분 - 왼쪽 */}
             <div
               id="fifth-step"
-              className="flex flex-row items-center gap-0.5 text-white -translate-x-1"
+              className="flex flex-row items-center gap-0.5 text-white"
+              style={{
+                transform: 'translate(-6px, 12px)'
+              }}
             >
               <p
+                className="opacity-0"
                 style={{
                   fontFamily: "'ONE Mobile POP', sans-serif",
                   fontSize: "12px",
@@ -797,15 +569,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 Auto
               </p>
               <Switch
-                className="w-[26px] h-4 md:h-6 md:w-11 text-[#0147E5]"
+                className="w-[26px] h-4 md:h-6 md:w-11 text-[#0147E5] opacity-0"
                 checked={isAuto} // isAuto 상태에 따라 스위치의 체크 상태를 설정
                 onCheckedChange={handleAutoSwitch} // 스위치 토글 시 isAuto 상태를 반전
-                disabled={false} // Auto switch is always enabled
+                disabled={false} // items.autoNftCount가 1 미만일 때 스위치 비활성화
               />
             </div>
 
             {/* 리필 영역 - 중앙 */}
-            <div className="flex flex-row items-center justify-center w-[72px]">
+            <div 
+              className="flex flex-row items-center justify-center w-[72px]"
+              style={{
+                transform: 'translateY(12px)'
+              }}
+            >
               {timeUntilRefill === "Refill dice" ? (
                 <motion.div
                   onClick={handleRefillDice}
@@ -864,7 +641,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               onMouseUp={handleMouseUp}
               onTouchStart={handleMouseDown}
               onTouchEnd={handleMouseUp}
-              className={`w-[68px] h-[68px] flex flex-col items-center justify-center translate-x-1 -translate-y-8 ${
+              className={`w-[68px] h-[68px] flex flex-col items-center justify-center focus:outline-none focus:ring-0 ${
                 buttonDisabled || diceCount < 1 || isAuto
                   ? "opacity-50 cursor-not-allowed"
                   : "cursor-pointer"
@@ -874,6 +651,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
+                backgroundColor: "transparent",
+                transform: 'translate(6px, -10px)',
+                outline: "none",
+                border: "none",
               }}
               disabled={buttonDisabled || diceCount < 1 || isAuto}
             >
@@ -911,6 +692,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {renderTile(19)}
         {renderTile(0)}
       </div>
+      
+      {/* 카드게임 모달 */}
+      {isCardGameActive && (
+        <CardGameModal onClose={handleCardGameEnd} />
+      )}
     </div>
   );
 };

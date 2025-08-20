@@ -1,4 +1,13 @@
-@import 'pretendard/dist/web/variable/pretendardvariable.css';
+@import 'pretendard/dist/web/static/pretendard.css';
+
+/* ONE Mobile POP OTF 폰트 정의 */
+@font-face {
+  font-family: 'ONE Mobile POP OTF';
+  src: url('/src/shared/assets/fonts/ONE Mobile POP OTF.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -70,11 +79,10 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply bg-background text-foreground;
   }
 }
 
@@ -109,6 +117,15 @@ img {
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'ONE Mobile POP';
+  src: url('@/shared/assets/fonts/ONE Mobile POP OTF.otf') format('opentype'),
+       url('@/shared/assets/fonts/ONE Mobile POP.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .font-pretendard {
   font-family: 'Pretendard Variable', Pretendard, -apple-system,
     BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI',
@@ -121,4 +138,20 @@ img {
     BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI',
     'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+}
+
+.red-inner-shadow {
+  box-shadow:
+    inset -2px -2px 6px 0 rgba(0,0,0,0.4),
+    inset  2px  2px 6px 0 rgba(255,255,255,0.4),
+    inset -2px -2px 4px 0 rgba(0,0,0,0.15),
+    inset  2px  2px 4px 0 rgba(255,255,255,0.15);
+}
+
+.black-inner-shadow {
+  box-shadow:
+    inset -2px -2px 6px 0 rgba(0,0,0,0.4),
+    inset  2px  2px 6px 0 rgba(255,255,255,0.4),
+    inset -2px -2px 4px 0 rgba(0,0,0,0.15),
+    inset  2px  2px 4px 0 rgba(255,255,255,0.15);
 }
