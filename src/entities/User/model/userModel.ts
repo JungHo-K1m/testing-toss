@@ -382,70 +382,90 @@ export const useUserStore = create<UserState>((set, get) => ({
         popUps, // 새로 추가
         bgm
       } = data.data;
-  
+
+      // rank 데이터 안전하게 파싱
+      const safeRank = rank || {};
+      const safeUser = user || {};
+      const safeNowDice = nowDice || {};
+      const safePet = pet || {};
+      const safeWeekAttendance = weekAttendance || {};
+      const safeBoards = boards || [];
+      const safePopUps = popUps || [];
+      const safeBgm = bgm || {};
+
       set({
         // 사용자 정보
-        nickName: user.nickName,
-        uid: user.uid, // string으로 변경
+        nickName: safeUser.nickName || null,
+        uid: safeUser.uid || null, // string으로 변경
         walletAddress: null, // 백엔드에서 제거됨
-        referrerId: user.referrerId,
+        referrerId: safeUser.referrerId || null,
         isAuto: false, // 백엔드에서 제거됨
-        completeTutorial: user.completeTutorial,
+        completeTutorial: safeUser.completeTutorial || false,
         timeZone: null, // 백엔드에서 제거됨
-        suspend: user.suspended,
-        redirect: user.redirect,
-  
+        suspend: safeUser.suspended || false,
+        redirect: safeUser.redirect || false,
+
         // 게임 진행 상태
-        position: nowDice.tileSequence,
-        diceCount: nowDice.dice,
-        starPoints: rank.star,
-        lotteryCount: rank.ticket,
-        userLv: pet.level || 100,
-        characterType: pet.type ? pet.type.toLowerCase() as 'dog' | 'cat' : null,
-  
+        position: safeNowDice.tileSequence || 0,
+        diceCount: safeNowDice.dice || 0,
+        starPoints: safeRank.star || 0,
+        lotteryCount: safeRank.ticket || 0,
+        userLv: safePet.level || 1,
+        characterType: safePet.type ? safePet.type.toLowerCase() as 'dog' | 'cat' : null,
+
         slToken: 0, // 백엔드에서 제거됨
-        rank: rank.rank,
-        previousRank: rank.rank,
-        diceRefilledAt: rank.diceRefilledAt,
-  
+        rank: safeRank.rank || 0,
+        previousRank: safeRank.rank || 0,
+        diceRefilledAt: safeRank.diceRefilledAt || null,
+
         // 게임 보드 및 출석
-        boards: boards,
+        boards: safeBoards,
         weekAttendance: {
-          mon: weekAttendance.mon,
-          tue: weekAttendance.tue,
-          wed: weekAttendance.wed,
-          thu: weekAttendance.thu,
-          fri: weekAttendance.fri,
-          sat: weekAttendance.sat,
-          sun: weekAttendance.sun,
+          mon: safeWeekAttendance.mon || null,
+          tue: safeWeekAttendance.tue || null,
+          wed: safeWeekAttendance.wed || null,
+          thu: safeWeekAttendance.thu || null,
+          fri: safeWeekAttendance.fri || null,
+          sat: safeWeekAttendance.sat || null,
+          sun: safeWeekAttendance.sun || null,
         },
-  
+
         // 펫 정보
         pet: {
-          type: pet.type ? pet.type.toLowerCase() as 'DOG' | 'CAT' : null,
-          level: pet.level || 1,
-          exp: pet.exp || 0,
+          type: safePet.type ? safePet.type.toLowerCase() as 'DOG' | 'CAT' : null,
+          level: safePet.level || 1,
+          exp: safePet.exp || 0,
         },
 
         // 팝업 정보 (새로 추가)
-        popUps: popUps || [],
-  
+        popUps: safePopUps,
+
         isLoading: false,
         error: null,
       });
 
-      // 사운드 설정
-      const soundStore = useSoundStore.getState();
+      // 사운드 설정 (안전하게 처리)
+      try {
+        const soundStore = useSoundStore.getState();
 
-      soundStore.setMasterVolume((bgm.masterVolume / 10) * 0.3);
-      soundStore.setBgmVolume((bgm.backVolume / 10) * 0.3);
-      soundStore.setSfxVolume((bgm.effectVolume / 10) * 0.3);
+        if (safeBgm.masterVolume !== undefined) {
+          soundStore.setMasterVolume((safeBgm.masterVolume / 10) * 0.3);
+        }
+        if (safeBgm.backVolume !== undefined) {
+          soundStore.setBgmVolume((safeBgm.backVolume / 10) * 0.3);
+        }
+        if (safeBgm.effectVolume !== undefined) {
+          soundStore.setSfxVolume((safeBgm.effectVolume / 10) * 0.3);
+        }
 
-      useSoundStore.setState({
-        masterMuted: bgm.masterMute,
-        bgmMuted: bgm.backMute,
-        sfxMuted: bgm.effectMute,
-      });
+        useSoundStore.setState({
+          masterMuted: safeBgm.masterMute || false,
+          bgmMuted: safeBgm.backMute || false,
+          sfxMuted: safeBgm.effectMute || false,
+        });
+      } catch (soundError) {
+        console.warn('Sound settings failed:', soundError);
+      }
 
     } catch (error: any) {
       // error.response.data.message가 있으면 그 값을 사용

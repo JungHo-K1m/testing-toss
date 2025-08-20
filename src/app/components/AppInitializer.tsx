@@ -348,6 +348,87 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
+  // 안전한 페이지 이동 함수
+  const safeNavigate = (path: string, fallbackToWindowLocation: boolean = true) => {
+    console.log(`[AppInitializer] 안전한 페이지 이동 시도: ${path}`);
+    console.log(`[AppInitializer] 현재 환경:`, {
+      isWebView: !!window.ReactNativeWebView,
+      currentPath: window.location.pathname,
+      currentHref: window.location.href,
+      userAgent: navigator.userAgent,
+    });
+    
+    try {
+      // React Native WebView 환경에서는 window.location을 직접 사용
+      if (window.ReactNativeWebView) {
+        console.log(`[AppInitializer] React Native WebView 환경에서 window.location 사용: ${path}`);
+        console.log(`[AppInitializer] 이동 전 상태:`, {
+          pathname: window.location.pathname,
+          href: window.location.href,
+          search: window.location.search,
+          hash: window.location.hash,
+        });
+        
+        // 초기화 완료 처리 (페이지 이동 전에 호출)
+        console.log(`[AppInitializer] onInitialized 호출 시작`);
+        onInitialized();
+        console.log(`[AppInitializer] onInitialized 호출 완료`);
+        
+        // localStorage 상태 확인
+        const initializationFlag = localStorage.getItem("isInitialized");
+        const accessToken = localStorage.getItem("accessToken");
+        console.log(`[AppInitializer] localStorage 상태 확인:`, {
+          initializationFlag,
+          accessToken: accessToken ? "존재함" : "존재하지 않음",
+        });
+        
+        // 상태가 제대로 설정되었는지 확인 후 페이지 이동
+        if (initializationFlag === "true" && accessToken) {
+          console.log(`[AppInitializer] 초기화 상태 확인 완료, 페이지 이동 실행: ${path}`);
+          
+          // 약간의 지연 후 페이지 이동 (초기화 상태 업데이트를 위해)
+          setTimeout(() => {
+            console.log(`[AppInitializer] 페이지 이동 실행: ${path}`);
+            window.location.href = path;
+            console.log(`[AppInitializer] window.location.href 설정 완료: ${path}`);
+          }, 100); // 지연 시간을 줄임
+        } else {
+          console.error(`[AppInitializer] 초기화 상태가 제대로 설정되지 않음!`);
+          setError('초기화 상태 설정에 실패했습니다. 다시 시도해주세요.');
+        }
+        
+        return;
+      }
+      
+      // 일반 브라우저 환경에서는 React Router navigate 시도
+      navigate(path);
+      console.log(`[AppInitializer] navigate 성공: ${path}`);
+      
+      // 초기화 완료 처리
+      onInitialized();
+      
+      // 약간의 지연 후 페이지 이동 상태 확인
+      setTimeout(() => {
+        if (window.location.pathname !== path) {
+          console.warn(`[AppInitializer] navigate 후 경로 불일치, window.location 사용: ${path}`);
+          if (fallbackToWindowLocation) {
+            window.location.href = path;
+            onInitialized();
+          }
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error(`[AppInitializer] navigate 실패: ${path}`, error);
+      
+      if (fallbackToWindowLocation) {
+        console.log(`[AppInitializer] fallback으로 window.location 사용: ${path}`);
+        window.location.href = path;
+        onInitialized();
+      }
+    }
+  };
+
   // 서버 로그인 처리
   const handleServerLogin = async () => {
     console.log('[AppInitializer] 서버 로그인 시작');
@@ -387,13 +468,24 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       const userName = localStorage.getItem("userName");
       const referrerId = localStorage.getItem("referrerId");
       const isInitial = localStorage.getItem("isInitial") === "true";
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
       
       console.log('[AppInitializer] localStorage에서 가져온 데이터:', {
         userId,
         userName,
         referrerId,
-        isInitial
+        isInitial,
+        accessToken: accessToken ? "존재함" : "존재하지 않음",
+        refreshToken: refreshToken ? "존재함" : "존재하지 않음",
       });
+
+      // 토큰이 제대로 저장되었는지 확인
+      if (!accessToken) {
+        console.error('[AppInitializer] 액세스 토큰이 저장되지 않음!');
+        setError('액세스 토큰 저장에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
 
       setServerLoginResult({ 
         userId: userId || undefined, 
@@ -418,34 +510,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           
           if (uid && nickName) {
             console.log('[AppInitializer] 사용자 데이터 완성, dice-event 페이지로 이동');
-            console.log('[AppInitializer] 페이지 이동 시도:', { 
-              currentPath: window.location.pathname,
-              targetPath: '/dice-event',
-              method: 'window.location.href'
-            });
-            
-            try {
-              // React Router navigate 대신 window.location 직접 사용
-              window.location.href = '/dice-event';
-              console.log('[AppInitializer] window.location.href 설정 완료');
-            } catch (navError) {
-              console.error('[AppInitializer] window.location.href 에러:', navError);
-            }
+            safeNavigate('/dice-event');
           } else {
             console.log('[AppInitializer] 사용자 데이터 불완전, choose-character 페이지로 이동');
-            console.log('[AppInitializer] 페이지 이동 시도:', { 
-              currentPath: window.location.pathname,
-              targetPath: '/choose-character',
-              method: 'window.location.href'
-            });
-            
-            try {
-              // React Router navigate 대신 window.location 직접 사용
-              window.location.href = '/choose-character';
-              console.log('[AppInitializer] window.location.href 설정 완료');
-            } catch (navError) {
-              console.error('[AppInitializer] window.location.href 에러:', navError);
-            }
+            safeNavigate('/choose-character');
           }
         } catch (error: any) {
           console.error('[AppInitializer] fetchUserData 에러:', error);
@@ -453,19 +521,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           // "Please choose your character first." 메시지 확인 (대소문자 구분 없이)
           if (error.message && error.message.toLowerCase().includes('please choose your character first')) {
             console.log('[AppInitializer] 캐릭터 선택 필요 확인, choose-character 페이지로 이동');
-            console.log('[AppInitializer] 페이지 이동 시도:', { 
-              currentPath: window.location.pathname,
-              targetPath: '/choose-character',
-              method: 'window.location.href'
-            });
-            
-            try {
-              // React Router navigate 대신 window.location 직접 사용
-              window.location.href = '/choose-character';
-              console.log('[AppInitializer] window.location.href 설정 완료');
-            } catch (navError) {
-              console.error('[AppInitializer] window.location.href 에러:', navError);
-            }
+            safeNavigate('/choose-character');
           } else {
             // 다른 에러인 경우 에러 표시
             setError(`fetchUserData 에러: ${error.message || '알 수 없는 오류'}`);
@@ -473,19 +529,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         }
       } else {
         console.log('[AppInitializer] 기존 사용자: choose-character 페이지로 이동');
-        console.log('[AppInitializer] 페이지 이동 시도:', { 
-          currentPath: window.location.pathname,
-          targetPath: '/choose-character',
-          method: 'window.location.href'
-        });
-        
-        try {
-          // React Router navigate 대신 window.location 직접 사용
-          window.location.href = '/choose-character';
-          console.log('[AppInitializer] window.location.href 설정 완료');
-        } catch (navError) {
-          console.error('[AppInitializer] window.location.href 에러:', navError);
-        }
+        safeNavigate('/choose-character');
       }
 
     } catch (error: any) {
@@ -922,94 +966,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           🧪 페이지 이동 방식 테스트
         </div>
         
-        {/* 방법 1: window.location.href */}
+        {/* 방법 1: React Router navigate (권장) */}
         <button
           onClick={() => {
-            console.log('[AppInitializer] 방법 1: window.location.href 테스트');
-            try {
-              window.location.href = '/choose-character';
-              console.log('[AppInitializer] window.location.href 설정 완료');
-            } catch (error) {
-              console.error('[AppInitializer] window.location.href 실패:', error);
-            }
-          }}
-          style={{
-            padding: "8px 16px",
-            fontSize: "12px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            width: "100%",
-            marginBottom: "8px",
-          }}
-        >
-          방법 1: window.location.href
-        </button>
-        
-        {/* 방법 2: window.location.replace */}
-        <button
-          onClick={() => {
-            console.log('[AppInitializer] 방법 2: window.location.replace 테스트');
-            try {
-              window.location.replace('/choose-character');
-              console.log('[AppInitializer] window.location.replace 설정 완료');
-            } catch (error) {
-              console.error('[AppInitializer] window.location.replace 실패:', error);
-            }
-          }}
-          style={{
-            padding: "8px 16px",
-            fontSize: "12px",
-            backgroundColor: "#fd7e14",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            width: "100%",
-            marginBottom: "8px",
-          }}
-        >
-          방법 2: window.location.replace
-        </button>
-        
-        {/* 방법 3: window.location.assign */}
-        <button
-          onClick={() => {
-            console.log('[AppInitializer] 방법 3: window.location.assign 테스트');
-            try {
-              window.location.assign('/choose-character');
-              console.log('[AppInitializer] window.location.assign 설정 완료');
-            } catch (error) {
-              console.error('[AppInitializer] window.location.assign 실패:', error);
-            }
-          }}
-          style={{
-            padding: "8px 16px",
-            fontSize: "12px",
-            backgroundColor: "#6f42c1",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            width: "100%",
-            marginBottom: "8px",
-          }}
-        >
-          방법 3: window.location.assign
-        </button>
-        
-        {/* 방법 4: React Router navigate */}
-        <button
-          onClick={() => {
-            console.log('[AppInitializer] 방법 4: React Router navigate 테스트');
-            try {
-              navigate('/choose-character');
-              console.log('[AppInitializer] navigate 함수 호출 완료');
-            } catch (error) {
-              console.error('[AppInitializer] navigate 함수 실패:', error);
-            }
+            console.log('[AppInitializer] 방법 1: React Router navigate 테스트 (권장)');
+            safeNavigate('/choose-character');
           }}
           style={{
             padding: "8px 16px",
@@ -1023,7 +984,70 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             marginBottom: "8px",
           }}
         >
-          방법 4: React Router navigate
+          방법 1: React Router navigate (권장)
+        </button>
+        
+        {/* 방법 2: window.location.href */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 2: window.location.href 테스트');
+            safeNavigate('/choose-character');
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 2: window.location.href
+        </button>
+        
+        {/* 방법 3: window.location.replace */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 3: window.location.replace 테스트');
+            safeNavigate('/choose-character');
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#fd7e14",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 3: window.location.replace
+        </button>
+        
+        {/* 방법 4: window.location.assign */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 4: window.location.assign 테스트');
+            safeNavigate('/choose-character');
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#6f42c1",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 4: window.location.assign
         </button>
       </div>
 

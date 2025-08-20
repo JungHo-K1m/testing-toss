@@ -33,6 +33,11 @@ const App: React.FC = () => {
 
   console.log("[App] Component rendered, isInitialized:", isInitialized);
 
+  // isInitialized 상태 변화 모니터링
+  useEffect(() => {
+    console.log("[App] isInitialized 상태 변화 감지:", isInitialized);
+  }, [isInitialized]);
+
   useEffect(() => {
     console.log("[App] useEffect triggered");
 
@@ -47,15 +52,26 @@ const App: React.FC = () => {
     const checkInitializationStatus = () => {
       const initializationFlag = localStorage.getItem("isInitialized");
       const accessToken = localStorage.getItem("accessToken");
+      const currentPath = window.location.pathname;
 
       console.log("[App] 초기화 상태 확인:", {
         initializationFlag,
         accessToken: accessToken ? "존재함" : "존재하지 않음",
+        currentPath,
+        isWebView: !!window.ReactNativeWebView,
       });
 
+      // 이미 초기화된 상태이고 액세스 토큰이 있는 경우
       if (initializationFlag === "true" && accessToken) {
         console.log("[App] 이미 초기화된 상태로 확인됨");
         setIsInitialized(true);
+        
+        // React Native WebView 환경에서는 루트 경로에 있어도 리다이렉트하지 않음
+        // 페이지 이동 후 상태 동기화를 위해
+        if (currentPath === "/" && !window.ReactNativeWebView) {
+          console.log("[App] 루트 경로에서 dice-event로 리다이렉트");
+          window.location.href = "/dice-event";
+        }
       } else {
         console.log("[App] 초기화가 필요한 상태로 확인됨");
         setIsInitialized(false);
@@ -72,17 +88,71 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // React Native WebView 환경에서 페이지 이동 후 상태 동기화를 위한 별도 useEffect
+  useEffect(() => {
+    if (!window.ReactNativeWebView) return;
+
+    const handleLocationChange = () => {
+      const currentPath = window.location.pathname;
+      const accessToken = localStorage.getItem("accessToken");
+      const initializationFlag = localStorage.getItem("isInitialized");
+      
+      console.log("[App] 위치 변경 감지:", {
+        currentPath,
+        accessToken: accessToken ? "존재함" : "존재하지 않음",
+        initializationFlag,
+        currentIsInitialized: isInitialized,
+      });
+      
+      // 페이지가 이동되었고 액세스 토큰이 있는 경우 초기화 완료로 처리
+      if (currentPath !== "/" && accessToken && initializationFlag === "true" && !isInitialized) {
+        console.log("[App] 페이지 이동 후 초기화 상태 동기화");
+        setIsInitialized(true);
+      }
+    };
+
+    // popstate 이벤트 리스너 추가
+    window.addEventListener('popstate', handleLocationChange);
+    
+    // 주기적으로 위치 변경 확인 (React Native WebView에서 popstate가 제대로 작동하지 않을 수 있음)
+    const interval = setInterval(handleLocationChange, 2000); // 2초로 늘림
+    
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      clearInterval(interval);
+    };
+  }, [isInitialized]); // isInitialized를 의존성으로 추가
+
   const handleInitialized = () => {
     console.log("[App] handleInitialized called");
-    setIsInitialized(true);
+    
     // localStorage에 초기화 완료 플래그 설정
     localStorage.setItem("isInitialized", "true");
+    
+    // 상태 업데이트
+    setIsInitialized(true);
+    
+    // 상태 업데이트 확인을 위한 로깅
+    console.log("[App] setIsInitialized(true) 호출 완료");
+    
+    // 초기화 완료 후 현재 경로 확인 및 적절한 페이지로 리다이렉트
+    const currentPath = window.location.pathname;
+    console.log("[App] 초기화 완료 후 현재 경로:", currentPath);
+    
+    // React Native WebView 환경에서는 리다이렉트하지 않음
+    // 페이지 이동 후 상태 동기화를 위해
+    if (!window.ReactNativeWebView && currentPath === "/" && !window.location.search.includes("redirecting")) {
+      console.log("[App] 루트 경로에서 dice-event로 리다이렉트");
+      // 리다이렉트 중임을 표시하는 플래그 추가
+      window.location.href = "/dice-event?redirecting=true";
+    }
   };
 
   console.log("[App] About to render, isInitialized:", isInitialized);
 
   // 초기화 상태 확인 중일 때 로딩 표시
   if (isCheckingInitialization) {
+    console.log("[App] 초기화 상태 확인 중 - 로딩 화면 표시");
     return (
       <div
         style={{
@@ -113,6 +183,15 @@ const App: React.FC = () => {
     );
   }
 
+  // 렌더링 조건 상세 로깅
+  console.log("[App] 렌더링 조건 확인:", {
+    isInitialized,
+    isCheckingInitialization,
+    currentPath: window.location.pathname,
+    localStorageIsInitialized: localStorage.getItem("isInitialized"),
+    localStorageAccessToken: localStorage.getItem("accessToken") ? "존재함" : "존재하지 않음",
+  });
+
   return (
     <div
       style={{
@@ -137,147 +216,153 @@ const App: React.FC = () => {
             <h1>🔐 로그인 필요</h1>
             <p>현재 상태: {isInitialized ? "초기화됨" : "초기화 필요"}</p>
             <p>토스 앱을 통해 로그인을 진행해주세요.</p>
+            <p>디버그: isInitialized = {String(isInitialized)}</p>
           </div>
           <AppInitializer onInitialized={handleInitialized} />
         </>
       ) : (
-        <SoundProvider bgmSrc={Audios.bgm}>
-          <Routes>
-            {/* DiceEventLayout Pages */}
-            <Route path="/" element={<Navigate to="/dice-event" />} />
-            <Route path="/dice-event" element={<DiceEvent />} />
-            <Route
-              path="/mission"
-              element={
-                <DiceEventLayout>
-                  <MissionPage />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/reward"
-              element={
-                <DiceEventLayout>
-                  <Reward />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/invite-friends"
-              element={
-                <DiceEventLayout>
-                  <InviteFriends />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/my-assets"
-              element={
-                <DiceEventLayout>
-                  <MyAssets />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/test"
-              element={
-                <DiceEventLayout>
-                  <SlotMachine />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/inventory"
-              element={
-                <DiceEventLayout>
-                  <Inventory />
-                </DiceEventLayout>
-              }
-            />
+        <div>
+          <div style={{ padding: "10px", backgroundColor: "#d4edda", color: "#155724", textAlign: "center" }}>
+            ✅ 초기화 완료 - 메인 앱 렌더링 중...
+          </div>
+          <SoundProvider bgmSrc={Audios.bgm}>
+            <Routes>
+              {/* DiceEventLayout Pages */}
+              <Route path="/" element={<Navigate to="/dice-event" />} />
+              <Route path="/dice-event" element={<DiceEvent />} />
+              <Route
+                path="/mission"
+                element={
+                  <DiceEventLayout>
+                    <MissionPage />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/reward"
+                element={
+                  <DiceEventLayout>
+                    <Reward />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/invite-friends"
+                element={
+                  <DiceEventLayout>
+                    <InviteFriends />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/my-assets"
+                element={
+                  <DiceEventLayout>
+                    <MyAssets />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/test"
+                element={
+                  <DiceEventLayout>
+                    <SlotMachine />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/inventory"
+                element={
+                  <DiceEventLayout>
+                    <Inventory />
+                  </DiceEventLayout>
+                }
+              />
 
-            {/* Hidden Pages */}
-            <Route
-              path="/choose-character"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <SelectCharacterPage />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/reward-history"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <RewardHistory />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/first-reward"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <FirstRewardPage />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <SettingsPage />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/policy-detail"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <PolicyDetailPage />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/invite-friends-list"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <InviteFriendsList />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/sound-setting"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <SoundSetting />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/previous-ranking"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <PreviousRanking />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/edit-nickname"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <EditNickname />
-                </DiceEventLayout>
-              }
-            />
-            <Route
-              path="/hall-of-fame"
-              element={
-                <DiceEventLayout hidden={true}>
-                  <HallofFame />
-                </DiceEventLayout>
-              }
-            />
-          </Routes>
-        </SoundProvider>
+              {/* Hidden Pages */}
+              <Route
+                path="/choose-character"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <SelectCharacterPage />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/reward-history"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <RewardHistory />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/first-reward"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <FirstRewardPage />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <SettingsPage />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/policy-detail"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <PolicyDetailPage />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/invite-friends-list"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <InviteFriendsList />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/sound-setting"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <SoundSetting />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/previous-ranking"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <PreviousRanking />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/edit-nickname"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <EditNickname />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/hall-of-fame"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <HallofFame />
+                  </DiceEventLayout>
+                }
+              />
+            </Routes>
+          </SoundProvider>
+        </div>
       )}
     </div>
   );

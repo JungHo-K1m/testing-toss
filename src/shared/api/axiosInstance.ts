@@ -144,7 +144,14 @@ api.interceptors.response.use(
 
     // 액세스 토큰이 없는 경우 처리 (로그인 페이지 등으로 이동)
     if (!localStorage.getItem('accessToken')) {
-      window.location.href = "/"; // 로그인 페이지 등으로 리다이렉트
+      // 현재 경로가 루트가 아닌 경우에만 리다이렉트
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/" && currentPath !== "/login") {
+        console.log(`🚨 [axiosInstance] 액세스 토큰 없음, 루트로 리다이렉트: ${currentPath}`);
+        window.location.href = "/"; // 로그인 페이지 등으로 리다이렉트
+      } else {
+        console.log(`ℹ️ [axiosInstance] 이미 루트 경로에 있음, 리다이렉트 건너뜀: ${currentPath}`);
+      }
       return Promise.reject(new Error("Access token not found."));
     }
 

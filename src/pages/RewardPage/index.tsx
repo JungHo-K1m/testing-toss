@@ -37,6 +37,11 @@ const Reward: React.FC = () => {
     fetchLeaderHome();
   }, [fetchLeaderHome]);
 
+  // 데이터 안전성 검증
+  if (!rankingAwards || !slDrawAwards || !usdtDrawAwards) {
+    return <LoadingSpinner className="h-screen" />;
+  }
+
   if (isLoadingHome) {
     return <LoadingSpinner className="h-screen" />;
   }
@@ -46,19 +51,19 @@ const Reward: React.FC = () => {
   }
 
   // 랭킹 보상
-  const rankingProducts = rankingAwards.slice(0, 3);
-  const rankingOthers = rankingAwards.slice(3);
+  const rankingProducts = (rankingAwards || []).slice(0, 3);
+  const rankingOthers = (rankingAwards || []).slice(3);
   const currentRound =
     rankingProducts.length > 0 ? rankingProducts[0].round : null;
 
   // 래플 보상: USDT / SL
-  const usdtProducts = usdtDrawAwards.slice(0, 3);
-  const usdtOthers = usdtDrawAwards.slice(3);
-  const slProducts = slDrawAwards.slice(0, 3);
-  const slOthers = slDrawAwards.slice(3);
+  const usdtProducts = (usdtDrawAwards || []).slice(0, 3);
+  const usdtOthers = (usdtDrawAwards || []).slice(3);
+  const slProducts = (slDrawAwards || []).slice(0, 3);
+  const slOthers = (slDrawAwards || []).slice(3);
 
   // 에어드랍 회차
-  const slRound = slDrawAwards.length > 0 ? slDrawAwards[0].round : null;
+  const slRound = (slDrawAwards || []).length > 0 ? slDrawAwards[0].round : null;
 
   const handleShowMoreRanking = () => {
     playSfx(Audios.button_click);
