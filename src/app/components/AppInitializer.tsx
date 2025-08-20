@@ -27,6 +27,20 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     currentPath: window.location.pathname
   });
   
+  // 웹뷰 환경 상세 정보 로깅
+  console.log('[AppInitializer] 웹뷰 환경 정보:', {
+    isWebView: !!window.ReactNativeWebView,
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    location: {
+      href: window.location.href,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      origin: window.location.origin
+    }
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false); // 자동 초기화 비활성화
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
@@ -58,7 +72,34 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 페이지 이동 모니터링
   useEffect(() => {
     console.log('[AppInitializer] 현재 경로 변경 감지:', window.location.pathname);
+    console.log('[AppInitializer] 전체 URL 정보:', {
+      href: window.location.href,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      origin: window.location.origin
+    });
   }, [window.location.pathname]);
+  
+  // 웹뷰 환경에서의 라우팅 상태 모니터링
+  useEffect(() => {
+    const checkRoutingStatus = () => {
+      console.log('[AppInitializer] 라우팅 상태 체크:', {
+        timestamp: new Date().toISOString(),
+        currentPath: window.location.pathname,
+        isWebView: !!window.ReactNativeWebView,
+        canNavigate: typeof window.location.href !== 'undefined'
+      });
+    };
+    
+    // 초기 체크
+    checkRoutingStatus();
+    
+    // 주기적 체크 (5초마다)
+    const interval = setInterval(checkRoutingStatus, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // 자동 초기화 핸들러 (주석처리)
   // const handleAutoInitialization = async () => {
@@ -875,34 +916,116 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         🔍 쿼리 파라미터로 토큰 전달하는 /home API 테스트
       </button>
 
-      {/* 페이지 이동 테스트 버튼 */}
-      <button
-        onClick={() => {
-          console.log('[AppInitializer] 강제 페이지 이동 테스트');
-          console.log('[AppInitializer] 현재 경로:', window.location.pathname);
-          try {
-            // React Router navigate 대신 window.location 직접 사용
-            window.location.href = '/choose-character';
-            console.log('[AppInitializer] 강제 이동 완료');
-          } catch (error) {
-            console.error('[AppInitializer] 강제 이동 실패:', error);
-          }
-        }}
-        style={{
-          padding: "10px 20px",
-          fontSize: "14px",
-          backgroundColor: "#dc3545",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          width: "100%",
-          marginBottom: "20px",
-          opacity: 0.8,
-        }}
-      >
-        🧪 강제 페이지 이동 테스트 (/choose-character)
-      </button>
+      {/* 다양한 페이지 이동 방식 테스트 버튼들 */}
+      <div style={{ marginBottom: "20px" }}>
+        <div style={{ fontWeight: "bold", marginBottom: "8px", color: "#495057" }}>
+          🧪 페이지 이동 방식 테스트
+        </div>
+        
+        {/* 방법 1: window.location.href */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 1: window.location.href 테스트');
+            try {
+              window.location.href = '/choose-character';
+              console.log('[AppInitializer] window.location.href 설정 완료');
+            } catch (error) {
+              console.error('[AppInitializer] window.location.href 실패:', error);
+            }
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 1: window.location.href
+        </button>
+        
+        {/* 방법 2: window.location.replace */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 2: window.location.replace 테스트');
+            try {
+              window.location.replace('/choose-character');
+              console.log('[AppInitializer] window.location.replace 설정 완료');
+            } catch (error) {
+              console.error('[AppInitializer] window.location.replace 실패:', error);
+            }
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#fd7e14",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 2: window.location.replace
+        </button>
+        
+        {/* 방법 3: window.location.assign */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 3: window.location.assign 테스트');
+            try {
+              window.location.assign('/choose-character');
+              console.log('[AppInitializer] window.location.assign 설정 완료');
+            } catch (error) {
+              console.error('[AppInitializer] window.location.assign 실패:', error);
+            }
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#6f42c1",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 3: window.location.assign
+        </button>
+        
+        {/* 방법 4: React Router navigate */}
+        <button
+          onClick={() => {
+            console.log('[AppInitializer] 방법 4: React Router navigate 테스트');
+            try {
+              navigate('/choose-character');
+              console.log('[AppInitializer] navigate 함수 호출 완료');
+            } catch (error) {
+              console.error('[AppInitializer] navigate 함수 실패:', error);
+            }
+          }}
+          style={{
+            padding: "8px 16px",
+            fontSize: "12px",
+            backgroundColor: "#20c997",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "8px",
+          }}
+        >
+          방법 4: React Router navigate
+        </button>
+      </div>
 
       {/* 주석처리된 기능들 안내 */}
       <div
