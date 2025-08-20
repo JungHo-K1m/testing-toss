@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { appLogin, isMinVersionSupported } from "@apps-in-toss/web-framework";
 import { tossLogin } from "@/entities/User/api/loginToss";
 import { useUserStore } from "@/entities/User/model/userModel";
+import useWalletStore from '@/shared/store/useWalletStore';
 
 // ReactNativeWebView 타입 선언
 declare global {
@@ -19,6 +20,13 @@ interface AppInitializerProps {
 
 const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const navigate = useNavigate();
+  
+  // navigate 함수 동작 확인
+  console.log('[AppInitializer] useNavigate 훅 초기화:', { 
+    navigate: typeof navigate,
+    currentPath: window.location.pathname
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false); // 자동 초기화 비활성화
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
@@ -46,6 +54,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   //   console.log("[AppInitializer] 페이지 최초 진입 - 자동 초기화 시작");
   //   handleAutoInitialization();
   // }, []);
+  
+  // 페이지 이동 모니터링
+  useEffect(() => {
+    console.log('[AppInitializer] 현재 경로 변경 감지:', window.location.pathname);
+  }, [window.location.pathname]);
 
   // 자동 초기화 핸들러 (주석처리)
   // const handleAutoInitialization = async () => {
@@ -187,8 +200,15 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
   // 새로운 토큰으로 로그인 처리
   const handleNewTokenLogin = async () => {
+    console.log("[AppInitializer] 토스 로그인 시작");
+    console.log("[AppInitializer] 현재 상태:", {
+      authorizationCode,
+      referrer,
+      isLoading,
+      error
+    });
+    
     try {
-      console.log("[AppInitializer] 토스 로그인 시작");
       setIsLoading(true);
       setError(null);
 
@@ -211,8 +231,28 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         return;
       }
 
+      console.log("[AppInitializer] 토스 앱 환경 및 버전 확인 완료");
+
       // appLogin 함수 호출
-      const { authorizationCode, referrer } = await appLogin();
+      console.log("[AppInitializer] appLogin 함수 호출 시작");
+      const loginResult = await appLogin();
+      console.log("[AppInitializer] appLogin 응답:", loginResult);
+      
+      // 타입 안전성을 위한 검증
+      if (!loginResult || typeof loginResult !== 'object') {
+        throw new Error('appLogin 응답이 올바르지 않습니다.');
+      }
+      
+      const { authorizationCode, referrer } = loginResult;
+      
+      if (!authorizationCode || typeof authorizationCode !== 'string') {
+        throw new Error('authorizationCode가 올바르지 않습니다.');
+      }
+      
+      if (!referrer || (referrer !== 'DEFAULT' && referrer !== 'SANDBOX')) {
+        console.warn('[AppInitializer] referrer가 예상된 값이 아닙니다:', referrer);
+      }
+      
       setAuthorizationCode(authorizationCode);
       setReferrer(referrer);
       setLoginResult({ authorizationCode, referrer });
@@ -232,15 +272,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             timestamp: Date.now(),
           })
         );
+        console.log("[AppInitializer] Native 앱에 성공 메시지 전송 완료");
       }
 
-      // 서버 로그인 진행 (주석처리 - 로그인 테스트만 진행)
-      // await handleServerLogin(authorizationCode, referrer);
-      
       console.log("[AppInitializer] 토스 로그인 완료 - 서버 로그인은 별도 테스트 필요");
+      
+      // 토스 로그인 성공 후 서버 로그인 진행 (선택사항)
+      console.log("[AppInitializer] 토스 로그인 성공으로 서버 로그인도 진행할 수 있습니다.");
+      console.log("[AppInitializer] 서버 로그인을 원한다면 '2️⃣ 서버 로그인 테스트' 버튼을 클릭하세요.");
+      
     } catch (error: any) {
       console.error("[AppInitializer] 토스 로그인 실패:", error);
-      setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      
+      // appLogin 관련 에러 상세 분석
+      if (error.message && error.message.includes('appLogin')) {
+        console.error('[AppInitializer] appLogin 함수 관련 에러:', error);
+        setError(`appLogin 함수 에러: ${error.message}`);
+      } else {
+        setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      }
 
       // Native 앱에 에러 메시지 전송
       if (window.ReactNativeWebView) {
@@ -258,112 +308,151 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   };
 
   // 서버 로그인 처리
-  const handleServerLogin = async (authCode: string, ref: string) => {
+  const handleServerLogin = async () => {
+    console.log('[AppInitializer] 서버 로그인 시작');
+    console.log('[AppInitializer] 현재 상태:', {
+      authorizationCode,
+      referrer,
+      manualAuthCode,
+      manualReferrer,
+      isLoading,
+      error
+    });
+    
     try {
-      console.log("[AppInitializer] 서버 로그인 시작");
       setIsLoading(true);
       setError(null);
 
-      const loginSuccess = await tossLogin(authCode, ref);
-      console.log("[AppInitializer] tossLogin 응답:", loginSuccess);
+      // authorizationCode와 referrer가 있으면 우선 사용, 없으면 manual 값 사용
+      const authCode = authorizationCode || manualAuthCode || 'test-auth-code';
+      const referrerValue = referrer || manualReferrer || 'test-referrer';
+      
+      console.log('[AppInitializer] 사용할 인증 정보:', { 
+        authCode, 
+        referrerValue,
+        source: authorizationCode ? 'toss login' : (manualAuthCode ? 'manual input' : 'default')
+      });
 
-      if (loginSuccess) {
-        // 액세스 토큰, 리프레시 토큰 저장 (tossLogin에서 처리됨)
-        console.log("[AppInitializer] 토큰 저장 완료");
+      console.log('[AppInitializer] tossLogin 함수 호출 시작');
+      const result = await tossLogin(authCode, referrerValue);
+      console.log('[AppInitializer] tossLogin 응답:', result);
 
-        // 초기화 플래그 true로 설정
-        localStorage.setItem("isInitialized", "true");
-        console.log("[AppInitializer] 초기화 플래그 설정 완료");
+      if (!result) {
+        throw new Error('tossLogin에서 응답을 받지 못했습니다.');
+      }
 
-        // 로컬 스토리지에서 사용자 정보 가져오기 (tossLogin에서 저장된 데이터)
-        const userId = localStorage.getItem("userId");
-        const userName = localStorage.getItem("userName");
-        const referrerId = localStorage.getItem("referrerId");
-        const isInitial = localStorage.getItem("isInitial") === "true";
-        const accessToken = localStorage.getItem("accessToken");
+      // localStorage에서 사용자 정보 가져오기 (tossLogin에서 저장된 데이터)
+      const userId = localStorage.getItem("userId");
+      const userName = localStorage.getItem("userName");
+      const referrerId = localStorage.getItem("referrerId");
+      const isInitial = localStorage.getItem("isInitial") === "true";
+      
+      console.log('[AppInitializer] localStorage에서 가져온 데이터:', {
+        userId,
+        userName,
+        referrerId,
+        isInitial
+      });
 
-        console.log("[AppInitializer] localStorage에서 가져온 데이터:", {
-          userId,
-          userName,
-          referrerId,
-          isInitial,
-          accessToken: accessToken ? '저장됨' : '없음'
-        });
+      setServerLoginResult({ 
+        userId: userId || undefined, 
+        userName: userName || undefined, 
+        referrerId: referrerId || undefined, 
+        isInitial 
+      });
 
-        setServerLoginResult({ 
-          userId: userId || undefined, 
-          userName: userName || undefined, 
-          referrerId: referrerId || undefined, 
-          isInitial 
-        });
-
-        console.log("[AppInitializer] 서버 로그인 성공:", {
-          userId,
-          userName,
-          referrerId,
-          isInitial,
-        });
-
-        // Native 앱에 서버 로그인 성공 메시지 전송
-        if (window.ReactNativeWebView) {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({
-              type: "serverLoginSuccess",
-              userId,
-              userName,
-              referrerId,
-              isInitial,
-              timestamp: Date.now(),
-            })
-          );
-        }
-
-        // isInitial 값에 따른 분기 처리 (주석처리 - 단계별 테스트를 위해)
-        // if (isInitial) {
-        //   // 1. 신규 사용자인 경우 - 캐릭터 선택 페이지로 이동
-        //   console.log(
-        //     "[AppInitializer] 신규 사용자 - /choose-character로 이동"
-        //   );
-        //   navigate("/choose-character");
-        //   onInitialized();
-        // } else {
-        //   // 2. 기존 사용자인 경우 - fetchUserData 호출 후 적절한 페이지로 이동
-        //   console.log("[AppInitializer] 기존 사용자 - fetchUserData 호출");
-        //   await handleFetchUserDataWithRetry();
-        // }
+      // isInitial에 따른 페이지 이동 로직
+      if (isInitial === true) {
+        console.log('[AppInitializer] 신규 사용자: fetchUserData 호출 후 응답 확인');
         
-        console.log("[AppInitializer] 서버 로그인 완료 - 페이지 이동과 fetchUserData는 별도 테스트 필요");
+        try {
+          // fetchUserData 호출 (Promise<void> 반환)
+          console.log('[AppInitializer] fetchUserData 호출 시작');
+          await fetchUserData();
+          console.log('[AppInitializer] fetchUserData 완료');
+          
+          // fetchUserData 완료 후 사용자 상태 확인
+          const { uid, nickName, characterType } = useUserStore.getState();
+          console.log('[AppInitializer] 사용자 상태:', { uid, nickName, characterType });
+          
+          if (uid && nickName) {
+            console.log('[AppInitializer] 사용자 데이터 완성, dice-event 페이지로 이동');
+            console.log('[AppInitializer] 페이지 이동 시도:', { 
+              currentPath: window.location.pathname,
+              targetPath: '/dice-event',
+              method: 'window.location.href'
+            });
+            
+            try {
+              // React Router navigate 대신 window.location 직접 사용
+              window.location.href = '/dice-event';
+              console.log('[AppInitializer] window.location.href 설정 완료');
+            } catch (navError) {
+              console.error('[AppInitializer] window.location.href 에러:', navError);
+            }
+          } else {
+            console.log('[AppInitializer] 사용자 데이터 불완전, choose-character 페이지로 이동');
+            console.log('[AppInitializer] 페이지 이동 시도:', { 
+              currentPath: window.location.pathname,
+              targetPath: '/choose-character',
+              method: 'window.location.href'
+            });
+            
+            try {
+              // React Router navigate 대신 window.location 직접 사용
+              window.location.href = '/choose-character';
+              console.log('[AppInitializer] window.location.href 설정 완료');
+            } catch (navError) {
+              console.error('[AppInitializer] window.location.href 에러:', navError);
+            }
+          }
+        } catch (error: any) {
+          console.error('[AppInitializer] fetchUserData 에러:', error);
+          
+          // "Please choose your character first." 메시지 확인 (대소문자 구분 없이)
+          if (error.message && error.message.toLowerCase().includes('please choose your character first')) {
+            console.log('[AppInitializer] 캐릭터 선택 필요 확인, choose-character 페이지로 이동');
+            console.log('[AppInitializer] 페이지 이동 시도:', { 
+              currentPath: window.location.pathname,
+              targetPath: '/choose-character',
+              method: 'window.location.href'
+            });
+            
+            try {
+              // React Router navigate 대신 window.location 직접 사용
+              window.location.href = '/choose-character';
+              console.log('[AppInitializer] window.location.href 설정 완료');
+            } catch (navError) {
+              console.error('[AppInitializer] window.location.href 에러:', navError);
+            }
+          } else {
+            // 다른 에러인 경우 에러 표시
+            setError(`fetchUserData 에러: ${error.message || '알 수 없는 오류'}`);
+          }
+        }
       } else {
-        console.error("[AppInitializer] 서버 로그인 실패");
-        setError("서버 로그인에 실패했습니다.");
-
-        // Native 앱에 서버 로그인 실패 메시지 전송
-        if (window.ReactNativeWebView) {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({
-              type: "serverLoginError",
-              error: "서버 로그인에 실패했습니다.",
-              timestamp: Date.now(),
-            })
-          );
+        console.log('[AppInitializer] 기존 사용자: choose-character 페이지로 이동');
+        console.log('[AppInitializer] 페이지 이동 시도:', { 
+          currentPath: window.location.pathname,
+          targetPath: '/choose-character',
+          method: 'window.location.href'
+        });
+        
+        try {
+          // React Router navigate 대신 window.location 직접 사용
+          window.location.href = '/choose-character';
+          console.log('[AppInitializer] window.location.href 설정 완료');
+        } catch (navError) {
+          console.error('[AppInitializer] window.location.href 에러:', navError);
         }
       }
-    } catch (error: any) {
-      console.error("[AppInitializer] 서버 로그인 중 오류:", error);
-      setError(`서버 로그인 중 오류: ${error.message || "알 수 없는 오류"}`);
 
-      // Native 앱에 에러 메시지 전송
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({
-            type: "serverLoginError",
-            error: error?.message || "서버 로그인 중 오류가 발생했습니다.",
-            timestamp: Date.now(),
-          })
-        );
-      }
+    } catch (error: any) {
+      console.error('[AppInitializer] 서버 로그인 실패:', error);
+      setError(`서버 로그인 실패: ${error.message || '알 수 없는 오류'}`);
     } finally {
       setIsLoading(false);
+      console.log('[AppInitializer] 서버 로그인 완료');
     }
   };
 
@@ -376,15 +465,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   };
 
   // 수동 서버 로그인 (테스트용)
-  const handleManualServerLogin = async (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
+  const handleManualServerLogin = async () => {
+    console.log('[AppInitializer] 수동 서버 로그인 시작');
+    console.log('[AppInitializer] 사용 가능한 값들:', { 
+      authorizationCode,
+      referrer,
+      manualAuthCode: `"${manualAuthCode}"`, 
+      manualReferrer: `"${manualReferrer}"`
+    });
+    
+    // authorizationCode와 referrer가 있으면 바로 진행, 없으면 manual 값 확인
+    if (!authorizationCode && !referrer && (!manualAuthCode || !manualReferrer)) {
+      const errorMsg = "토스 로그인을 진행하거나 수동으로 인증 코드와 추천인을 모두 입력해주세요.";
+      console.error('[AppInitializer] 필요한 값 없음:', errorMsg);
+      setError(errorMsg);
+      return;
     }
-    if (authorizationCode && referrer) {
-      await handleServerLogin(authorizationCode, referrer);
-    } else {
-      setError("토스 로그인을 먼저 진행해주세요.");
-    }
+    
+    console.log('[AppInitializer] 값 확인 완료, handleServerLogin 호출');
+    await handleServerLogin();
   };
 
   // 수동 초기화 (테스트용) - 주석처리
@@ -578,7 +677,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       {/* 수동 테스트 버튼들 - 토스 로그인 + 서버 로그인 활성화 */}
       <button
-        onClick={handleManualTossLogin}
+        onClick={handleNewTokenLogin}
         disabled={isLoading}
         style={{
           padding: "15px 30px",
@@ -593,23 +692,77 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           opacity: isLoading ? 0.7 : 1,
         }}
       >
-        {isLoading ? "🔄 처리 중..." : "1️⃣ 토스 로그인 테스트"}
+        {isLoading ? "🔄 처리 중..." : "1️⃣ 토스 로그인"}
       </button>
+
+      {/* 수동 입력 폼 */}
+      <div
+        style={{
+          marginBottom: "20px",
+          padding: "16px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
+          border: "1px solid #dee2e6",
+        }}
+      >
+        <div style={{ fontWeight: "bold", marginBottom: "12px", color: "#495057" }}>
+          📝 수동 입력 (토스 로그인 없이 테스트용)
+        </div>
+        <div style={{ marginBottom: "12px" }}>
+          <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", color: "#495057" }}>
+            인증 코드:
+          </label>
+          <input
+            type="text"
+            value={manualAuthCode}
+            onChange={(e) => setManualAuthCode(e.target.value)}
+            placeholder="인증 코드를 입력하세요"
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              fontSize: "14px",
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: "12px" }}>
+          <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", color: "#495057" }}>
+            추천인:
+          </label>
+          <input
+            type="text"
+            value={manualReferrer}
+            onChange={(e) => setManualReferrer(e.target.value)}
+            placeholder="추천인을 입력하세요"
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              fontSize: "14px",
+            }}
+          />
+        </div>
+        <div style={{ fontSize: "12px", color: "#6c757d", fontStyle: "italic" }}>
+          💡 토스 로그인 없이 서버 로그인을 테스트하려면 위 필드에 값을 입력하고 "2️⃣ 서버 로그인 테스트" 버튼을 클릭하세요.
+        </div>
+      </div>
 
       <button
         onClick={handleManualServerLogin}
-        disabled={isLoading || !authorizationCode || !referrer}
+        disabled={isLoading || (!authorizationCode && !referrer && (!manualAuthCode || !manualReferrer))}
         style={{
           padding: "15px 30px",
           fontSize: "18px",
-          backgroundColor: isLoading || !authorizationCode || !referrer ? "#6c757d" : "#28a745",
+          backgroundColor: isLoading || (!authorizationCode && !referrer && (!manualAuthCode || !manualReferrer)) ? "#6c757d" : "#28a745",
           color: "white",
           border: "none",
           borderRadius: "8px",
-          cursor: isLoading || !authorizationCode || !referrer ? "not-allowed" : "pointer",
+          cursor: isLoading || (!authorizationCode && !referrer && (!manualAuthCode || !manualReferrer)) ? "not-allowed" : "pointer",
           width: "100%",
           marginBottom: "20px",
-          opacity: isLoading || !authorizationCode || !referrer ? 0.7 : 1,
+          opacity: isLoading || (!authorizationCode && !referrer && (!manualAuthCode || !manualReferrer)) ? 0.7 : 1,
         }}
       >
         {isLoading ? "🔄 처리 중..." : "2️⃣ 서버 로그인 테스트"}
@@ -720,6 +873,35 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         }}
       >
         🔍 쿼리 파라미터로 토큰 전달하는 /home API 테스트
+      </button>
+
+      {/* 페이지 이동 테스트 버튼 */}
+      <button
+        onClick={() => {
+          console.log('[AppInitializer] 강제 페이지 이동 테스트');
+          console.log('[AppInitializer] 현재 경로:', window.location.pathname);
+          try {
+            // React Router navigate 대신 window.location 직접 사용
+            window.location.href = '/choose-character';
+            console.log('[AppInitializer] 강제 이동 완료');
+          } catch (error) {
+            console.error('[AppInitializer] 강제 이동 실패:', error);
+          }
+        }}
+        style={{
+          padding: "10px 20px",
+          fontSize: "14px",
+          backgroundColor: "#dc3545",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          width: "100%",
+          marginBottom: "20px",
+          opacity: 0.8,
+        }}
+      >
+        🧪 강제 페이지 이동 테스트 (/choose-character)
       </button>
 
       {/* 주석처리된 기능들 안내 */}

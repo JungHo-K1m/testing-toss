@@ -21,7 +21,7 @@ interface TossLoginErrorResponse {
 }
 
 // 토스 로그인
-export const tossLogin = async (authorizationCode: string, referrer: string): Promise<boolean> => {
+export const tossLogin = async (authorizationCode: string, referrer: string): Promise<TossLoginResponse['data']> => {
     const userInfo = {
         authorizationCode,
         referrer
@@ -103,7 +103,7 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
             console.log('  2. Network 탭에서 /auth/login/toss 응답의 Set-Cookie 헤더 확인');
             console.log('  3. HttpOnly 쿠키는 JavaScript로 접근 불가능');
 
-            return true;
+            return data;
         } else {
             // 에러 응답 처리
             const errorData = responseData as TossLoginErrorResponse;
@@ -112,12 +112,12 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
                 message: errorData.message,
                 data: errorData.data
             });
-            return false;
+            throw new Error(`Login failed: ${errorData.message}`); // 에러를 다시 던지지 않고 예외 발생
         }
     } catch (error) {
         console.error("❌ 인증 중 오류 발생:", error);
         // 에러를 다시 던지지 않고 false 반환으로 변경
-        return false;
+        throw error; // 예외를 다시 던지지 않고 예외 발생
     }
 };
 
