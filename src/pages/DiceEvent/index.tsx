@@ -4,16 +4,12 @@ import UserLevel from "@/entities/User/components/UserLevel";
 import "@/features/DiceEvent/DiceEvent.css";
 import Images from "@/shared/assets/images";
 import { MonthlyPrize } from "@/entities/MonthlyPrize";
-// import Attendance from "@/widgets/Attendance";
-import MyRankingWidget from "@/widgets/MyRanking/MyRankingWidget";
-import MissionWidget from "@/widgets/MissionWidget/MissionWidget";
 import { useNavigate } from "react-router-dom";
 import useDiceGame from "./useDiceGame";
 import GameBoard from "./GameBoard";
 import { Board } from "@/features/DiceEvent";
 import RPSGame from "../RPSGame";
 import SpinGame from "../SpinGame";
-import CardGameModal from "../CardGame/CardGameModal";
 import { useUserStore } from "@/entities/User/model/userModel";
 import LoadingSpinner from "@/shared/components/ui/loadingSpinner";
 import {
@@ -31,6 +27,8 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import getRewardPoints from "@/entities/Mission/api/fromRewardPoint";
+import updateTimeZone from "@/entities/User/api/updateTimeZone";
+import useWalletStore from "@/shared/store/useWalletStore";
 import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
 import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
 import BottomNav from "@/widgets/BottomNav/BottomNav";
@@ -73,11 +71,11 @@ const DiceEventPage: React.FC = () => {
     userLv,
     characterType,
     position,
+    // monthlyPrize,
     isAuto,
     pet,
     suspend,
     setSuspend,
-    redirect,
   } = useUserStore();
 
   const game = useDiceGame();
@@ -86,6 +84,7 @@ const DiceEventPage: React.FC = () => {
   const [initialY, setInitialY] = useState<number>(474);
   const [delta, setDelta] = useState<number>(56);
   const navigate = useNavigate();
+  const { walletAddress } = useWalletStore();
 
   // AirDrop 팝업 표시를 위한 상태
   const [showAirDrop, setShowAirDrop] = useState<boolean>(false);
@@ -141,45 +140,6 @@ const DiceEventPage: React.FC = () => {
     }
   }, []);
 
-  // 소유한 아이템 갯수에 따른 목록 표시 함수 - 백엔드에서 items 필드가 제거되어 더 이상 사용되지 않음
-  const getItemLabel = (label: string, count: number) => {
-    // 백엔드 API 변경으로 인해 모든 아이템 카운트가 0으로 설정됨
-    return <span className="text-[#737373]">{label}</span>;
-  };
-
-  // 아이템 목록 - 백엔드에서 items 필드가 제거되어 더 이상 표시할 수 없음
-  const itemList = [
-    {
-      label: "GOLD PASS",
-      icon: Images.GoldIcon,
-      count: 0, // items.goldCount 제거됨
-      gradient: "linear-gradient(180deg, #FDE047 0%, #FFFFFF 100%)",
-    },
-    {
-      label: "SILVER PASS",
-      icon: Images.SilverIcon,
-      count: 0, // items.silverCount 제거됨
-      gradient: "linear-gradient(180deg, #22C55E 0%, #FFFFFF 100%)",
-    },
-    {
-      label: "BRONZE PASS",
-      icon: Images.BronzeIcon,
-      count: 0, // items.bronzeCount 제거됨
-      gradient: "linear-gradient(180deg, #F59E0B 0%, #FFFFFF 100%)",
-    },
-    {
-      label: "AUTO ITEM",
-      icon: Images.AutoIcon,
-      count: 0, // items.autoNftCount 제거됨
-      gradient: "linear-gradient(180deg, #0147E5 0%, #FFFFFF 100%)",
-    },
-    {
-      label: "REWARD BOOSTER",
-      icon: Images.RewardIcon,
-      count: 0, // items.rewardNftCount 제거됨
-      gradient: "linear-gradient(180deg, #FF4F4F 0%, #FFFFFF 100%)",
-    },
-  ];
 
   // 현재 레벨 보상 찾기
   const currentReward = levelRewards.find((r) => r.level === userLv);
@@ -224,14 +184,6 @@ const DiceEventPage: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    // SDK가 초기화되고 지갑이 연결된 후에 사용자 데이터를 가져옵니다.
-    const initializeUserData = async () => {
-      await fetchUserData();
-    };
-
-    initializeUserData();
-  }, [fetchUserData]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -262,6 +214,7 @@ const DiceEventPage: React.FC = () => {
   // 랭킹 보상 팝업 표시를 위한 상태
   const [showRankingModal, setShowRankingModal] = useState<boolean>(false);
   const [showItemGuideModal, setShowItemGuideModal] = useState(false);
+  const [showItemDialog, setShowItemDialog] = useState(false);
 
   useEffect(() => {
     const checkAndShowModals = () => {
@@ -367,11 +320,8 @@ const DiceEventPage: React.FC = () => {
     return <LoadingSpinner className="h-screen" />;
   }
 
-  // 에러가 있어도 기본 UI 표시 (토큰 없음 등의 경우)
   if (error) {
-    console.log("[DiceEvent] Data loading error:", error);
-    // 에러가 있어도 기본 UI를 표시하도록 주석 처리
-    // return <div>Error loading data: {error}</div>;
+    return <div>Error loading data: {error}</div>;
   }
 
   // 랜덤박스 열기 함수
@@ -432,8 +382,6 @@ const DiceEventPage: React.FC = () => {
           />
         ) : game.isSpinGameActive ? (
           <SpinGame onSpinEnd={game.handleSpinGameEnd} />
-        ) : game.isCardGameActive ? (
-          <CardGameModal onClose={game.handleCardGameEnd} />
         ) : (
           <>
             <div className="w-full flex justify-center mb-4 mt-8 gap-[10px]">
@@ -456,8 +404,8 @@ const DiceEventPage: React.FC = () => {
                     return;
                   }
 
-                  // 다른 영역 클릭이면 inventory로 이동
-                  // navigate("/inventory", { state: { charactorImageSrc } });
+                  // 다른 영역 클릭이면 착용중인 아이템 모달창 표시
+                  setShowItemDialog(true);
                 }}
                 className="cursor-pointer"
                 role="button"
@@ -468,9 +416,9 @@ const DiceEventPage: React.FC = () => {
                 // }}
               >
                 <UserLevel
-                  userLv={userLv || 1}
-                  charactorImageSrc={charactorImageSrc || Images.Cat1}
-                  exp={pet?.exp || 0}
+                  userLv={userLv}
+                  charactorImageSrc={charactorImageSrc}
+                  exp={pet.exp}
                   characterType={characterType || "cat"}
                   equippedItems={equippedItems}
                   onAlertClick={() => {
@@ -480,36 +428,36 @@ const DiceEventPage: React.FC = () => {
                 />
               </div>
 
-              {/* 이번 달 보상 내용 - 백엔드에서 monthlyPrize 필드가 제거되어 기본값 사용 */}
+              {/* 이번 달 보상 내용 */}
               <MonthlyPrize
-                month={1} // monthlyPrize?.month 제거됨
-                prizeType={""} // monthlyPrize?.prizeType 제거됨
-                amount={0} // monthlyPrize?.amount 제거됨
-                eventFinishTime={""} // monthlyPrize?.eventFinishTime 제거됨
+                month={1}
+                prizeType="token"
+                amount={1000}
+                eventFinishTime="2025-08-20T15:00:00Z"
               />
             </div>
 
             <GameBoard
-              position={position || 0}
-              selectingTile={game?.selectingTile || false}
-              handleTileClick={game?.handleTileClick || (() => {})}
-              gaugeValue={game?.gaugeValue || 0}
-              diceCount={game?.diceCount || 0}
-              showDiceValue={game?.showDiceValue || false}
-              rolledValue={game?.rolledValue || 0}
-              buttonDisabled={game?.buttonDisabled || false}
-              diceRef={game?.diceRef || null}
-              handleRollComplete={game?.handleRollComplete || (() => {})}
-              reward={game?.reward || null}
-              isHolding={game?.isHolding || false}
-              handleMouseDown={game?.handleMouseDown || (() => {})}
-              handleMouseUp={game?.handleMouseUp || (() => {})}
-              isLuckyVisible={game?.isLuckyVisible || false}
-              rollDice={game?.rollDice || (() => {})}
+              position={position}
+              selectingTile={game.selectingTile}
+              handleTileClick={game.handleTileClick}
+              gaugeValue={game.gaugeValue}
+              diceCount={game.diceCount}
+              showDiceValue={game.showDiceValue}
+              rolledValue={game.rolledValue}
+              buttonDisabled={game.buttonDisabled}
+              diceRef={game.diceRef}
+              handleRollComplete={game.handleRollComplete}
+              reward={game.reward}
+              isHolding={game.isHolding}
+              handleMouseDown={game.handleMouseDown}
+              handleMouseUp={game.handleMouseUp}
+              isLuckyVisible={game.isLuckyVisible}
+              rollDice={game.rollDice}
             />
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
-              <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-50 pointer-events-none">
+              <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl">
                   <img
@@ -522,8 +470,8 @@ const DiceEventPage: React.FC = () => {
               </div>
             )}
             <Board
-              position={position || 0}
-              charactorImageSrc={charactorImageSrc || Images.Cat1}
+              position={position}
+              charactorImageSrc={charactorImageSrc}
               initialX={initialX}
               initialY={initialY}
               delta={delta}
@@ -532,7 +480,7 @@ const DiceEventPage: React.FC = () => {
             />
             <br />
 
-            {/* 랜덤박스스 아이콘 */}
+            {/* 랜덤박스 아이콘 */}
             <div className="w-full max-w-[332px] md:max-w-full flex justify-center">
               <div
                 style={{
@@ -847,58 +795,6 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            {/* 사용 중지 다이얼로그 */}
-            {/* <Dialog open={suspend}>
-            <DialogTitle></DialogTitle>
-            <DialogContent className=" bg-[#21212F] border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]">
-              <div className="relative">
-                <DialogClose className="absolute top-0 right-0 p-2">
-                  <HiX
-                    className="w-5 h-5"
-                    onClick={() => {
-                      playSfx(Audios.button_click);
-                      setSuspend(false);
-                    }}
-                  />
-                </DialogClose>
-              </div>
-              <div className="flex flex-col items-center justify-around">
-                <div className=" flex flex-col items-center gap-2">
-                  <h1 className=" font-bold text-xl  text-center">
-                    {t("dice_event.account_suspended")}
-                  </h1>
-                </div>
-                <div className="flex flex-col mt-5">
-                  <p className="font-Pretendard text-center text-base font-semibold">
-                    {t("dice_event.fair_play")}
-                    <br />
-                    {t("dice_event.mistake")}
-                  </p>
-                </div>
-
-                <div className="flex flex-col mt-2">
-                  <p className="font-Pretendard text-center text-sm font-semibold text-[#DD2726]">
-                    {t("dice_event.reason")}
-                  </p>
-                </div>
-
-                <div className="flex flex-col mt-2">
-                  <p className="font-Pretendard text-center text-sm font-normal text-[#A3A3A3]">
-                    {t("dice_event.if_error")}
-                    <br />
-                    {t("dice_event.contact_team")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSuspend(false)}
-                  className="bg-[#0147E5] text-base font-medium rounded-full w-40 h-14 mt-8 mb-7"
-                >
-                  {t("agree_page.close")}
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog> */}
-
             {/* Random Box 모달 */}
             <Dialog
               open={showRaffleBoxModal}
@@ -1204,6 +1100,81 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
+            {/* 장착 중인 아이템 모달달 */}
+            <Dialog open={showItemDialog}>
+              <DialogContent
+                className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                }}
+              >
+                <div className="relative">
+                  <DialogClose className="absolute top-0 right-0 p-2">
+                    <HiX
+                      className="w-5 h-5"
+                      onClick={() => {
+                        playSfx(Audios.button_click);
+                        setShowItemDialog(false);
+                      }}
+                    />
+                  </DialogClose>
+                </div>
+                <div className="flex flex-col items-center justify-around">
+                  <div className=" flex flex-col items-center gap-2 mb-[30px]">
+                    <h1
+                      className="text-center"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: 400,
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                      }}
+                    >
+                      장착된 아이템
+                    </h1>
+                    <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
+                      <img
+                        src={Images.DogSmile}
+                        alt="levelupEffect"
+                        className="w-[150px] h-[150px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    <div
+                      className="flex flex-row items-center justify-center gap-6"
+                      style={{
+                        width: "70vw",
+                        height: "120px",
+                        background: "rgba(194, 213, 232, 0.1)",
+                        border: "2px solid #B4CADA",
+                        borderRadius: "20px",
+                        padding: "16px",
+                        boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                        backdropFilter: "blur(15px)",
+                        WebkitBackdropFilter: "blur(15px)",
+                      }}
+                    >
+                      <p
+                        className="text-center p-4"
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "24px",
+                          fontWeight: 400,
+                          color: "#FFFFFF",
+                          WebkitTextStroke: "1px #000000",
+                        }}
+                      >
+                        현재 장착 중인 아이템이 없습니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <br />
             <br />
             <br />
@@ -1213,10 +1184,8 @@ const DiceEventPage: React.FC = () => {
           </>
         )}
 
-        {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
-        {!game.isSpinGameActive &&
-          !game.isRPSGameActive &&
-          !game.isCardGameActive && <BottomNav />}
+        {/* BottomNav - SpinGame이 활성화되지 않을 때만 표시 */}
+        {!game.isSpinGameActive && !game.isRPSGameActive && <BottomNav />}
       </div>
     </div>
   );

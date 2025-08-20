@@ -83,6 +83,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
     isAuto,
     setIsAuto,
     refillDice, // refillDice 함수 추가
+    addGoldItem,
+    removeGoldItem,
+    addSilverItem,
+    removeSilverItem,
+    addBronzeItem,
+    removeBronzeItem,
+    addRewardItem,
+    removeRewardItem,
+    addAutoItem,
+    removeAutoItem,
+    addAllItems,
+    addDice,
+    addSLToken,
+    removeDice,
+    removeSLToken,
     autoSwitch,
   } = useUserStore();
   const [timeUntilRefill, setTimeUntilRefill] = useState("");
@@ -270,9 +285,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   const renderTile = (id: number) => {
     const sequence = tileIdToSequenceMap[id];
-    const tileData = boards.find(
-      (tile: { sequence: number }) => tile.sequence === sequence
-    );
+    const tileData = boards.find((tile) => tile.sequence === sequence);
 
     let content: React.ReactNode = null;
     let dataStar = "0";
@@ -346,8 +359,143 @@ const GameBoard: React.FC<GameBoardProps> = ({
     );
   };
 
-  // 테스트용 아이템 추가/삭제 함수들은 백엔드에서 items 필드가 제거되어 사용할 수 없음
-  // 백엔드 API 변경으로 인해 더 이상 필요하지 않음
+  // 테스트용 아이템 추가/삭제 핸들러
+  const handleAddGold = async () => {
+    try {
+      await addGoldItem();
+      alert("Gold NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("Gold NFT 추가에 실패했습니다.");
+      // 에러는 useUserStore에서 처리하므로 여기서는 별도 처리 불필요
+    }
+  };
+
+  const handleRemoveGold = async () => {
+    try {
+      await removeGoldItem();
+      alert("Gold NFT가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("Gold NFT 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddSilver = async () => {
+    try {
+      await addSilverItem();
+      alert("Silver NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("Silver NFT 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveSilver = async () => {
+    try {
+      await removeSilverItem();
+      alert("Silver NFT가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("Silver NFT 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddBronze = async () => {
+    try {
+      await addBronzeItem();
+      alert("Bronze NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("Bronze NFT 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveBronze = async () => {
+    try {
+      await removeBronzeItem();
+      alert("Bronze NFT가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("Bronze NFT 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddReward = async () => {
+    try {
+      await addRewardItem();
+      alert("Reward NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("Reward NFT 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveReward = async () => {
+    try {
+      await removeRewardItem();
+      alert("Reward NFT가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("Reward NFT 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddAuto = async () => {
+    try {
+      await addAutoItem();
+      alert("Auto NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("Auto NFT 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveAuto = async () => {
+    try {
+      await removeAutoItem();
+      alert("Auto NFT가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("Auto NFT 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddAll = async () => {
+    try {
+      await addAllItems();
+      alert("모든 NFT가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("모든 NFT 추가에 실패했습니다.");
+    }
+  };
+
+  const handleAddDice = async () => {
+    try {
+      await addDice();
+      alert("주사위가 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("주사위 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveDice = async () => {
+    try {
+      await removeDice();
+      alert("주사위가 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("주사위 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleAddSLToken = async () => {
+    try {
+      await addSLToken();
+      alert("SL Token이 성공적으로 추가되었습니다!");
+    } catch (error) {
+      alert("SL Token 추가에 실패했습니다.");
+    }
+  };
+
+  const handleRemoveSLToken = async () => {
+    try {
+      await removeSLToken();
+      alert("SL Token이 성공적으로 삭제되었습니다!");
+    } catch (error) {
+      alert("SL Token 삭제에 실패했습니다.");
+    }
+  };
+
 
   return (
     <div className="w-full h-full flex items-center justify-center relative">
@@ -448,8 +596,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     <div className="flex flex-col items-center">
                       <img src={Images.Star} alt="star" className="h-6" />
                       <span className="mt-1 ">
-                        +{formatNumber(reward.value)}{" "}
-                        {/* items.boardRewardTimes 제거됨 */}
+                        +{formatNumber(reward.value * 1)}
                       </span>
                     </div>
                   )}
@@ -469,8 +616,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                         className="h-6"
                       />
                       <span className="mt-1">
-                        +{formatNumber(reward.value)}{" "}
-                        {/* items.ticketTimes 제거됨 */}
+                        +{formatNumber(reward.value * 1)}
                       </span>
                     </div>
                   )}
@@ -478,15 +624,18 @@ const GameBoard: React.FC<GameBoardProps> = ({
               )}
             </AnimatePresence>
 
-            <div className="flex flex-col w-full h-full items-center justify-center dice-container translate-y-5">
-              <Dice
-                ref={diceRef}
-                onRollComplete={(value: number, data: RollDiceResponseData) =>
-                  handleRollComplete(value, data)
-                }
-                gaugeValue={gaugeValue}
-              />
-            </div>
+            {/* anywhere 비행기 활성화 시에는 주사위를 숨김 */}
+            {!selectingTile && (
+              <div className="flex flex-col w-full h-full items-center justify-center dice-container translate-y-5">
+                <Dice
+                  ref={diceRef}
+                  onRollComplete={(value: number, data: RollDiceResponseData) =>
+                    handleRollComplete(value, data)
+                  }
+                  gaugeValue={gaugeValue}
+                />
+              </div>
+            )}
             <p
               className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2 z-20"
               style={{
@@ -514,51 +663,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
               )}
             </AnimatePresence>
 
-            {/* 보유 아이템 다이얼로그 */}
-            <Dialog>
-              <DialogTrigger>
-                <div
-                  id="fourth-step"
-                  className="absolute text-white -left-11 -bottom-14 md:-left-24 md:-bottom-28 font-semibold text-xs md:text-sm md:space-y-1"
-                >
-                </div>
-              </DialogTrigger>
-              <DialogContent className=" bg-[#21212F] border-none rounded-3xl text-white h-svh md:h-auto overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]">
-                <DialogHeader className="">
-                  <DialogTitle>인벤토리</DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col mt-4 gap-4">
-                  <div className="flex flex-col bg-[#1F1E27] p-5 rounded-3xl border-2 border-[#35383F] font-medium gap-2">
-                    <div className="flex flex-row items-center gap-2">
-                      <IoGameController className="w-6 h-6" />
-                      <p>
-                        포인트 : x1{" "}
-                        {/* items.boardRewardTimes 제거됨 - 기본값 1로 설정 */}
-                      </p>
-                    </div>
-                    <div className="flex flex-row items-center gap-2">
-                      <IoTicket className="w-6 h-6" />
-                      <p>
-                        티켓 : x1{" "}
-                        {/* items.ticketTimes 제거됨 - 기본값 1로 설정 */}
-                      </p>
-                    </div>
-                    <div className="flex flex-row items-center gap-2">
-                      <PiSpinnerBallFill className="w-6 h-6" />
-                      <p>
-                        스핀 : x1{" "}
-                        {/* items.spinTimes 제거됨 - 기본값 1로 설정 */}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-end gap-1">
-                    <AiOutlineInfoCircle className=" w-5 h-5" />
-                    <p className="text-end text-sm font-medium">추가 효과</p>
-                  </div>
-                  <NFTRewardList />
-                </div>
-              </DialogContent>
-            </Dialog>
 
             {/**릴리스용 */}
             {/* <div onClick={()=>{setIsOpen(true)}} className="absolute cursor-pointer text-white -right-11 -top-8 md:-right-24 md:-top-20 font-semibold text-xs md:text-sm md:space-y-1">
@@ -696,7 +800,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 className="w-[26px] h-4 md:h-6 md:w-11 text-[#0147E5]"
                 checked={isAuto} // isAuto 상태에 따라 스위치의 체크 상태를 설정
                 onCheckedChange={handleAutoSwitch} // 스위치 토글 시 isAuto 상태를 반전
-                disabled={false} // items.autoNftCount 제거됨 - 항상 활성화
+                disabled={false} // Auto switch is always enabled
               />
             </div>
 
@@ -728,7 +832,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                       color: "#2A294E",
                     }}
                   >
-                    : 리필
+                    : "리필"
                   </p>
                 </motion.div>
               ) : (

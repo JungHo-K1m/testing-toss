@@ -21,7 +21,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
 }) => {
   const navigate = useNavigate();
   const { playSfx } = useSound();
-  const setSelected = useNavigationStore((state: { setSelected: (arg0: string) => void; }) => state.setSelected);
+  const setSelected = useNavigationStore((state) => state.setSelected);
 
   // 월 이름 배열
   const monthNames = [

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Snowfall } from "react-snowfall";
 import Images from "@/shared/assets/images";
 
 // 아이템 타입 정의
@@ -27,50 +26,12 @@ const UserLevel: React.FC<{
   equippedItems = [],
   onAlertClick,
 }) => {
-  let levelClassName = "";
-  let mainColor = "";
-
-  if (userLv >= 1 && userLv <= 4) {
-    levelClassName = "lv1to4-box";
-    mainColor = "#dd2726";
-  } else if (userLv >= 5 && userLv <= 8) {
-    levelClassName = "lv5to8-box";
-    mainColor = "#f59e0b";
-  } else if (userLv >= 9 && userLv <= 12) {
-    levelClassName = "lv9to12-box";
-    mainColor = "#facc15";
-  } else if (userLv >= 13 && userLv <= 16) {
-    levelClassName = "lv13to16-box";
-    mainColor = "#22c55e";
-  } else if (userLv >= 17 && userLv <= 20) {
-    levelClassName = "lv17to20-box";
-    mainColor = "#0147e5";
-  }
-
   // 레벨에 따른 캐릭터 이미지 선택 로직 (DiceEvent와 동일)
   const getCharacterImageSrc = () => {
-    const index = Math.floor((userLv - 1) / 4);
-
-    const catImages = [
-      Images.Cat1,
-      Images.Cat2,
-      Images.Cat3,
-      Images.Cat4,
-      Images.Cat5,
-    ];
-
-    const dogImages = [
-      Images.Dog1,
-      Images.Dog2,
-      Images.Dog3,
-      Images.Dog4,
-      Images.Dog5,
-    ];
-
     if (characterType === "cat") {
-      return catImages[index] || catImages[catImages.length - 1];
+      return Images.CatSmile;
     } else {
-      return dogImages[index] || dogImages[dogImages.length - 1];
+      return Images.DogSmile;
     }
   };
 
@@ -100,69 +61,8 @@ const UserLevel: React.FC<{
 
   const roundedExp = Math.floor(exp);
 
-  const messages = [
-    "축하합니다! 보상은 다음과 같습니다:",
-    "축하합니다! 보상은 다음과 같습니다:",
-    "축하합니다! 보상은 다음과 같습니다:",
-    "축하합니다! 보상은 다음과 같습니다:",
-    "축하합니다! 보상은 다음과 같습니다:",
-  ];
-
   const [currentMsgIndex, setCurrentMsgIndex] = useState(0);
   const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    let showTimer: NodeJS.Timeout;
-    let hideTimer: NodeJS.Timeout;
-
-    const startCycle = () => {
-      const randomIndex = Math.floor(Math.random() * messages.length);
-      setCurrentMsgIndex(randomIndex);
-      setVisible(true);
-
-      hideTimer = setTimeout(() => {
-        setVisible(false);
-      }, 3000);
-
-      // 12초 후 다음 메시지
-      showTimer = setTimeout(() => {
-        startCycle();
-      }, 12000);
-    };
-
-    startCycle();
-
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-    };
-  }, [messages.length]);
-
-  const currentMessageParts = messages[currentMsgIndex].split("<br/>");
-
-  // 현재 날짜 기준 계절 구분
-  const month = new Date().getMonth() + 1; // 1~12
-  let images: HTMLImageElement[] | undefined;
-
-  if (month >= 3 && month <= 5) {
-    // 봄: 벚꽃잎(예: Images.Spring)
-    const springImg = new Image();
-    springImg.src = Images.Spring;
-    images = [springImg];
-  } else if (month >= 6 && month <= 8) {
-    // 여름: 잎사귀(예: Images.Summer)
-    const summerImg = new Image();
-    summerImg.src = Images.Summer;
-    images = [summerImg];
-  } else if (month >= 9 && month <= 11) {
-    // 가을: 낙엽(예: Images.Fall)
-    const fallImg = new Image();
-    fallImg.src = Images.Fall;
-    images = [fallImg];
-  } else {
-    // 겨울: 이미지 사용 안함(눈송이 기본 형태)
-    images = undefined;
-  }
 
   // 레벨에 따른 캐릭터 이미지 사용
   const characterImageSrc = getCharacterImageSrc();
@@ -179,12 +79,6 @@ const UserLevel: React.FC<{
         WebkitBackdropFilter: "blur(10px)",
       }}
     >
-      <Snowfall
-        style={{ borderRadius: "24px" }}
-        snowflakeCount={10}
-        images={images}
-      />
-
       {/* AlertIcon - 좌측 상단 */}
       <div
         className="absolute top-[15px] left-[15px] z-50"
@@ -203,7 +97,7 @@ const UserLevel: React.FC<{
       </div>
 
       {/* 말풍선 + 문구 */}
-      <div className="absolute top-1 right-1 flex justify-end w-full px-1 z-50">
+      {/* <div className="absolute top-1 right-1 flex justify-end w-full px-1 z-50">
         <AnimatePresence>
           {visible && (
             <motion.div
@@ -221,12 +115,6 @@ const UserLevel: React.FC<{
                 overflow: "visible",
               }}
             >
-              {currentMessageParts.map((part, index) => (
-                <React.Fragment key={index}>
-                  {part}
-                  {index < currentMessageParts.length - 1 && <br />}
-                </React.Fragment>
-              ))}
               <div
                 style={{
                   content: "",
@@ -244,7 +132,7 @@ const UserLevel: React.FC<{
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </div> */}
 
       {/* 캐릭터와 아이템 겹치기 */}
       <div className="relative">
@@ -256,14 +144,14 @@ const UserLevel: React.FC<{
         />
 
         {/* 장착된 아이템들을 기본 캐릭터 위에 겹쳐서 표시 */}
-        {equippedItems.map((itemType, index) => (
+        {/* {equippedItems.map((itemType, index) => (
           <img
             key={`${itemType}-${index}`}
             src={getItemImage(itemType)}
             alt={`${characterType} ${itemType}`}
             className="absolute inset-0 w-24 h-24 md:w-32 md:h-32 z-30"
           />
-        ))}
+        ))} */}
       </div>
 
       <div className="flex flex-row items-center w-full px-4 gap-2">
