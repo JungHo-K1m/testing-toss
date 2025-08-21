@@ -12,7 +12,7 @@ export interface AttendanceResponse {
     sun: boolean;
   };
   randomBox: {
-    result: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';
+    type: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';  // result → type으로 변경
     equipment?: {
       ownedEquipmentId: number;
       type: 'HEAD' | 'EYE' | 'EAR' | 'NECK' | 'BACK';

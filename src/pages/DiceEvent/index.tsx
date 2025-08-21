@@ -34,6 +34,7 @@ import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
 import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
 import BottomNav from "@/widgets/BottomNav/BottomNav";
 import NewMyRanking from "@/widgets/NewMyRanking";
+import { purchaseRandomBox, RandomBoxResult } from "@/entities/User/api/purchaseRandomBox";
 
 const levelRewards = [
   // 2~9 레벨 보상 예시
@@ -77,6 +78,7 @@ const DiceEventPage: React.FC = () => {
     pet,
     suspend,
     setSuspend,
+    lotteryCount, // lotteryCount로 변경 (열쇠 개수)
   } = useUserStore();
 
   const game = useDiceGame();
@@ -324,11 +326,37 @@ const DiceEventPage: React.FC = () => {
   const [showRaffleBoxOpenModal, setShowRaffleBoxOpenModal] = useState(false);
   const [isVibrating, setIsVibrating] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [boxResult, setBoxResult] = useState<{
-    type: string;
-    value: number;
-    image: string;
-  } | null>(null);
+  const [boxResult, setBoxResult] = useState<RandomBoxResult | null>(null);
+  const [isLoadingBox, setIsLoadingBox] = useState(false);
+
+  // 보유 열쇠 개수는 lotteryCount를 직접 사용
+
+  // 디버깅용: 랜덤박스 결과 로깅
+  useEffect(() => {
+    if (boxResult) {
+      console.log('랜덤박스 결과:', boxResult);
+      console.log('결과 타입:', boxResult.type);
+      if (boxResult.equipment) {
+        console.log('장비 정보:', boxResult.equipment);
+        console.log('장비 타입:', boxResult.equipment.type);
+        console.log('장비 희귀도:', boxResult.equipment.rarity);
+        console.log('이미지 경로:', getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity));
+      }
+    }
+  }, [boxResult]);
+
+  // 사용자 데이터 초기 로딩
+  useEffect(() => {
+    const initializeUserData = async () => {
+      try {
+        await fetchUserData();
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    initializeUserData();
+  }, [fetchUserData]);
 
   if (isLoading) {
     return <LoadingSpinner className="h-screen" />;
@@ -338,36 +366,112 @@ const DiceEventPage: React.FC = () => {
     return <div>Error loading data: {error}</div>;
   }
 
+  // 장비 타입별 이미지 가져오기 함수 (Attendance.tsx와 동일)
+  const getEquipmentIcon = (type: string, rarity: number) => {
+    const getRarityImageIndex = (rarity: number): number => {
+      if (rarity <= 1) return 1;      // 보라색
+      if (rarity <= 3) return 2;      // 하늘색
+      if (rarity <= 5) return 3;      // 초록색
+      if (rarity <= 7) return 4;      // 노란색
+      return 5;                        // 빨간색
+    };
+
+    const imageIndex = getRarityImageIndex(rarity);
+    
+    let imageKey: string;
+    switch (type.toUpperCase()) {
+      case 'HEAD': 
+        imageKey = `Crown${imageIndex}`;
+        break;
+      case 'EAR': 
+        imageKey = `Hairpin${imageIndex}`;
+        break;
+      case 'EYE': 
+        imageKey = `Sunglass${imageIndex}`;
+        break;
+      case 'NECK': 
+        imageKey = `Muffler${imageIndex}`;
+        break;
+      case 'BACK': 
+        imageKey = `Ballon${imageIndex}`;
+        break;
+      default: 
+        imageKey = 'Ballon1';
+    }
+    
+    // 디버깅용 로그
+    console.log('이미지 키:', imageKey);
+    console.log('Images 객체에서 해당 키 존재 여부:', imageKey in Images);
+    console.log('사용 가능한 이미지 키들:', Object.keys(Images).filter(key => key.includes('Crown') || key.includes('Hairpin') || key.includes('Sunglass') || key.includes('Muffler') || key.includes('Ballon')));
+    
+    const result = Images[imageKey as keyof typeof Images];
+    
+    if (!result) {
+      console.error(`이미지를 찾을 수 없습니다: ${imageKey}`);
+      console.error('사용 가능한 이미지들:', Object.keys(Images));
+      return Images.Ballon1; // 기본값
+    }
+    
+    return result;
+  };
+
+  // 장비 타입별 이름 가져오기 함수
+  const getEquipmentName = (type: string): string => {
+    const itemNames: { [key: string]: string } = {
+      HEAD: "크라운",
+      EAR: "머리핀",
+      EYE: "선글라스",
+      NECK: "목도리",
+      BACK: "풍선",
+    };
+    return itemNames[type] || type;
+  };
+
   // 랜덤박스 열기 함수
-  const handleOpenRaffleBox = () => {
+  const handleOpenRaffleBox = async () => {
+    if (lotteryCount < 100) {
+      alert('열쇠가 부족합니다. 최소 100개가 필요합니다.');
+      return;
+    }
+
     setShowRaffleBoxOpenModal(true);
     setIsVibrating(false);
     setShowResult(false);
     setBoxResult(null);
+    setIsLoadingBox(true);
 
-    // 2초 후 진동 시작
-    setTimeout(() => {
-      setIsVibrating(true);
-      playSfx(Audios.button_click);
+    try {
+      // 2초 후 진동 시작
+      setTimeout(async () => {
+        setIsVibrating(true);
+        playSfx(Audios.button_click);
 
-      // 2초 진동 후 결과 표시
-      setTimeout(() => {
-        setIsVibrating(false);
-        setShowResult(true);
-
-        // 랜덤 결과 생성 (예시)
-        const results = [
-          { type: "포인트", value: 1000, image: Images.StarpointIcon },
-          { type: "다이스", value: 50, image: Images.DiceIcon },
-          { type: "티켓", value: 5, image: Images.LotteryTicket },
-        ];
-        const randomResult =
-          results[Math.floor(Math.random() * results.length)];
-        setBoxResult(randomResult);
-
-        // 자동 닫기 제거 - 사용자가 "받기" 버튼을 클릭해야 닫힘
-      }, 2000);
-    }, 500);
+        // 2초 진동 후 결과 표시
+        setTimeout(async () => {
+          try {
+            // 실제 API 호출
+            const result = await purchaseRandomBox();
+            setBoxResult(result);
+            
+            // 보유 열쇠 차감 - lotteryCount 직접 업데이트
+            // TODO: API 응답에서 업데이트된 열쇠 개수를 받아와서 업데이트
+            // 현재는 임시로 로컬 상태만 업데이트
+            
+            setIsVibrating(false);
+            setShowResult(true);
+          } catch (error) {
+            console.error('랜덤박스 구매 실패:', error);
+            alert('랜덤박스 구매에 실패했습니다. 다시 시도해주세요.');
+            setShowRaffleBoxOpenModal(false);
+          } finally {
+            setIsLoadingBox(false);
+          }
+        }, 2000);
+      }, 500);
+    } catch (error) {
+      console.error('랜덤박스 열기 오류:', error);
+      setIsLoadingBox(false);
+    }
   };
 
   const handleRPSGameEnd = (result: "win" | "lose", winnings: number) => {
@@ -902,7 +1006,7 @@ const DiceEventPage: React.FC = () => {
                         color: "#FFFFFF",
                       }}
                     >
-                      1000
+                      {lotteryCount}
                     </span>
                   </div>
                   <div className="flex flex-col gap-4 w-full">
@@ -1102,24 +1206,84 @@ const DiceEventPage: React.FC = () => {
                   {/* 결과 표시 */}
                   {showResult && boxResult && (
                     <div className="flex flex-col items-center mb-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <img
-                          src={boxResult.image}
-                          style={{ width: 40, height: 40 }}
-                          alt={boxResult.type}
-                        />
-                        <span
-                          style={{
-                            fontFamily: "'ONE Mobile POP', sans-serif",
-                            fontSize: "20px",
-                            fontWeight: 400,
-                            color: "#FFFFFF",
-                            WebkitTextStroke: "1px #000000",
-                          }}
-                        >
-                          {boxResult.value} {boxResult.type}
-                        </span>
-                      </div>
+                      {boxResult.type === 'EQUIPMENT' && boxResult.equipment ? (
+                        <div className="flex items-center gap-3 mb-2">
+                          <img
+                            src={getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)}
+                            style={{ width: 40, height: 40 }}
+                            alt={boxResult.equipment.type}
+                            onError={(e) => {
+                              console.error('이미지 로드 실패:', e);
+                              if (boxResult.equipment) {
+                                console.error('시도한 이미지 경로:', getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity));
+                              }
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "20px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            {getEquipmentName(boxResult.equipment.type)} 장비
+                          </span>
+                        </div>
+                      ) : boxResult.type === 'DICE' ? (
+                        <div className="flex items-center gap-3 mb-2">
+                          <img
+                            src={Images.Dice}
+                            style={{ width: 40, height: 40 }}
+                            alt="dice"
+                          />
+                          <span
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "20px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            다이스 획득!
+                          </span>
+                        </div>
+                      ) : boxResult.type === 'SL' ? (
+                        <div className="flex items-center gap-3 mb-2">
+                          <img
+                            src={Images.LotteryTicket}
+                            style={{ width: 40, height: 40 }}
+                            alt="lottery"
+                          />
+                          <span
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "20px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            래플권 획득!
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 mb-2">
+                          <span
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "20px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            아쉽게도 아무것도...
+                          </span>
+                        </div>
+                      )}
                       <p
                         style={{
                           fontFamily: "'ONE Mobile POP', sans-serif",
@@ -1129,7 +1293,7 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "0.5px #000000",
                         }}
                       >
-                        획득하셨습니다!
+                        {boxResult.type === 'NONE' ? '다음 기회에!' : '획득하셨습니다!'}
                       </p>
                     </div>
                   )}

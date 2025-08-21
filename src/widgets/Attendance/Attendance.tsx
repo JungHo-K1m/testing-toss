@@ -61,6 +61,18 @@ const getEquipmentIcon = (type: string, rarity: number) => {
   return result;
 };
 
+// 장비 타입별 이름 가져오기 함수
+const getEquipmentName = (type: string): string => {
+  const itemNames: { [key: string]: string } = {
+    HEAD: "크라운",
+    EAR: "머리핀",
+    EYE: "선글라스",
+    NECK: "목도리",
+    BACK: "풍선",
+  };
+  return itemNames[type] || type;
+};
+
 type DayKeys = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 
 interface AttendanceProps {
@@ -159,7 +171,8 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
     
     console.log('renderRewardResult called:', randomBox);
     
-    switch (randomBox.result) {
+    // randomBox.result → randomBox.type으로 변경
+    switch (randomBox.type) {
       case 'EQUIPMENT':
         if (randomBox.equipment) {
           const { type, rarity } = randomBox.equipment;
@@ -252,7 +265,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
         );
         
       default:
-        console.log('Unknown result type:', randomBox.result);
+        console.log('Unknown result type:', randomBox.type);
         return null;
     }
   };
@@ -370,28 +383,28 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
               <div className="flex flex-col items-center mb-4">
                 <div className="flex items-center gap-3 mb-2">
                   {/* 보상 타입에 따른 아이콘 */}
-                  {attendanceResult.randomBox.result === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
+                  {attendanceResult.randomBox.type === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
                     <img
-                      src={Images.airDropBox}
+                      src={getEquipmentIcon(attendanceResult.randomBox.equipment.type, attendanceResult.randomBox.equipment.rarity)}
                       style={{ width: 40, height: 40 }}
                       alt="equipment"
                     />
                   )}
-                  {attendanceResult.randomBox.result === 'DICE' && (
+                  {attendanceResult.randomBox.type === 'DICE' && (
                     <img
                       src={Images.Dice}
                       style={{ width: 40, height: 40 }}
                       alt="dice"
                     />
                   )}
-                  {attendanceResult.randomBox.result === 'SL' && (
+                  {attendanceResult.randomBox.type === 'SL' && (
                     <img
-                      src={Images.airDropBox}
+                      src={Images.SLToken}
                       style={{ width: 40, height: 40 }}
                       alt="sl-token"
                     />
                   )}
-                  {attendanceResult.randomBox.result === 'NONE' && (
+                  {attendanceResult.randomBox.type === 'NONE' && (
                     <img
                       src={Images.airDropBox}
                       style={{ width: 40, height: 40 }}
@@ -399,40 +412,27 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                     />
                   )}
                   
-                                      <span
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "20px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "1px #000000",
-                      }}
-                    >
-                      {attendanceResult.randomBox.result === 'EQUIPMENT' && attendanceResult.randomBox.equipment
-                        ? `${attendanceResult.randomBox.equipment.type} 장비`
-                        : attendanceResult.randomBox.result === 'DICE'
-                        ? '주사위 보상'
-                        : attendanceResult.randomBox.result === 'SL'
-                        ? 'SL 토큰'
-                        : '보상 없음'}
-                    </span>
+                  <span
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "20px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "1px #000000",
+                    }}
+                  >
+                    {attendanceResult.randomBox.type === 'EQUIPMENT' && attendanceResult.randomBox.equipment
+                      ? `${getEquipmentName(attendanceResult.randomBox.equipment.type)} 장비`
+                      : attendanceResult.randomBox.type === 'DICE'
+                      ? '주사위 보상'
+                      : attendanceResult.randomBox.type === 'SL'
+                      ? 'SL 토큰'
+                      : '보상 없음'}
+                  </span>
                 </div>
                 
-                                  {/* 장비인 경우 희귀도 표시 */}
-                  {attendanceResult.randomBox.result === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
-                    <p
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "16px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "0.5px #000000",
-                      }}
-                    >
-                      희귀도: {attendanceResult.randomBox.equipment.rarity}
-                    </p>
-                  )}
-                  
+                {/* 장비인 경우 희귀도 표시 */}
+                {attendanceResult.randomBox.type === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
                   <p
                     style={{
                       fontFamily: "'ONE Mobile POP', sans-serif",
@@ -442,8 +442,21 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                       WebkitTextStroke: "0.5px #000000",
                     }}
                   >
-                    {attendanceResult.randomBox.result === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
+                    희귀도: {attendanceResult.randomBox.equipment.rarity}
                   </p>
+                )}
+                
+                <p
+                  style={{
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    WebkitTextStroke: "0.5px #000000",
+                  }}
+                >
+                  {attendanceResult.randomBox.type === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
+                </p>
               </div>
             )}
 
@@ -565,7 +578,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                   {renderRewardResult()}
                   
                   {/* 장비인 경우 희귀도 표시 */}
-                  {attendanceResult.randomBox.result === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
+                  {attendanceResult.randomBox.type === 'EQUIPMENT' && attendanceResult.randomBox.equipment && (
                     <p
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -588,7 +601,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                       WebkitTextStroke: "0.5px #000000",
                     }}
                   >
-                    {attendanceResult.randomBox.result === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
+                    {attendanceResult.randomBox.type === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
                   </p>
                 </div>
               )}
