@@ -235,7 +235,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   // fetchUserData, items.autoNftCount 의존성 제거(필요하면 남기되 최소화)
 
   useEffect(() => {
-    let autoInterval: NodeJS.Timeout;
+    let autoInterval: ReturnType<typeof setInterval>;
 
     if (isAuto) {
       autoInterval = setInterval(() => {

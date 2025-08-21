@@ -1,4 +1,6 @@
-@import 'pretendard/dist/web/static/pretendard.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ONE Mobile POP OTF 폰트 정의 */
 @font-face {
@@ -8,10 +10,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 @layer base {
   :root {
@@ -79,7 +77,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
   body {
     @apply bg-background text-foreground;
