@@ -124,11 +124,12 @@ export const useDiceGame = () => {
               break;
             case 8:
               setTimeout(() => {
-                // 홈을 지났을 때 래플권만 증가
-                   movePiece(8, 25, (finalPos) => {
-                       setMoving(false);
-                       onMoveComplete(finalPos); // finalPos == 25 % 20 => 5
-                     });
+                // anywhere 비행기 활성화 시에는 주사위를 숨김
+                if (!isAuto) {
+                  setSelectingTile(true);
+                }
+                setMoving(false);
+                onMoveComplete(8); // 8번 위치에서 멈춤
               }, 300);
               break;
             case 13:
@@ -226,6 +227,12 @@ export const useDiceGame = () => {
               setIsSpinGameActive(false);
               rpsGameStore.fetchAllowedBetting();
               break;
+            case 8:
+              // anywhere 타일 - 플레이어가 이동할 위치 선택
+              if (!isAuto) {
+                setSelectingTile(true);
+              }
+              break;
             case 10:
               setIsCardGameActive(true);
               setIsRPSGameActive(false);
@@ -283,7 +290,7 @@ export const useDiceGame = () => {
 
   const handleTileClick = useCallback(
     async (tileId: number) => {
-      if (!selectingTile || tileId === 18) return; // 타일 18 클릭 시 아무 동작도 하지 않음
+      if (!selectingTile) return; // selectingTile이 false면 클릭 불가
 
       playSfx(Audios.high_pass);
 
@@ -300,9 +307,6 @@ export const useDiceGame = () => {
         setDiceCount(data.dice);
         setRolledValue(data.diceResult);
         setPosition(data.tileSequence);
-
-        // 필요한 경우 추가적인 보상 처리
-        // applyReward(tileId); // 제거
 
         // 타일 5, 10, 15에 따른 게임 활성화
         if (tileId === 5) {

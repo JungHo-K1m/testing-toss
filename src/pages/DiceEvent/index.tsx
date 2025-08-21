@@ -564,11 +564,6 @@ const DiceEventPage: React.FC = () => {
               <DialogTrigger
                 className="w-full flex justify-center"
                 onClick={() => playSfx(Audios.button_click)}
-                style={{
-                  backgroundColor: "transparent",
-                  outline: "none",
-                  border: "none",
-                }}
               >
                 <InlineRanking />
               </DialogTrigger>

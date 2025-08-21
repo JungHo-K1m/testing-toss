@@ -313,8 +313,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
       content = <DiceTile count={tileData?.rewardAmount || 0} />;
       dataDice = (tileData?.rewardAmount || 0).toString();
     } else if ([8, 18].includes(id)) {
-      // AirplaneTile
-      content = <AirplaneTile text={tileData?.moveType || ""} />;
+      // AirplaneTile - anywhere 기능
+      if (id === 8) {
+        // 8번 타일은 anywhere 타일 - 플레이어가 원하는 위치로 이동 가능
+        content = <AirplaneTile text="ANYWHERE" />;
+      } else {
+        // 18번 타일은 기존대로
+        content = <AirplaneTile text={tileData?.moveType || ""} />;
+      }
     } else if ([5, 10, 15].includes(id)) {
       // 게임 타일들
       let gameIcon;
@@ -513,21 +519,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 />
               </div>
             )}
-            <div className="absolute bottom-[-30px] left-1/2 transform  z-20">
-              <p
-                className="text-center whitespace-nowrap"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #2A294E",
-                  transform: 'translateX(-18px)'
-                }}
-              >
-                x {formatNumber(diceCount)}
-              </p>
-            </div>
+            {/* anywhere 비행기 활성화 시에는 주사위 개수 텍스트도 숨김 */}
+            {!selectingTile && (
+              <div className="absolute bottom-[-30px] left-1/2 transform  z-20">
+                <p
+                  className="text-center whitespace-nowrap"
+                  style={{
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "18px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    WebkitTextStroke: "1px #2A294E",
+                    transform: 'translateX(-18px)'
+                  }}
+                >
+                  x {formatNumber(diceCount)}
+                </p>
+              </div>
+            )}
             {/* "LUCKY" image animation */}
             <AnimatePresence>
               {isLuckyVisible && (

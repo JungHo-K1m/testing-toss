@@ -20,6 +20,7 @@ interface BoardProps {
   delta: number;
   equippedItems?: ItemType[];
   characterType?: "cat" | "dog";
+  isAnywhereTile?: boolean; // anywhere 타일 여부 추가
 }
 
 const Board: React.FC<BoardProps> = ({

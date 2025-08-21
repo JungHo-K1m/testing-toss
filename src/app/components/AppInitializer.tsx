@@ -528,8 +528,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           }
         }
       } else {
-        console.log('[AppInitializer] 기존 사용자: choose-character 페이지로 이동');
-        safeNavigate('/choose-character');
+        console.log('[AppInitializer] 기존 사용자: dice-event 페이지로 이동');
+        safeNavigate('/dice-event');
       }
 
     } catch (error: any) {

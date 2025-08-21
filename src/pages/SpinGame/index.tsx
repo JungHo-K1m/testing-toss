@@ -317,6 +317,11 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
   const [prizeData, setPrizeData] = useState<{
     spinType: string;
     amount: number;
+    baseAmount: number;
+    rank?: number;
+    diceCount?: number;
+    starCount?: number;
+    slCount?: number;
   } | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { playSfx } = useSound();
@@ -338,8 +343,8 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       const response = await api.get("/play-spin");
       // console.log("Server response:", response.data);
       if (response.data.code === "OK") {
-        const { spinType, amount, baseAmount } = response.data.data;
-        // console.log("Received spinType:", spinType,"amount:",amount,"baseAmount:",baseAmount);
+        const { spinType, amount, baseAmount, rank, diceCount, starCount, slCount } = response.data.data;
+        // console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
 
         // data 배열에서 spinType과 baseAmount 가 모두 일치하는 인덱스 찾기
         const foundIndex = data.findIndex(
@@ -351,7 +356,16 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         if (foundIndex !== -1) {
           // console.log("Prize index found:", foundIndex);
           setPrizeNumber(foundIndex);
-          setPrizeData({ spinType, amount });
+          // API 문서에 맞게 모든 필드 포함
+          setPrizeData({ 
+            spinType, 
+            amount, 
+            baseAmount, 
+            rank, 
+            diceCount, 
+            starCount, 
+            slCount 
+          });
           setMustSpin(true);
         } else {
           // console.error("No matching prize found for given spinType and baseAmount");
@@ -374,7 +388,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     // 사용자 상태 업데이트
     if (prizeData) {
       // console.log("Prize data:", prizeData);
-      const { spinType, amount } = prizeData;
+      const { spinType, amount, baseAmount, rank, diceCount, starCount, slCount } = prizeData;
 
       const normalizedSpinType = spinType.trim().toUpperCase();
 
@@ -388,6 +402,8 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         playSfx(Audios.reward);
       }
 
+      // API 문서에 따르면 amount는 배수가 적용된 최종 보상
+      // baseAmount는 기본 보상
       if (normalizedSpinType === "STAR") {
         setStarPoints((prev: number) => prev + amount);
       } else if (normalizedSpinType === "DICE") {
@@ -399,6 +415,9 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       } else if (normalizedSpinType === "BOOM") {
         // console.log("Boom! Better luck next time!");
       }
+
+      // 추가 정보 로깅 (디버깅용)
+      // console.log("Additional prize info:", { rank, diceCount, starCount, slCount });
     }
     setIsDialogOpen(true);
   };
@@ -426,6 +445,10 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         return "Raffle Ticket";
       case "BOOM":
         return "Boom! Try Again";
+      case "KEY":
+        return "Key";
+      case "TOSS_POINT":
+        return "TOSS Points";
       default:
         return "Unknown";
     }
@@ -446,6 +469,10 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         return Images.LotteryTicket; // 래플 티켓 이미지
       case "BOOM":
         return Images.Boom; // 붐 이미지
+      case "KEY":
+        return Images.Dice; // 키 이미지 (임시로 주사위 사용)
+      case "TOSS_POINT":
+        return Images.TokenReward; // TOSS 포인트 이미지 (임시로 코인 사용)
       default:
         return Images.Dice;
     }
@@ -670,7 +697,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                       WebkitTextStroke: "1px #000000",
                     }}
                   >
-                    보상 부스터
+                    {getPrizeDisplayName(prizeData?.spinType)}
                   </p>
                 </div>
                 <div className="flex flex-row items-center gap-1 mt-2 ml-6">
@@ -684,9 +711,22 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                       WebkitTextStroke: "1px #000000",
                     }}
                   >
-                    돌림판 보상 업그레이드 : x 1
+                    {prizeData?.spinType === "BOOM" ? "Boom! Try Again" : 
+                     `${getPrizeDisplayName(prizeData?.spinType)}: ${prizeData?.amount || 0}`}
                   </p>
                 </div>
+                {/* API 문서의 추가 정보 표시 */}
+                {prizeData && prizeData.spinType !== "BOOM" && (
+                  <div className="mt-2 ml-6 text-xs text-gray-300">
+                    {prizeData.baseAmount !== prizeData.amount && (
+                      <p>기본 보상: {prizeData.baseAmount} → 최종 보상: {prizeData.amount}</p>
+                    )}
+                    {prizeData.rank && <p>순위: {prizeData.rank}</p>}
+                    {prizeData.diceCount && <p>주사위: {prizeData.diceCount}</p>}
+                    {prizeData.starCount && <p>별: {prizeData.starCount}</p>}
+                    {prizeData.slCount && <p>코인: {prizeData.slCount}</p>}
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-3 w-[300px] h-14 mt-4">
