@@ -1,5 +1,6 @@
 import React from 'react';
 import { HiCheck, HiX } from 'react-icons/hi';
+import Images from '@/shared/assets/images';
 
 interface AttendanceDayProps {
   day: string;
@@ -12,15 +13,41 @@ const AttendanceDay: React.FC<AttendanceDayProps> = ({ day, status, displayDay, 
   const getStatusClass = () => {
     switch (status) {
       case 'checked':
-        return 'attendance-check-box-checked text-white border-none';
+        return 'text-white'; // 테두리 제거
       case 'missed':
-        return 'attendance-check-box-missed text-white border-none';
+        return 'text-white'; // 테두리 제거
       case 'default':
-        return 'border-slate-200';
+        return 'border-slate-200'; // 기본 상태는 테두리 유지
       case 'today':
-        return 'border-yellow-400 animate-pulse';
+        return 'border-yellow-400 animate-pulse'; // 오늘 날짜는 테두리 유지
       default:
         return '';
+    }
+  };
+
+  // 출석 상태에 따른 아이콘 렌더링
+  const renderStatusIcon = () => {
+    switch (status) {
+      case 'checked':
+        return (
+          <img
+            src={Images.CheckIcon}
+            alt="출석 완료"
+            className="w-8 h-8" // 40x40 사이즈
+            style={{ width: '32px', height: '32px' }}
+          />
+        );
+      case 'missed':
+        return (
+          <img
+            src={Images.CloseIcon}
+            alt="출석 실패"
+            className="w-8 h-8" // 40x40 사이즈
+            style={{ width: '32px', height: '32px' }}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -31,13 +58,11 @@ const AttendanceDay: React.FC<AttendanceDayProps> = ({ day, status, displayDay, 
     >
       <p className="font-semibold">{displayDay}</p>
       <div
-        className={`w-7 h-7 rounded-full flex justify-center items-center border-2 ${getStatusClass()}`}
+        className={`w-8 h-8 rounded-full flex justify-center items-center ${
+          status === 'checked' || status === 'missed' ? '' : 'border-2'
+        } ${getStatusClass()}`}
       >
-        {status === 'checked' ? (
-          <HiCheck className="w-5 h-5" />
-        ) : status === 'missed' ? (
-          <HiX className="w-5 h-5" />
-        ) : null}
+        {renderStatusIcon()}
       </div>
     </div>
   );

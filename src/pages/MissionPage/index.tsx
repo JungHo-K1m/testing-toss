@@ -15,7 +15,7 @@ import LoadingSpinner from "@/shared/components/ui/loadingSpinner";
 import { preloadImages } from "@/shared/utils/preloadImages";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
-// import Attendance from "@/widgets/Attendance";
+import Attendance from "@/widgets/Attendance/Attendance";
 
 interface OneTimeMissionCardProps {
   mission: Mission;
@@ -333,7 +333,7 @@ const MissionPage: React.FC = () => {
 
       {/* 출석 위젯 */}
       <h1
-        className="text-center"
+        className="text-center mt-10"
         style={{
           ...whiteTextStyle,
           fontSize: "18px",
@@ -341,8 +341,8 @@ const MissionPage: React.FC = () => {
       >
         일일 출석
       </h1>
-      <div className="mx-6">
-        {/* <Attendance /> */}
+      <div className="mx-6 mb-6">
+        <Attendance />
       </div>
 
       {/* 미완료 미션 */}

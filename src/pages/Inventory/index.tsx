@@ -1,7 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TopTitle } from "@/shared/components/ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import Images from "@/shared/assets/images";
+import { getItemList, InventoryItem, EquippedSlotItem, InventoryResponse } from "@/entities/User/api/getItemList";
+
+// 등급별 색상 매핑 함수
+const getRarityImageIndex = (rarity: number): number => {
+  if (rarity <= 1) return 1;      // 보라색
+  if (rarity <= 3) return 2;      // 하늘색
+  if (rarity <= 5) return 3;      // 초록색
+  if (rarity <= 7) return 4;      // 노란색
+  return 5;                        // 빨간색
+};
+
+// 장비 타입별 이미지 가져오기 함수
+const getEquipmentIcon = (type: string, rarity: number) => {
+  const imageIndex = getRarityImageIndex(rarity);
+  
+  let result;
+  switch (type.toUpperCase()) {
+    case 'HEAD': 
+      result = Images[`Crown${imageIndex}` as keyof typeof Images];
+      break;
+    case 'EAR': 
+      result = Images[`Hairpin${imageIndex}` as keyof typeof Images];
+      break;
+    case 'EYE': 
+      result = Images[`Sunglass${imageIndex}` as keyof typeof Images];
+      break;
+    case 'NECK': 
+      result = Images[`Muffler${imageIndex}` as keyof typeof Images];
+      break;
+    case 'BACK': 
+      result = Images[`Ballon${imageIndex}` as keyof typeof Images];
+      break;
+    default: 
+      result = Images.Ballon1; // 기본값
+  }
+  
+  return result;
+};
 
 // 아이템 상세 모달 컴포넌트
 interface ItemModalProps {
@@ -313,6 +351,42 @@ function ItemSlot({
   );
 }
 
+// 빈 슬롯 컴포넌트
+function EmptySlot({ type }: { type: string }) {
+  const getSlotPosition = (type: string) => {
+    switch (type) {
+      case 'HEAD': return 'top';
+      case 'BACK': return 'bottom';
+      case 'NECK': return 'right';
+      case 'EAR': return 'left';
+      case 'EYE': return 'right';
+      default: return 'center';
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col items-center">
+      <div
+        className="w-[60px] h-[60px] min-[376px]:w-20 min-[376px]:h-20 rounded-2xl flex items-center justify-center shadow-lg border-2 border-dashed border-gray-400 bg-gray-800/30"
+        style={{
+          boxShadow: "0px 2px 2px 0px rgba(0, 0, 0, 0.35), inset 0px 0px 2px 2px rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        <div className="text-gray-400 text-xs text-center">
+          <div className="font-bold">{type}</div>
+          <div className="text-[8px]">슬롯</div>
+        </div>
+      </div>
+      {/* 빈 슬롯 표시 */}
+      <div
+        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[18px] h-[18px] min-[376px]:w-[22px] min-[376px]:h-[22px] rounded-full flex items-center justify-center bg-gray-500 border border-gray-400"
+      >
+        <span className="text-[5px] min-[376px]:text-[6px] font-bold text-white">-</span>
+      </div>
+    </div>
+  );
+}
+
 interface OwnedItemCardProps {
   icon: string;
   alt: string;
@@ -410,136 +484,95 @@ const Inventory: React.FC = () => {
     isEquipped: boolean;
   } | null>(null);
 
+  // 인벤토리 데이터 상태
+  const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 인벤토리 데이터 가져오기
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getItemList();
+        setInventoryData(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
+        console.error('Inventory fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, []);
+
   // 아이템 클릭 핸들러
   const handleItemClick = (
-    item: {
-      icon: string;
-      alt: string;
-      quantity: number;
-      gradient: string;
-    },
+    item: InventoryItem,
     isEquipped: boolean = false
   ) => {
     const itemNames: { [key: string]: string } = {
-      crown: "레드 크라운",
-      muffler: "그린 머플러",
-      balloon: "블루 풍선",
-      ribbon: "옐로우 리본",
+      HEAD: "크라운",
+      EAR: "머리핀",
+      EYE: "선글라스",
+      NECK: "목도리",
+      BACK: "풍선",
     };
 
     setSelectedItem({
-      icon: item.icon,
-      alt: item.alt,
-      name: itemNames[item.alt] || item.alt,
-      level: item.quantity,
+      icon: getEquipmentIcon(item.type, item.rarity),
+      alt: item.type,
+      name: itemNames[item.type] || item.type,
+      level: item.rarity,
       isEquipped,
     });
     setIsModalOpen(true);
   };
 
   // 장착된 아이템 클릭 핸들러
-  const handleEquippedItemClick = (icon: string, alt: string) => {
-    const itemNames: { [key: string]: string } = {
-      crown: "레드 크라운",
-      muffler: "그린 머플러",
-      balloon: "블루 풍선",
-      ribbon: "옐로우 리본",
-    };
-
-    setSelectedItem({
-      icon,
-      alt,
-      name: itemNames[alt] || alt,
-      level: 1,
-      isEquipped: true,
-    });
-    setIsModalOpen(true);
+  const handleEquippedItemClick = (item: EquippedSlotItem) => {
+    // slotId 정보 로깅 (디버깅용)
+    console.log(`장착된 아이템 클릭: ${item.type}, 슬롯 ID: ${item.slotId}, 장비 ID: ${item.ownedEquipmentId}`);
+    handleItemClick(item, true);
   };
 
-  const dummyItems: Array<{
-    icon: string;
-    alt: string;
-    quantity: number;
-    gradient: string;
-  }> = [
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 1,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 2,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 3,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 4,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 5,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 6,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenMuffler,
-      alt: "muffler",
-      quantity: 7,
-      gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
-    },
-    {
-      icon: Images.CatGreenMuffler,
-      alt: "muffler",
-      quantity: 8,
-      gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
-    },
-    {
-      icon: Images.CatGreenMuffler,
-      alt: "muffler",
-      quantity: 9,
-      gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
-    },
-    {
-      icon: Images.CatGreenBallon,
-      alt: "balloon",
-      quantity: 1,
-      gradient: "linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%)",
-    },
-    {
-      icon: Images.CatGreenBallon,
-      alt: "balloon",
-      quantity: 3,
-      gradient: "linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%)",
-    },
-    {
-      icon: Images.CatGreenBallon,
-      alt: "balloon",
-      quantity: 5,
-      gradient: "linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%)",
-    },
-    {
-      icon: Images.CatGreenRibbon,
-      alt: "ribbon",
-      quantity: 2,
-      gradient: "linear-gradient(180deg, #BFDBFE 0%, #93C5FD 100%)",
-    },
+  // 장착된 아이템을 효율적으로 찾는 헬퍼 함수
+  const getEquippedItem = (type: string): EquippedSlotItem | undefined => {
+    return inventoryData?.slot.find(item => item.type === type);
+  };
+
+  // 로딩 상태 표시
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-white">
+        <div className="text-xl">인벤토리 로딩 중...</div>
+      </div>
+    );
+  }
+
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-white">
+        <div className="text-xl text-red-400">오류: {error}</div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-500 rounded-lg"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  // 기본 슬롯 위치 (HEAD, EYE, EAR, NECK, BACK 순서)
+  const slotPositions = [
+    { type: 'HEAD', position: 'top' },
+    { type: 'EYE', position: 'top' },
+    { type: 'EAR', position: 'left' },
+    { type: 'NECK', position: 'right' },
+    { type: 'BACK', position: 'bottom' },
   ];
 
   return (
@@ -561,22 +594,28 @@ const Inventory: React.FC = () => {
         <div className="flex items-center justify-center flex-1 w-full">
           {/* 좌측 아이템 슬롯 */}
           <div className="flex flex-col gap-[100px] items-center">
-            <ItemSlot
-              icon={Images.CatGreenCrown}
-              alt="crown"
-              level={3}
-              onClick={() =>
-                handleEquippedItemClick(Images.CatGreenCrown, "crown")
-              }
-            />
-            <ItemSlot
-              icon={Images.CatGreenBallon}
-              alt="balloon"
-              level={5}
-              onClick={() =>
-                handleEquippedItemClick(Images.CatGreenBallon, "balloon")
-              }
-            />
+            {/* HEAD 슬롯 */}
+            {getEquippedItem('HEAD') ? (
+              <ItemSlot
+                icon={getEquipmentIcon('HEAD', getEquippedItem('HEAD')!.rarity)}
+                alt="HEAD"
+                level={getEquippedItem('HEAD')!.rarity}
+                onClick={() => handleEquippedItemClick(getEquippedItem('HEAD')!)}
+              />
+            ) : (
+              <EmptySlot type="HEAD" />
+            )}
+            {/* BACK 슬롯 */}
+            {getEquippedItem('BACK') ? (
+              <ItemSlot
+                icon={getEquipmentIcon('BACK', getEquippedItem('BACK')!.rarity)}
+                alt="BACK"
+                level={getEquippedItem('BACK')!.rarity}
+                onClick={() => handleEquippedItemClick(getEquippedItem('BACK')!)}
+              />
+            ) : (
+              <EmptySlot type="BACK" />
+            )}
           </div>
           {/* 중앙 캐릭터 */}
           <img
@@ -586,30 +625,39 @@ const Inventory: React.FC = () => {
           />
           {/* 우측 아이템 슬롯 */}
           <div className="flex flex-col gap-[30px] items-center">
-            <ItemSlot
-              icon={Images.CatGreenMuffler}
-              alt="muffler"
-              level={7}
-              onClick={() =>
-                handleEquippedItemClick(Images.CatGreenMuffler, "muffler")
-              }
-            />
-            <ItemSlot
-              icon={Images.CatGreenRibbon}
-              alt="ribbon"
-              level={2}
-              onClick={() =>
-                handleEquippedItemClick(Images.CatGreenRibbon, "ribbon")
-              }
-            />
-            <ItemSlot
-              icon={Images.CatGreenRibbon}
-              alt="ribbon"
-              level={9}
-              onClick={() =>
-                handleEquippedItemClick(Images.CatGreenRibbon, "ribbon")
-              }
-            />
+            {/* NECK 슬롯 */}
+            {getEquippedItem('NECK') ? (
+              <ItemSlot
+                icon={getEquipmentIcon('NECK', getEquippedItem('NECK')!.rarity)}
+                alt="NECK"
+                level={getEquippedItem('NECK')!.rarity}
+                onClick={() => handleEquippedItemClick(getEquippedItem('NECK')!)}
+              />
+            ) : (
+              <EmptySlot type="NECK" />
+            )}
+            {/* EAR 슬롯 */}
+            {getEquippedItem('EAR') ? (
+              <ItemSlot
+                icon={getEquipmentIcon('EAR', getEquippedItem('EAR')!.rarity)}
+                alt="EAR"
+                level={getEquippedItem('EAR')!.rarity}
+                onClick={() => handleEquippedItemClick(getEquippedItem('EAR')!)}
+              />
+            ) : (
+              <EmptySlot type="EAR" />
+            )}
+            {/* EYE 슬롯 */}
+            {getEquippedItem('EYE') ? (
+              <ItemSlot
+                icon={getEquipmentIcon('EYE', getEquippedItem('EYE')!.rarity)}
+                alt="EYE"
+                level={getEquippedItem('EYE')!.rarity}
+                onClick={() => handleEquippedItemClick(getEquippedItem('EYE')!)}
+              />
+            ) : (
+              <EmptySlot type="EYE" />
+            )}
           </div>
         </div>
       </div>
@@ -634,17 +682,61 @@ const Inventory: React.FC = () => {
           >
             내 아이템
           </div>
+          
+          {/* 인벤토리 통계 정보 */}
+          {/* {inventoryData && (
+            <div className="mb-4 p-3 rounded-lg bg-blue-900/30 border border-blue-400/50">
+              <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                <div>
+                  <div className="text-blue-300 font-bold">장착된 아이템</div>
+                  <div className="text-white text-lg">
+                    {inventoryData.slot.length}/5
+                  </div>
+                </div>
+                <div>
+                  <div className="text-green-300 font-bold">보유 아이템</div>
+                  <div className="text-white text-lg">
+                    {inventoryData.myItems.length}개
+                  </div>
+                </div>
+                <div>
+                  <div className="text-yellow-300 font-bold">빈 슬롯</div>
+                  <div className="text-white text-lg">
+                    {5 - inventoryData.slot.length}개
+                  </div>
+                </div>
+              </div>
+            </div>
+          )} */}
+          
           <div className="grid grid-cols-4 gap-3 gap-y-4 justify-items-center">
-            {dummyItems.map((item, index) => (
-              <OwnedItemCard
-                key={`${item.alt}-${index}`}
-                icon={item.icon}
-                alt={item.alt}
-                quantity={item.quantity}
-                gradient={item.gradient}
-                onClick={() => handleItemClick(item, false)}
-              />
-            ))}
+            {inventoryData?.myItems && inventoryData.myItems.length > 0 ? (
+              inventoryData.myItems.map((item, index) => (
+                <OwnedItemCard
+                  key={`${item.type}-${item.ownedEquipmentId}-${index}`}
+                  icon={getEquipmentIcon(item.type, item.rarity)}
+                  alt={item.type}
+                  quantity={item.rarity}
+                  gradient=""
+                  onClick={() => handleItemClick(item, false)}
+                />
+              ))
+            ) : (
+              // 보유 아이템이 없을 때의 빈 상태
+              <div className="col-span-4 flex flex-col items-center justify-center py-12 text-gray-400">
+                <div className="w-24 h-24 mb-4 rounded-full bg-gray-700/50 flex items-center justify-center border-2 border-dashed border-gray-500">
+                  <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold mb-2">보유한 아이템이 없습니다</div>
+                  <div className="text-sm text-gray-500">
+                    게임을 플레이하여 아이템을 획득해보세요!
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

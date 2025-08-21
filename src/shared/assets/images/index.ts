@@ -303,6 +303,43 @@ import ButtonPointBlue from "./button-point-blue.png"
 import ButtonPointRed from "./button-point-red.png"
 import VolumeOff from "./volume-off.png"
 import VolumeOn from "./volume-on.png"
+import CheckIcon from "./check-icon.png"
+import CloseIcon from "./close-icon.png"
+
+// Equipment Icons - Ballon (BACK)
+import Ballon1 from "./ballon-1.png";
+import Ballon2 from "./ballon-2.png";
+import Ballon3 from "./ballon-3.png";
+import Ballon4 from "./ballon-4.png";
+import Ballon5 from "./ballon-5.png";
+
+// Equipment Icons - Muffler (NECK)
+import Muffler1 from "./muffler-1.png";
+import Muffler2 from "./muffler-2.png";
+import Muffler3 from "./muffler-3.png";
+import Muffler4 from "./muffler-4.png";
+import Muffler5 from "./muffler-5.png";
+
+// Equipment Icons - Sunglass (EYE)
+import Sunglass1 from "./sunglass-1.png";
+import Sunglass2 from "./sunglass-2.png";
+import Sunglass3 from "./sunglass-3.png";
+import Sunglass4 from "./sunglass-4.png";
+import Sunglass5 from "./sunglass-5.png";
+
+// Equipment Icons - Hairpin (EAR)
+import Hairpin1 from "./hairpin-1.png";
+import Hairpin2 from "./hairpin-2.png";
+import Hairpin3 from "./hairpin-3.png";
+import Hairpin4 from "./hairpin-4.png";
+import Hairpin5 from "./hairpin-5.png";
+
+// Equipment Icons - Crown (HEAD)
+import Crown1 from "./crown-1.png";
+import Crown2 from "./crown-2.png";
+import Crown3 from "./crown-3.png";
+import Crown4 from "./crown-4.png";
+import Crown5 from "./crown-5.png";
 
 
 const Images = {
@@ -610,6 +647,33 @@ const Images = {
   ButtonPointRed,
   VolumeOff,
   VolumeOn,
+  CheckIcon,
+  CloseIcon,
+  Ballon1,
+  Ballon2,
+  Ballon3,
+  Ballon4,
+  Ballon5,
+  Muffler1,
+  Muffler2,
+  Muffler3,
+  Muffler4,
+  Muffler5,
+  Sunglass1,
+  Sunglass2,
+  Sunglass3,
+  Sunglass4,
+  Sunglass5,
+  Hairpin1,
+  Hairpin2,
+  Hairpin3,
+  Hairpin4,
+  Hairpin5,
+  Crown1,
+  Crown2,
+  Crown3,
+  Crown4,
+  Crown5,
 };
 
 export default Images;
