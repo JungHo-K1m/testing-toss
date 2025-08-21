@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { TopTitle } from "@/shared/components/ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import Images from "@/shared/assets/images";
@@ -43,10 +42,10 @@ function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
   return (
     <>
       {/* 배경 블러 오버레이 */}
-      <div className="fixed inset-0 bg-opacity-30 backdrop-blur-md z-[60]" />
+      <div className="fixed inset-0 bg-opacity-30 backdrop-blur-md z-[9999]" />
 
       {/* 모달 컨테이너 */}
-      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+      <div className="fixed inset-0 flex items-center justify-center z-[10000] p-4">
         <div
           className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl"
           style={{
@@ -231,16 +230,65 @@ function ItemSlot({
   icon,
   alt,
   onClick,
+  level = 1,
 }: {
   icon: string;
   alt: string;
   onClick: () => void;
+  level?: number;
 }) {
+  // 강화도에 따른 배경 색상과 테두리 색상 결정
+  const getEnhancementStyle = (level: number) => {
+    if (level <= 2) {
+      return {
+        background: "linear-gradient(180deg, #C655FD 0%, #EECAFF 100%)",
+        border: "2px solid #EECAFF",
+        numberBackground: "#C655FD",
+        numberBorder: "1px solid #EECAFF",
+      };
+    } else if (level <= 4) {
+      return {
+        background: "linear-gradient(180deg, #1FC9FE 0%, #87E2FF 100%)",
+        border: "2px solid #87E2FF",
+        numberBackground: "#1FC9FE",
+        numberBorder: "1px solid #87E2FF",
+      };
+    } else if (level <= 6) {
+      return {
+        background: "linear-gradient(180deg, #73DF28 0%, #ABEE7D 100%)",
+        border: "2px solid #ABEE7D",
+        numberBackground: "#73DF28",
+        numberBorder: "1px solid #ABEE7D",
+      };
+    } else if (level <= 8) {
+      return {
+        background: "linear-gradient(180deg, #FDE328 0%, #FFF3A1 100%)",
+        border: "2px solid #FFF3A1",
+        numberBackground: "#FDE328",
+        numberBorder: "1px solid #FFF3A1",
+      };
+    } else {
+      return {
+        background: "linear-gradient(180deg, #FE5A1F 0%, #FFAC8E 100%)",
+        border: "2px solid #FFAC8E",
+        numberBackground: "#FE5A1F",
+        numberBorder: "1px solid #FFAC8E",
+      };
+    }
+  };
+
+  const enhancementStyle = getEnhancementStyle(level);
+
   return (
     <div className="relative flex flex-col items-center">
       <div
         className="w-[60px] h-[60px] min-[376px]:w-20 min-[376px]:h-20 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer"
-        style={{ background: "linear-gradient(180deg, #F43F5E 0%, #fff 100%)" }}
+        style={{
+          background: enhancementStyle.background,
+          border: enhancementStyle.border,
+          boxShadow:
+            "0px 2px 2px 0px rgba(0, 0, 0, 0.35), inset 0px 0px 2px 2px rgba(255, 255, 255, 0.2)",
+        }}
         onClick={onClick}
       >
         <img
@@ -250,9 +298,15 @@ function ItemSlot({
         />
       </div>
       {/* 등급 표시: 원형, 모바일 퍼스트 분기 */}
-      <div className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] bg-[#F43F5E] w-[18px] h-[18px] min-[376px]:w-[22px] min-[376px]:h-[22px] rounded-full flex items-center justify-center">
+      <div
+        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[18px] h-[18px] min-[376px]:w-[22px] min-[376px]:h-[22px] rounded-full flex items-center justify-center"
+        style={{
+          background: enhancementStyle.numberBackground,
+          border: enhancementStyle.numberBorder,
+        }}
+      >
         <span className="text-[5px] min-[376px]:text-[6px] font-bold text-white">
-          1
+          {level}
         </span>
       </div>
     </div>
@@ -274,18 +328,67 @@ function OwnedItemCard({
   gradient,
   onClick,
 }: OwnedItemCardProps) {
+  // 강화도에 따른 배경 색상과 테두리 색상 결정
+  const getEnhancementStyle = (level: number) => {
+    if (level <= 2) {
+      return {
+        background: "#C655FD80",
+        border: "2px solid #EECAFF",
+        numberBackground: "#C655FD",
+        numberBorder: "1px solid #EECAFF",
+      };
+    } else if (level <= 4) {
+      return {
+        background: "#1FC9FE80",
+        border: "2px solid #87E2FF",
+        numberBackground: "#1FC9FE80",
+        numberBorder: "1px solid #87E2FF",
+      };
+    } else if (level <= 6) {
+      return {
+        background: "#73DF2880",
+        border: "2px solid #ABEE7D",
+        numberBackground: "#73DF2880",
+        numberBorder: "1px solid #ABEE7D",
+      };
+    } else if (level <= 8) {
+      return {
+        background: "#FDE32880",
+        border: "2px solid #FFF3A1",
+        numberBackground: "#FDE32880",
+        numberBorder: "1px solid #FFF3A1",
+      };
+    } else {
+      return {
+        background: "#FE5A1F80",
+        border: "2px solid #FFAC8E",
+        numberBackground: "#FE5A1F80",
+        numberBorder: "1px solid #FFAC8E",
+      };
+    }
+  };
+
+  const enhancementStyle = getEnhancementStyle(quantity);
+
   return (
     <div
       className="relative rounded-2xl flex items-center justify-center shadow-md w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] cursor-pointer"
       style={{
-        background: gradient,
+        background: enhancementStyle.background,
+        border: enhancementStyle.border,
         boxShadow:
           "0px 2px 2px 0px rgba(0, 0, 0, 0.35), inset 0px 0px 2px 2px rgba(255, 255, 255, 0.2)",
       }}
       onClick={onClick}
     >
       <img src={icon} alt={alt} className="w-9 h-9 sm:w-10 sm:h-10" />
-      <div className="absolute left-1/2 -translate-x-1/2 -bottom-3 bg-[#FF5E5E] w-[22px] h-[22px] rounded-full flex items-center justify-center">
+      <div
+        className="absolute left-1/2 -translate-x-1/2 -bottom-3 w-[22px] h-[22px] rounded-full flex items-center justify-center"
+        style={{
+          background: enhancementStyle.numberBackground,
+          border: enhancementStyle.numberBorder,
+        }}
+      >
         <span className="text-white text-[10px] font-bold">{quantity}</span>
       </div>
     </div>
@@ -362,7 +465,25 @@ const Inventory: React.FC = () => {
     {
       icon: Images.CatGreenCrown,
       alt: "crown",
-      quantity: 5,
+      quantity: 1,
+      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
+    },
+    {
+      icon: Images.CatGreenCrown,
+      alt: "crown",
+      quantity: 2,
+      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
+    },
+    {
+      icon: Images.CatGreenCrown,
+      alt: "crown",
+      quantity: 3,
+      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
+    },
+    {
+      icon: Images.CatGreenCrown,
+      alt: "crown",
+      quantity: 4,
       gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
     },
     {
@@ -374,49 +495,31 @@ const Inventory: React.FC = () => {
     {
       icon: Images.CatGreenCrown,
       alt: "crown",
-      quantity: 5,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 5,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 5,
-      gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
-    },
-    {
-      icon: Images.CatGreenCrown,
-      alt: "crown",
-      quantity: 5,
+      quantity: 6,
       gradient: "linear-gradient(180deg, #FECACA 0%, #FDA4AF 100%)",
     },
     {
       icon: Images.CatGreenMuffler,
       alt: "muffler",
-      quantity: 4,
+      quantity: 7,
       gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
     },
     {
       icon: Images.CatGreenMuffler,
       alt: "muffler",
-      quantity: 4,
+      quantity: 8,
       gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
     },
     {
       icon: Images.CatGreenMuffler,
       alt: "muffler",
-      quantity: 4,
+      quantity: 9,
       gradient: "linear-gradient(180deg, #D9F99D 0%, #A7F3D0 100%)",
     },
     {
       icon: Images.CatGreenBallon,
       alt: "balloon",
-      quantity: 3,
+      quantity: 1,
       gradient: "linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%)",
     },
     {
@@ -428,7 +531,7 @@ const Inventory: React.FC = () => {
     {
       icon: Images.CatGreenBallon,
       alt: "balloon",
-      quantity: 3,
+      quantity: 5,
       gradient: "linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%)",
     },
     {
@@ -461,6 +564,7 @@ const Inventory: React.FC = () => {
             <ItemSlot
               icon={Images.CatGreenCrown}
               alt="crown"
+              level={3}
               onClick={() =>
                 handleEquippedItemClick(Images.CatGreenCrown, "crown")
               }
@@ -468,6 +572,7 @@ const Inventory: React.FC = () => {
             <ItemSlot
               icon={Images.CatGreenBallon}
               alt="balloon"
+              level={5}
               onClick={() =>
                 handleEquippedItemClick(Images.CatGreenBallon, "balloon")
               }
@@ -475,7 +580,7 @@ const Inventory: React.FC = () => {
           </div>
           {/* 중앙 캐릭터 */}
           <img
-            src={charactorImageSrc}
+            src={Images.DogSmile}
             alt="character"
             className="min-[376px]:w-[200px] min-[376px]:h-[200px] w-[180px] h-[180px] min-[376px]:-translate-y-4 -translate-y-12"
           />
@@ -484,6 +589,7 @@ const Inventory: React.FC = () => {
             <ItemSlot
               icon={Images.CatGreenMuffler}
               alt="muffler"
+              level={7}
               onClick={() =>
                 handleEquippedItemClick(Images.CatGreenMuffler, "muffler")
               }
@@ -491,6 +597,7 @@ const Inventory: React.FC = () => {
             <ItemSlot
               icon={Images.CatGreenRibbon}
               alt="ribbon"
+              level={2}
               onClick={() =>
                 handleEquippedItemClick(Images.CatGreenRibbon, "ribbon")
               }
@@ -498,6 +605,7 @@ const Inventory: React.FC = () => {
             <ItemSlot
               icon={Images.CatGreenRibbon}
               alt="ribbon"
+              level={9}
               onClick={() =>
                 handleEquippedItemClick(Images.CatGreenRibbon, "ribbon")
               }

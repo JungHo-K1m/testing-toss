@@ -385,7 +385,9 @@ export const useDiceGame = () => {
     setSelectingTile(false);
     setButtonDisabled(false);
     setMoving(false);
-  }, []);
+    // 카드게임 완료 후 상태 완전 초기화
+    setIsCardGameActive(false);
+  }, [setIsCardGameActive]);
 
   const handleMouseDown = useCallback(() => {
     if (!buttonDisabled && diceCount > 0) {

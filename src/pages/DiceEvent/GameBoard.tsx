@@ -31,7 +31,6 @@ import Audios from "@/shared/assets/audio";
 import { HiVolumeOff, HiVolumeUp } from "react-icons/hi";
 import { useSoundStore } from "@/shared/store/useSoundStore";
 import saveSoundSetting from "@/entities/User/api/saveSoundSetting";
-import CardGameModal from "@/pages/CardGame/CardGameModal";
 
 dayjs.extend(duration);
 dayjs.extend(utc); // UTC 플러그인 적용
@@ -419,7 +418,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           {/* 음소거 버튼 */}
           <button
               onClick={handleMute}
-              className="absolute top-9 left-5 z-50 bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-0"
+              className="absolute top-11 left-9 z-50 bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-0"
               style={{
                 backgroundColor: "transparent",
                 outline: "none",
@@ -580,7 +579,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             <div 
               className="flex flex-row items-center justify-center w-[72px]"
               style={{
-                transform: 'translateY(12px)'
+                transform: 'translateY(8px)'
               }}
             >
               {timeUntilRefill === "Refill dice" ? (
@@ -652,7 +651,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
                 backgroundColor: "transparent",
-                transform: 'translate(6px, -10px)',
+                transform: 'translate(10px, -18px)',
                 outline: "none",
                 border: "none",
               }}
@@ -693,10 +692,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {renderTile(0)}
       </div>
       
-      {/* 카드게임 모달 */}
-      {isCardGameActive && (
-        <CardGameModal onClose={handleCardGameEnd} />
-      )}
+
     </div>
   );
 };

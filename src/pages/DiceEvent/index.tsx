@@ -10,6 +10,7 @@ import GameBoard from "./GameBoard";
 import { Board } from "@/features/DiceEvent";
 import RPSGame from "../RPSGame";
 import SpinGame from "../SpinGame";
+import CardGameModal from "../CardGame/CardGameModal";
 import { useUserStore } from "@/entities/User/model/userModel";
 import LoadingSpinner from "@/shared/components/ui/loadingSpinner";
 import {
@@ -470,6 +471,11 @@ const DiceEventPage: React.FC = () => {
               isCardGameActive={game.isCardGameActive}
               handleCardGameEnd={game.handleCardGameEnd}
             />
+            
+            {/* 카드게임 모달 - 한 번만 진행되는 게임 */}
+            {game.isCardGameActive && (
+              <CardGameModal onClose={game.handleCardGameEnd} />
+            )}
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
               <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">

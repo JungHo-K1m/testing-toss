@@ -115,16 +115,16 @@ const data = [
     prize: { type: "TICKET", amount: 1 },
     style: { backgroundColor: "#CA3D77" },
   },
-  {
-    option: "Boom!",
-    image: {
-      uri: `${Images.Boom}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "BOOM", amount: 0 },
-    style: { backgroundColor: "#333333" },
-  },
+  // {
+  //   option: "Boom!",
+  //   image: {
+  //     uri: `${Images.Boom}`,
+  //     sizeMultiplier: 0.7,
+  //     offsetY: 150,
+  //   },
+  //   prize: { type: "BOOM", amount: 0 },
+  //   style: { backgroundColor: "#333333" },
+  // },
 ];
 
 // 커스텀 휠 컴포넌트
@@ -177,7 +177,7 @@ const CustomWheel: React.FC<{
         {data.map((item, index) => {
           const angle = (360 / data.length) * index;
           // 반응형 radius 계산 (비율 기반)
-          const radius = 35; // 휠 크기의 35% 반지름
+          const radius = 25; // 휠 크기의 35% 반지름
           const x = Math.cos(((angle - 90) * Math.PI) / 180) * radius;
           const y = Math.sin(((angle - 90) * Math.PI) / 180) * radius;
 
@@ -186,9 +186,9 @@ const CustomWheel: React.FC<{
               key={index}
               className="absolute w-[12%] h-[12%] flex items-center justify-center"
               style={{
-                left: `calc(50% + ${x}% - 6%)`,
-                top: `calc(50% + ${y}% - 6%)`,
-                transform: `rotate(${-rotation}deg)`, // 텍스트가 회전하지 않도록
+                left: `calc(50% + ${x}% - 4%)`,
+                top: `calc(50% + ${y}% - 4%)`,
+                transform: `rotate(${angle}deg)`, // 휠의 각도에 맞게 회전
               }}
             >
               <div className="text-center">
@@ -196,13 +196,23 @@ const CustomWheel: React.FC<{
                   src={item.image.uri}
                   alt={item.option}
                   className="w-[60%] h-[60%] mx-auto mb-1"
+                  style={{
+                    transform: `rotate(${-angle}deg)`, // 이미지가 휠과 함께 회전하도록
+                  }}
                 />
-                <div
-                  className="text-[2.5vw] md:text-xs font-bold"
-                  style={{ color: item.style.textColor || "#000000" }}
+                {/* <div
+                  style={{ 
+                    // color: item.style.textColor || "#000000",
+                    transform: `rotate(${-angle}deg)`, // 텍스트가 휠과 함께 회전하도록
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "12px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    WebkitTextStroke: "1px #000000",
+                  }}
                 >
                   {item.option}
-                </div>
+                </div> */}
               </div>
             </div>
           );
@@ -307,13 +317,11 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
   const [prizeData, setPrizeData] = useState<{
     spinType: string;
     amount: number;
-    rank?: number;
-    starCount?: number;
   } | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { playSfx } = useSound();
 
-  const { setStarPoints, setDiceCount, setSlToken, setLotteryCount, setRank } =
+  const { setStarPoints, setDiceCount, setSlToken, setLotteryCount } =
     useUserStore();
 
   const handleSpinClick = async () => {
@@ -326,59 +334,28 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
 
       playSfx(Audios.spin_game);
 
-      // /api/play-spin API 호출
+      // /play-spin API 호출
       const response = await api.get("/play-spin");
       // console.log("Server response:", response.data);
       if (response.data.code === "OK") {
-        const { bettingAmount, reward, result, pcValue, rank, starCount } =
-          response.data.data;
-        // console.log("Received data:", { bettingAmount, reward, result, pcValue, rank, starCount });
+        const { spinType, amount, baseAmount } = response.data.data;
+        // console.log("Received spinType:", spinType,"amount:",amount,"baseAmount:",baseAmount);
 
-        // 새로운 API 응답 구조에 맞게 처리
-        // result가 WIN인 경우에만 보상 지급
-        if (result === 1) {
-          // WIN
-          // reward 값에 따라 적절한 보상 타입 결정
-          let spinType = "STAR";
-          let amount = reward;
+        // data 배열에서 spinType과 baseAmount 가 모두 일치하는 인덱스 찾기
+        const foundIndex = data.findIndex(
+          (item) =>
+            item.prize.type === spinType.toUpperCase() &&
+            item.prize.amount === baseAmount
+        );
 
-          // reward 값에 따라 보상 타입 분류 (예시)
-          if (reward >= 1000 && reward <= 5000) {
-            spinType = "STAR";
-          } else if (reward === 1) {
-            spinType = "DICE";
-          } else if (reward === 10) {
-            spinType = "SL";
-          } else if (reward === 1) {
-            spinType = "TICKET";
-          }
-
-          // data 배열에서 해당 보상 타입과 일치하는 인덱스 찾기
-          const foundIndex = data.findIndex(
-            (item) => item.prize.type === spinType
-          );
-
-          if (foundIndex !== -1) {
-            // console.log("Prize index found:", foundIndex);
-            setPrizeNumber(foundIndex);
-            setPrizeData({ spinType, amount, rank, starCount });
-            setMustSpin(true);
-          } else {
-            // 기본값으로 첫 번째 보상 설정
-            setPrizeNumber(0);
-            setPrizeData({ spinType: "STAR", amount: reward, rank, starCount });
-            setMustSpin(true);
-          }
+        if (foundIndex !== -1) {
+          // console.log("Prize index found:", foundIndex);
+          setPrizeNumber(foundIndex);
+          setPrizeData({ spinType, amount });
+          setMustSpin(true);
         } else {
-          // DEFEAT인 경우 BOOM 보상
-          const boomIndex = data.findIndex(
-            (item) => item.prize.type === "BOOM"
-          );
-          if (boomIndex !== -1) {
-            setPrizeNumber(boomIndex);
-            setPrizeData({ spinType: "BOOM", amount: 0, rank, starCount });
-            setMustSpin(true);
-          }
+          // console.error("No matching prize found for given spinType and baseAmount");
+          window.location.reload();
         }
       } else {
         // console.error("Error in play-spin API:", response.data.message);
@@ -411,16 +388,8 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         playSfx(Audios.reward);
       }
 
-      // 서버 응답으로 받은 rank와 starCount를 UserStore에 업데이트
-      if (prizeData.rank !== undefined) {
-        setRank(prizeData.rank);
-      }
-      if (prizeData.starCount !== undefined) {
-        setStarPoints(prizeData.starCount);
-      }
-
       if (normalizedSpinType === "STAR") {
-        // 이미 starCount로 업데이트했으므로 추가 업데이트 불필요
+        setStarPoints((prev: number) => prev + amount);
       } else if (normalizedSpinType === "DICE") {
         setDiceCount((prev: number) => prev + amount);
       } else if (normalizedSpinType === "SL") {
@@ -715,7 +684,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                       WebkitTextStroke: "1px #000000",
                     }}
                   >
-                    돌림판 보상 업그레이드 : x1
+                    돌림판 보상 업그레이드 : x 1
                   </p>
                 </div>
               </div>

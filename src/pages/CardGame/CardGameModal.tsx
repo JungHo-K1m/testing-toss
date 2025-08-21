@@ -1009,11 +1009,7 @@ const CardGameModal = ({ onClose }: any) => {
               setIsResultOpen(true);
               // 게임 결과 후 베팅 정보 새로고침
               await fetchBettingInfo();
-              // 게임 상태 리셋
-              setMode(null);
-              setSelectedColor(null);
-              setSelectedSuit(null);
-              setCardRevealed(false);
+              // 카드게임은 한 번만 진행되므로 게임 상태는 리셋하지 않음
             }}
             onCancel={onClose}
           />
@@ -1025,9 +1021,8 @@ const CardGameModal = ({ onClose }: any) => {
           answer={result.answer || { color: "", suit: { label: "" } }}
           onClose={() => {
             setIsResultOpen(false);
-            // 게임을 다시 시작할 수 있도록 상태 리셋
-            setIsGameStarted(false);
-            setBetAmount(0);
+            // 카드게임은 한 번만 진행되므로 모달 완전 종료
+            onClose();
           }}
         />
       </div>
