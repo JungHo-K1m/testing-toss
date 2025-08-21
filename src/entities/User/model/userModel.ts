@@ -179,7 +179,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchLeaderTab: async () => {
     try {
       const data = await fetchLeaderTabAPI()
-      // data: { leaderBoard: [...], myRank: { rank, star, ticket, slToken, diceRefilledAt } }
+      // data: { leaderBoard: [...], myRank: { rank, star, key, slToken, diceRefilledAt } }
       set(state => ({
         // 이전 랭크를 보존해 두었다가 애니메이션에 사용
         previousRank: state.rank,
@@ -187,14 +187,14 @@ export const useUserStore = create<UserState>((set, get) => ({
         // myRank 필드로부터 각 값 갱신
         rank: data.myRank.rank,
         starPoints: data.myRank.star,
-        lotteryCount: data.myRank.ticket,
+        lotteryCount: data.myRank.key,
         slToken: data.myRank.slToken,
 
         // 모달 데이터도 함께 업데이트
         modalRank: data.myRank.rank,
         modalPreviousRank: state.rank,
         modalStarPoints: data.myRank.star,
-        modalLotteryCount: data.myRank.ticket,
+        modalLotteryCount: data.myRank.key,
         modalSlToken: data.myRank.slToken,
 
         // 상위 10명 리스트
@@ -332,7 +332,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         previousRank: state.rank, // 이전 랭크 저장
         rank: data.rank,
         starPoints: data.star,
-        lotteryCount: data.key,        // ticket에서 key로 변경
+        lotteryCount: data.key,        // key에서 key로 변경
         diceCount: data.dice,
         position: data.tileSequence,   // tileSequence로 position 업데이트
         userLv: data.level,            // 레벨 업데이트
@@ -409,7 +409,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         position: safeNowDice.tileSequence || 0,
         diceCount: safeNowDice.dice || 0,
         starPoints: safeRank.star || 0,
-        lotteryCount: safeRank.ticket || 0,
+        lotteryCount: safeRank.key || 0,
         userLv: safePet.level || 1,
         characterType: safePet.type ? safePet.type.toLowerCase() as 'dog' | 'cat' : null,
 

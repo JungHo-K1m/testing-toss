@@ -294,9 +294,9 @@ export const BaseRanking: React.FC<BaseRankingProps> = ({
         <div className="w-full h-full flex items-center justify-around text-xs">
           <div className="flex flex-col items-center gap-2">
             <motion.img
-              src={Images.Star}
+              src={Images.StarIcon}
               alt="star"
-              className="w-6 h-6"
+              className="w-[44px] h-[44px]"
               variants={scaleGlowImg}
               animate={starChanged ? "animate" : "initial"}
             />
@@ -314,9 +314,9 @@ export const BaseRanking: React.FC<BaseRankingProps> = ({
           </div>
           <div className="flex flex-col items-center gap-2">
             <motion.img
-              src={Images.LotteryTicket}
+              src={Images.KeyIcon}
               alt="ticket"
-              className="w-6 h-6"
+              className="w-[44px] h-[44px]"
               variants={scaleGlowImg}
               animate={lotteryChanged ? "animate" : "initial"}
             />
@@ -337,7 +337,7 @@ export const BaseRanking: React.FC<BaseRankingProps> = ({
               />
             </p>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          {/* <div className="flex flex-col items-center gap-2">
             <motion.img
               src={Images.TokenReward}
               alt="token"
@@ -362,7 +362,7 @@ export const BaseRanking: React.FC<BaseRankingProps> = ({
                 preserveValue
               />
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
 

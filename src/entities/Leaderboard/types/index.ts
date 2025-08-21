@@ -8,7 +8,7 @@ export interface LeaderBoardEntry {
 export interface MyRankData {
   rank: number;
   star: number;
-  ticket: number;
+  key: number;
   slToken: number;
   diceRefilledAt: string;
 }

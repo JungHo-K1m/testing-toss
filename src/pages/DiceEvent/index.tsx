@@ -564,6 +564,11 @@ const DiceEventPage: React.FC = () => {
               <DialogTrigger
                 className="w-full flex justify-center"
                 onClick={() => playSfx(Audios.button_click)}
+                style={{
+                  backgroundColor: "transparent",
+                  outline: "none",
+                  border: "none",
+                }}
               >
                 <InlineRanking />
               </DialogTrigger>
@@ -587,7 +592,14 @@ const DiceEventPage: React.FC = () => {
                 <div className="relative z-10 flex flex-col h-full">
                   <DialogHeader className="flex w-full items-end">
                     <DialogClose>
-                      <HiX className="w-5 h-5" />
+                      <HiX 
+                        className="w-5 h-5"
+                        style={{
+                          backgroundColor: "transparent",
+                          outline: "none",
+                          border: "none",
+                        }} 
+                      />
                     </DialogClose>
                   </DialogHeader>
                   <ModalRanking />
