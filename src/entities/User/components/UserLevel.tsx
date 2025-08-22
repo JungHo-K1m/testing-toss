@@ -96,44 +96,6 @@ const UserLevel: React.FC<{
         />
       </div>
 
-      {/* 말풍선 + 문구 */}
-      {/* <div className="absolute top-1 right-1 flex justify-end w-full px-1 z-50">
-        <AnimatePresence>
-          {visible && (
-            <motion.div
-              key={currentMsgIndex}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.5 }}
-              className="relative px-2 py-1 rounded-2xl shadow-lg font-semibold text-[10px]"
-              style={{
-                background: "#fff",
-                color: "#333",
-                textAlign: "center",
-                zIndex: 50,
-                overflow: "visible",
-              }}
-            >
-              <div
-                style={{
-                  content: "",
-                  position: "absolute" as const,
-                  bottom: "-3px",
-                  left: "30%",
-                  transform: "translateX(-50%)",
-                  width: 0,
-                  height: 0,
-                  borderLeft: "6px solid transparent",
-                  borderRight: "6px solid transparent",
-                  borderTop: "6px solid #fff",
-                }}
-              ></div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div> */}
-
       {/* 캐릭터와 아이템 겹치기 */}
       <div className="relative">
         {/* 기본 캐릭터 이미지 */}

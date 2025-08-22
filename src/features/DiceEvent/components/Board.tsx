@@ -86,7 +86,7 @@ const Board: React.FC<BoardProps> = ({
         className="w-12 h-12 md:w-20 md:h-20 relative z-10"
         style={{
           ...flipStyle,
-          transform: `${flipStyle.transform || ''} translateX(4px)`.trim(),
+          transform: `${flipStyle.transform || ""} translateX(4px)`.trim(),
         }}
       />
       {/* {equippedItems.map((itemType, index) => (

@@ -417,25 +417,32 @@ const GameBoard: React.FC<GameBoardProps> = ({
           className="col-span-4 row-span-4 flex flex-col items-center justify-evenly bg-center"
           style={{ zIndex: 2, position: "relative" }}
         >
-          <div className="w-full flex justify-center mb-4" style={{ zIndex: 20 }}>
+          <div
+            className="w-full flex justify-center mb-4"
+            style={{ zIndex: 20 }}
+          >
             <Gauge gaugeValue={gaugeValue} />
           </div>
 
           {/* 음소거 버튼 */}
           <button
-              onClick={handleMute}
-              className="absolute top-11 left-9 z-50 bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-0"
-              style={{
-                backgroundColor: "transparent",
-                outline: "none",
-                border: "none",
-              }}
-            >
-              {masterMuted ? (
-                <img src={Images.VolumeOff} alt="Volume Off" className="w-5 h-5" />
-              ) : (
-                <img src={Images.VolumeOn} alt="Volume On" className="w-5 h-5" />
-              )}
+            onClick={handleMute}
+            className="absolute top-11 left-9 z-50 bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-0"
+            style={{
+              backgroundColor: "transparent",
+              outline: "none",
+              border: "none",
+            }}
+          >
+            {masterMuted ? (
+              <img
+                src={Images.VolumeOff}
+                alt="Volume Off"
+                className="w-5 h-5"
+              />
+            ) : (
+              <img src={Images.VolumeOn} alt="Volume On" className="w-5 h-5" />
+            )}
           </button>
 
           <div className="relative w-[120px] h-[120px] md:w-44 md:h-44">
@@ -456,58 +463,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* <AnimatePresence>
-              {reward && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ duration: 1 }}
-                  className="absolute flex items-center justify-center w-16 h-16 bg-white rounded-full text-black text-sm font-bold border-4 border-yellow-200"
-                  style={{
-                    top: reward.top,
-                    left: reward.left,
-                    zIndex: 50,
-                  }}
-                >
-                  {reward.type === "STAR" && (
-                    <div className="flex flex-col items-center">
-                      <img src={Images.Star} alt="star" className="h-6" />
-                      <span className="mt-1 ">
-                        +{formatNumber(reward.value * items.boardRewardTimes)}
-                      </span>
-                    </div>
-                  )}
-                  {reward.type === "DICE" && (
-                    <div className="flex flex-col items-center">
-                      <img src={Images.Dice} alt="dice" className="h-6" />
-                      <span className="mt-1">
-                        +{formatNumber(reward.value)}
-                      </span>
-                    </div>
-                  )}
-                  {reward.type === "lottery" && (
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={Images.LotteryTicket}
-                        alt="lottery"
-                        className="h-6"
-                      />
-                      <span className="mt-1">
-                        +{formatNumber(reward.value * items.ticketTimes)}
-                      </span>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence> */}
 
             {/* anywhere 비행기 활성화 시에는 주사위를 숨김 */}
             {!selectingTile && (
-              <div 
+              <div
                 className="flex flex-col w-full h-full items-center justify-center dice-container"
                 style={{
-                  transform: 'translateY(20px)'
+                  transform: "translateY(20px)",
                 }}
               >
                 <Dice
@@ -530,7 +492,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     fontWeight: 400,
                     color: "#FFFFFF",
                     WebkitTextStroke: "1px #2A294E",
-                    transform: 'translateX(-18px)'
+                    transform: "translateX(-18px)",
                   }}
                 >
                   x {formatNumber(diceCount)}
@@ -551,7 +513,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 />
               )}
             </AnimatePresence>
-
           </div>
           <div
             id="third-step"
@@ -562,7 +523,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               id="fifth-step"
               className="flex flex-row items-center gap-0.5 text-white"
               style={{
-                transform: 'translate(-6px, 12px)'
+                transform: "translate(-6px, 12px)",
               }}
             >
               <p
@@ -585,10 +546,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
             </div>
 
             {/* 리필 영역 - 중앙 */}
-            <div 
+            <div
               className="flex flex-row items-center justify-center w-[72px]"
               style={{
-                transform: 'translateY(8px)'
+                transform: "translateY(8px)",
               }}
             >
               {timeUntilRefill === "Refill dice" ? (
@@ -660,7 +621,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
                 backgroundColor: "transparent",
-                transform: 'translate(10px, -18px)',
+                transform: "translate(10px, -18px)",
                 outline: "none",
                 border: "none",
               }}
@@ -700,8 +661,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {renderTile(19)}
         {renderTile(0)}
       </div>
-      
-
     </div>
   );
 };
