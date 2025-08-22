@@ -341,20 +341,24 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
 
       // /play-spin API 호출
       const response = await api.get("/play-spin");
-      // console.log("Server response:", response.data);
+      console.log("Server response:", response.data);
+      
       if (response.data.code === "OK") {
         const { spinType, amount, baseAmount, rank, diceCount, starCount, slCount } = response.data.data;
-        // console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
+        console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
+        console.log("Available prize types in data array:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
 
         // data 배열에서 spinType과 baseAmount 가 모두 일치하는 인덱스 찾기
         const foundIndex = data.findIndex(
-          (item) =>
-            item.prize.type === spinType.toUpperCase() &&
-            item.prize.amount === baseAmount
+          (item) => {
+            const match = item.prize.type === spinType.toUpperCase() && item.prize.amount === baseAmount;
+            console.log(`Checking item:`, item.prize, `against API:`, { type: spinType.toUpperCase(), amount: baseAmount }, `Match:`, match);
+            return match;
+          }
         );
 
         if (foundIndex !== -1) {
-          // console.log("Prize index found:", foundIndex);
+          console.log("Prize index found:", foundIndex);
           setPrizeNumber(foundIndex);
           // API 문서에 맞게 모든 필드 포함
           setPrizeData({ 
@@ -368,16 +372,21 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
           });
           setMustSpin(true);
         } else {
-          // console.error("No matching prize found for given spinType and baseAmount");
-          window.location.reload();
+          console.error("No matching prize found for given spinType and baseAmount");
+          console.error("API Response:", { spinType, baseAmount });
+          console.error("Available prizes:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
+          // window.location.reload(); // 임시로 주석 처리
+          alert(`API 응답과 일치하는 상품을 찾을 수 없습니다. spinType: ${spinType}, baseAmount: ${baseAmount}`);
         }
       } else {
-        // console.error("Error in play-spin API:", response.data.message);
-        window.location.reload();
+        console.error("Error in play-spin API:", response.data.message);
+        // window.location.reload(); // 임시로 주석 처리
+        alert(`API 오류: ${response.data.message}`);
       }
     } catch (error) {
-      // console.error("Error calling play-spin API:", error);
-      window.location.reload();
+      console.error("Error calling play-spin API:", error);
+      // window.location.reload(); // 임시로 주석 처리
+      alert(`API 호출 오류: ${error}`);
     } finally {
       setIsSpinning(false);
     }

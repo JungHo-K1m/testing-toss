@@ -8,17 +8,17 @@ export interface AttendanceResponse {
     wed: boolean;
     thu: boolean;
     fri: boolean;
-    sat: boolean;
-    sun: boolean;
+    sat: boolean | null;
+    sun: boolean | null;
   };
-  randomBox: {
-    type: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';  // result → type으로 변경
+  randomBox: Array<{
+    type: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';
     equipment?: {
       ownedEquipmentId: number;
       type: 'HEAD' | 'EYE' | 'EAR' | 'NECK' | 'BACK';
       rarity: number; // 0~9
     };
-  };
+  }>;
 }
 
 // 출석 체크 API (GET 요청으로 변경)
