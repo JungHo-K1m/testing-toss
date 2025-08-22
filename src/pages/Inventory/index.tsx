@@ -3,6 +3,7 @@ import { TopTitle, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/sh
 import { useNavigate, useLocation } from "react-router-dom";
 import Images from "@/shared/assets/images";
 import { getItemList, InventoryItem, EquippedSlotItem, InventoryResponse } from "@/entities/User/api/getItemList";
+import { wearEquipment } from "@/entities/User/api/wearEquipment";
 import BottomNavigation from "@/widgets/BottomNav/BottomNav";
 import { HiX } from "react-icons/hi";
 import { DialogClose } from "@radix-ui/react-dialog";
@@ -55,10 +56,12 @@ interface ItemModalProps {
     level: number;
     isEquipped: boolean;
     type?: string;
+    ownedEquipmentId?: number; // 장착/해제를 위한 ID 추가
   };
+  onEquipmentChange: (newInventoryData: any) => void; // 인벤토리 데이터 업데이트 콜백
 }
 
-function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
+function ItemModal({ isOpen, onClose, item, onEquipmentChange }: ItemModalProps) {
   // 아이템 타입별 강화 효과 정의
   const getEnhancementEffects = (type: string) => {
     switch (type?.toUpperCase()) {
@@ -217,14 +220,15 @@ function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <div className="relative">
-          <DialogClose className="absolute top-0 right-0 p-2">
-            <HiX
-              className="w-5 h-5"
-              onClick={onClose}
-            />
-          </DialogClose>
-        </div>
+                 <DialogTitle className="sr-only">아이템 상세 정보</DialogTitle>
+         <div className="relative">
+           <DialogClose className="absolute top-0 right-0 p-2">
+             <HiX
+               className="w-5 h-5"
+               onClick={onClose}
+             />
+           </DialogClose>
+         </div>
         
         <div className="flex flex-col items-center justify-around">
                      <div className="flex flex-col items-center gap-2 mb-[30px]">
@@ -334,10 +338,82 @@ function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
                 WebkitTextStroke: "1px #000000",
                 opacity: 1,
               }}
-              onClick={() => {
-                // TODO: 장착/해제 로직 구현
-                console.log(item.isEquipped ? "해제" : "장착");
-              }}
+                             onClick={async () => {
+                 try {
+                   console.log('=== 장착/해제 버튼 클릭 시작 ===');
+                   console.log('아이템 정보:', {
+                     ownedEquipmentId: item.ownedEquipmentId,
+                     type: item.type,
+                     isEquipped: item.isEquipped,
+                     name: item.name,
+                     level: item.level
+                   });
+                   
+                   if (!item.ownedEquipmentId) {
+                     console.error('❌ ownedEquipmentId가 없습니다:', item);
+                     alert('아이템 정보를 찾을 수 없습니다.');
+                     return;
+                   }
+                   
+                   console.log('🚀 wearEquipment API 호출 시작...');
+                   console.log('API 요청 데이터:', { ownedEquipmentId: item.ownedEquipmentId });
+                   
+                   const newInventoryData = await wearEquipment({
+                     ownedEquipmentId: item.ownedEquipmentId
+                   });
+                   
+                   console.log('✅ API 응답 성공:', newInventoryData);
+                   console.log('응답 데이터 구조:', {
+                     hasSlot: !!newInventoryData.slot,
+                     hasMyItems: !!newInventoryData.myItems,
+                     slotLength: newInventoryData.slot?.length || 0,
+                     myItemsLength: newInventoryData.myItems?.length || 0
+                   });
+                   
+                   console.log('🔄 인벤토리 데이터 업데이트 시작...');
+                   onEquipmentChange(newInventoryData);
+                   console.log('✅ 인벤토리 데이터 업데이트 완료');
+                   
+                   console.log('🚪 모달 닫기 시작...');
+                   onClose();
+                   console.log('✅ 모달 닫기 완료');
+                   
+                   console.log(`🎉 ${item.isEquipped ? "해제" : "장착"} 완료!`);
+                   console.log('=== 장착/해제 버튼 클릭 완료 ===');
+                   
+                 } catch (error: unknown) {
+                   console.error('❌ 장착/해제 실패 - 에러 상세 정보:');
+                   console.error('에러 객체:', error);
+                   console.error('에러 메시지:', error instanceof Error ? error.message : '알 수 없는 에러');
+                   console.error('에러 스택:', error instanceof Error ? error.stack : '스택 정보 없음');
+                   
+                   // Axios 에러인지 확인
+                   if (error && typeof error === 'object' && 'response' in error) {
+                     const axiosError = error as any;
+                     console.error('API 응답 에러:', {
+                       status: axiosError.response?.status,
+                       statusText: axiosError.response?.statusText,
+                       data: axiosError.response?.data
+                     });
+                   }
+                   
+                   // 에러 메시지를 사용자 친화적으로 표시
+                   let errorMessage = '장착/해제에 실패했습니다.';
+                   
+                   if (error instanceof Error) {
+                     errorMessage += `\n\n에러: ${error.message}`;
+                   } else if (error && typeof error === 'object' && 'response' in error) {
+                     const axiosError = error as any;
+                     if (axiosError.response?.data?.message) {
+                       errorMessage += `\n\n서버 에러: ${axiosError.response.data.message}`;
+                     } else if (axiosError.response?.status) {
+                       errorMessage += `\n\nHTTP 상태: ${axiosError.response.status}`;
+                     }
+                   }
+                   
+                   alert(errorMessage);
+                 }
+               }}
             >
               <img
                 src={
@@ -614,14 +690,15 @@ const Inventory: React.FC = () => {
 
   // 모달 상태 관리
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedItem, setSelectedItem] = useState<{
-    icon: string;
-    alt: string;
-    name: string;
-    level: number;
-    isEquipped: boolean;
-    type: string;
-  } | null>(null);
+     const [selectedItem, setSelectedItem] = useState<{
+     icon: string;
+     alt: string;
+     name: string;
+     level: number;
+     isEquipped: boolean;
+     type: string;
+     ownedEquipmentId?: number;
+   } | null>(null);
 
   // 인벤토리 데이터 상태
   const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
@@ -659,16 +736,23 @@ const Inventory: React.FC = () => {
       BACK: "풍선",
     };
 
-    setSelectedItem({
-      icon: getEquipmentIcon(item.type, item.rarity),
-      alt: item.type,
-      name: itemNames[item.type] || item.type,
-      level: item.rarity,
-      isEquipped,
-      type: item.type,
-    });
+         setSelectedItem({
+       icon: getEquipmentIcon(item.type, item.rarity),
+       alt: item.type,
+       name: itemNames[item.type] || item.type,
+       level: item.rarity,
+       isEquipped,
+       type: item.type,
+       ownedEquipmentId: item.ownedEquipmentId,
+     });
     setIsModalOpen(true);
     console.log('Modal opened, isModalOpen:', true); // 디버깅용
+    console.log('Selected item data:', {
+      type: item.type,
+      rarity: item.rarity,
+      ownedEquipmentId: item.ownedEquipmentId,
+      isEquipped
+    });
   };
 
   // 장착된 아이템 클릭 핸들러
@@ -758,11 +842,65 @@ const Inventory: React.FC = () => {
             )}
           </div>
           {/* 중앙 캐릭터 */}
-          <img
-            src={Images.DogSmile}
-            alt="character"
-            className="min-[376px]:w-[200px] min-[376px]:h-[200px] w-[180px] h-[180px] min-[376px]:-translate-y-4 -translate-y-12"
-          />
+           <div className="relative">
+             {/* BACK 아이템을 캐릭터 뒤에 표시 */}
+             {getEquippedItem('BACK') && (
+               <img
+                 src={getEquipmentIcon('BACK', getEquippedItem('BACK')!.rarity)}
+                 alt="BACK"
+                 className="absolute -top-14 left-1/2 transform -translate-x-1/2 w-20 h-20 min-[376px]:w-24 min-[376px]:h-24 opacity-90"
+                 style={{ zIndex: 5 }}
+               />
+             )}
+             
+             {/* 캐릭터 이미지 */}
+             <img
+               src={Images.DogSmile}
+               alt="character"
+               className="relative min-[376px]:w-[200px] min-[376px]:h-[200px] w-[180px] h-[180px] min-[376px]:-translate-y-4 -translate-y-12"
+               style={{ zIndex: 10 }}
+             />
+             
+             {/* 장착된 아이템 오버레이 (캐릭터 앞에 표시) */}
+              {getEquippedItem('HEAD') && (
+                <img
+                  src={getEquipmentIcon('HEAD', getEquippedItem('HEAD')!.rarity)}
+                  alt="HEAD"
+                  className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-16 h-16 min-[376px]:w-20 min-[376px]:h-20 opacity-90"
+                  style={{ zIndex: 15 }}
+                />
+              )}
+              
+              {getEquippedItem('EYE') && (
+                <img
+                  src={getEquipmentIcon('EYE', getEquippedItem('EYE')!.rarity)}
+                  alt="EYE"
+                  className="absolute top-[14px] left-[51%] transform -translate-x-1/2 w-12 h-12 min-[376px]:w-20 min-[376px]:h-20 opacity-90"
+                  style={{ zIndex: 15 }}
+                />
+              )}
+              
+              {getEquippedItem('EAR') && (
+                <img
+                  src={getEquipmentIcon('EAR', getEquippedItem('EAR')!.rarity)}
+                  alt="EAR"
+                  className="absolute top-1 right-8 w-10 h-10 min-[376px]:w-12 min-[376px]:h-12 opacity-90"
+                  style={{ 
+                    zIndex: 15,
+                    transform: 'rotate(45deg)'
+                  }}
+                />
+              )}
+              
+              {getEquippedItem('NECK') && (
+                <img
+                  src={getEquipmentIcon('NECK', getEquippedItem('NECK')!.rarity)}
+                  alt="NECK"
+                  className="absolute top-[88px] left-[51%] transform -translate-x-1/2 w-14 h-14 min-[376px]:w-16 min-[376px]:h-16 opacity-90"
+                  style={{ zIndex: 15 }}
+                />
+              )}
+           </div>
           {/* 우측 아이템 슬롯 */}
           <div className="flex flex-col gap-[20px] items-center">
             {/* NECK 슬롯 */}
@@ -855,17 +993,36 @@ const Inventory: React.FC = () => {
         </div>
       </div>
 
-             {/* 아이템 상세 모달 */}
-       {selectedItem && (
-         <ItemModal
-           isOpen={isModalOpen}
-           onClose={() => {
-             setIsModalOpen(false);
-             setSelectedItem(null);
-           }}
-           item={selectedItem}
-         />
-       )}
+                     {/* 아이템 상세 모달 */}
+        {selectedItem && (
+          <ItemModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedItem(null);
+            }}
+            item={selectedItem}
+                         onEquipmentChange={(newInventoryData) => {
+               console.log('🔄 인벤토리 데이터 업데이트:', newInventoryData);
+               
+               // API 응답 데이터 구조 확인 및 검증
+               if (newInventoryData && 
+                   Array.isArray(newInventoryData.slot) && 
+                   Array.isArray(newInventoryData.myItems)) {
+                 
+                 console.log('✅ 유효한 응답 데이터:', {
+                   slotCount: newInventoryData.slot.length,
+                   myItemsCount: newInventoryData.myItems.length
+                 });
+                 
+                 setInventoryData(newInventoryData);
+               } else {
+                 console.error('❌ 잘못된 응답 데이터 구조:', newInventoryData);
+                 // 기존 데이터 유지
+               }
+             }}
+          />
+        )}
 
        {/* 하단 네비게이션 */}
        <BottomNavigation hidden={isModalOpen} />

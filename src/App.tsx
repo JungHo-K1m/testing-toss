@@ -31,15 +31,14 @@ const App: React.FC = () => {
   const [isCheckingInitialization, setIsCheckingInitialization] =
     useState(true);
 
-  console.log("[App] Component rendered, isInitialized:", isInitialized);
+
 
   // isInitialized 상태 변화 모니터링
   useEffect(() => {
-    console.log("[App] isInitialized 상태 변화 감지:", isInitialized);
+    // 상태 변화 모니터링 (로그 제거)
   }, [isInitialized]);
 
   useEffect(() => {
-    console.log("[App] useEffect triggered");
 
     // 컨텍스트 메뉴 방지
     const preventContextMenu = (e: { preventDefault: () => void }) => {
@@ -54,26 +53,18 @@ const App: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const currentPath = window.location.pathname;
 
-      console.log("[App] 초기화 상태 확인:", {
-        initializationFlag,
-        accessToken: accessToken ? "존재함" : "존재하지 않음",
-        currentPath,
-        isWebView: !!window.ReactNativeWebView,
-      });
+
 
       // 이미 초기화된 상태이고 액세스 토큰이 있는 경우
       if (initializationFlag === "true" && accessToken) {
-        console.log("[App] 이미 초기화된 상태로 확인됨");
         setIsInitialized(true);
         
         // React Native WebView 환경에서는 루트 경로에 있어도 리다이렉트하지 않음
         // 페이지 이동 후 상태 동기화를 위해
         if (currentPath === "/" && !window.ReactNativeWebView) {
-          console.log("[App] 루트 경로에서 dice-event로 리다이렉트");
           window.location.href = "/dice-event";
         }
       } else {
-        console.log("[App] 초기화가 필요한 상태로 확인됨");
         setIsInitialized(false);
       }
 
@@ -97,16 +88,8 @@ const App: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const initializationFlag = localStorage.getItem("isInitialized");
       
-      console.log("[App] 위치 변경 감지:", {
-        currentPath,
-        accessToken: accessToken ? "존재함" : "존재하지 않음",
-        initializationFlag,
-        currentIsInitialized: isInitialized,
-      });
-      
       // 페이지가 이동되었고 액세스 토큰이 있는 경우 초기화 완료로 처리
       if (currentPath !== "/" && accessToken && initializationFlag === "true" && !isInitialized) {
-        console.log("[App] 페이지 이동 후 초기화 상태 동기화");
         setIsInitialized(true);
       }
     };
@@ -124,35 +107,27 @@ const App: React.FC = () => {
   }, [isInitialized]); // isInitialized를 의존성으로 추가
 
   const handleInitialized = () => {
-    console.log("[App] handleInitialized called");
-    
     // localStorage에 초기화 완료 플래그 설정
     localStorage.setItem("isInitialized", "true");
     
     // 상태 업데이트
     setIsInitialized(true);
     
-    // 상태 업데이트 확인을 위한 로깅
-    console.log("[App] setIsInitialized(true) 호출 완료");
-    
     // 초기화 완료 후 현재 경로 확인 및 적절한 페이지로 리다이렉트
     const currentPath = window.location.pathname;
-    console.log("[App] 초기화 완료 후 현재 경로:", currentPath);
     
     // React Native WebView 환경에서는 리다이렉트하지 않음
     // 페이지 이동 후 상태 동기화를 위해
     if (!window.ReactNativeWebView && currentPath === "/" && !window.location.search.includes("redirecting")) {
-      console.log("[App] 루트 경로에서 dice-event로 리다이렉트");
       // 리다이렉트 중임을 표시하는 플래그 추가
       window.location.href = "/dice-event?redirecting=true";
     }
   };
 
-  console.log("[App] About to render, isInitialized:", isInitialized);
+
 
   // 초기화 상태 확인 중일 때 로딩 표시
   if (isCheckingInitialization) {
-    console.log("[App] 초기화 상태 확인 중 - 로딩 화면 표시");
     return (
       <div
         style={{
@@ -183,14 +158,7 @@ const App: React.FC = () => {
     );
   }
 
-  // 렌더링 조건 상세 로깅
-  console.log("[App] 렌더링 조건 확인:", {
-    isInitialized,
-    isCheckingInitialization,
-    currentPath: window.location.pathname,
-    localStorageIsInitialized: localStorage.getItem("isInitialized"),
-    localStorageAccessToken: localStorage.getItem("accessToken") ? "존재함" : "존재하지 않음",
-  });
+
 
   return (
     <div
