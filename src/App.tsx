@@ -222,9 +222,6 @@ const App: React.FC = () => {
         </>
       ) : (
         <div>
-          <div style={{ padding: "10px", backgroundColor: "#d4edda", color: "#155724", textAlign: "center" }}>
-            ✅ 초기화 완료 - 메인 앱 렌더링 중...
-          </div>
           <SoundProvider bgmSrc={Audios.bgm}>
             <Routes>
               {/* DiceEventLayout Pages */}

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { TopTitle } from "@/shared/components/ui";
+import { TopTitle, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import Images from "@/shared/assets/images";
 import { getItemList, InventoryItem, EquippedSlotItem, InventoryResponse } from "@/entities/User/api/getItemList";
+import BottomNavigation from "@/widgets/BottomNav/BottomNav";
+import { HiX } from "react-icons/hi";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 // 등급별 색상 매핑 함수
 const getRarityImageIndex = (rarity: number): number => {
@@ -51,23 +54,108 @@ interface ItemModalProps {
     name: string;
     level: number;
     isEquipped: boolean;
+    type?: string;
   };
 }
 
 function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
-  if (!isOpen) return null;
+  // 아이템 타입별 강화 효과 정의
+  const getEnhancementEffects = (type: string) => {
+    switch (type?.toUpperCase()) {
+      case 'HEAD': // 크라운 - 주사위 재충전 대기시간 감소
+        return [
+          { level: 1, effect: "-3.2%" },
+          { level: 2, effect: "-3.9%" },
+          { level: 3, effect: "-4.9%" },
+          { level: 4, effect: "-6.5%" },
+          { level: 5, effect: "-9.4%" },
+          { level: 6, effect: "-14.6%" },
+          { level: 7, effect: "-24.4%" },
+          { level: 8, effect: "-44.4%" },
+          { level: 9, effect: "-95%" },
+        ];
+      case 'EYE': // 선글라스 - 미니게임 스타포인트 배수
+        return [
+          { level: 1, effect: "×1.005" },
+          { level: 2, effect: "×1.02" },
+          { level: 3, effect: "×1.11" },
+          { level: 4, effect: "×1.35" },
+          { level: 5, effect: "×1.86" },
+          { level: 6, effect: "×2.78" },
+          { level: 7, effect: "×4.29" },
+          { level: 8, effect: "×6.62" },
+          { level: 9, effect: "×10" },
+        ];
+      case 'EAR': // 머리핀 - 럭키다이스 성공 확률
+        return [
+          { level: 1, effect: "32.4%" },
+          { level: 2, effect: "32.9%" },
+          { level: 3, effect: "33.6%" },
+          { level: 4, effect: "34.8%" },
+          { level: 5, effect: "36.9%" },
+          { level: 6, effect: "40.8%" },
+          { level: 7, effect: "48%" },
+          { level: 8, effect: "62.7%" },
+          { level: 9, effect: "100%" },
+        ];
+      case 'NECK': // 목도리 - 주사위 스타포인트 배수
+        return [
+          { level: 1, effect: "×2.66" },
+          { level: 2, effect: "×3.04" },
+          { level: 3, effect: "×3.54" },
+          { level: 4, effect: "×4.35" },
+          { level: 5, effect: "×5.83" },
+          { level: 6, effect: "×8.55" },
+          { level: 7, effect: "×13.57" },
+          { level: 8, effect: "×23.89" },
+          { level: 9, effect: "×50" },
+        ];
+      case 'BACK': // 풍선 - 스핀 보상배수
+        return [
+          { level: 1, effect: "×1.33" },
+          { level: 2, effect: "×1.52" },
+          { level: 3, effect: "×1.77" },
+          { level: 4, effect: "×2.175" },
+          { level: 5, effect: "×2.915" },
+          { level: 6, effect: "×4.275" },
+          { level: 7, effect: "×6.785" },
+          { level: 8, effect: "×11.945" },
+          { level: 9, effect: "×25" },
+        ];
+      default:
+        return [
+          { level: 1, effect: "+10%" },
+          { level: 2, effect: "+10%" },
+          { level: 3, effect: "+20%" },
+          { level: 4, effect: "+20%" },
+          { level: 5, effect: "+30%" },
+          { level: 6, effect: "+30%" },
+          { level: 7, effect: "+40%" },
+          { level: 8, effect: "+40%" },
+          { level: 9, effect: "+50%" },
+        ];
+    }
+  };
 
-  const enhancementEffects = [
-    { level: 1, effect: "+10%" },
-    { level: 2, effect: "+10%" },
-    { level: 3, effect: "+20%" },
-    { level: 4, effect: "+20%" },
-    { level: 5, effect: "+30%" },
-    { level: 6, effect: "+30%" },
-    { level: 7, effect: "+40%" },
-    { level: 8, effect: "+40%" },
-    { level: 9, effect: "+50%" },
-  ];
+  const enhancementEffects = getEnhancementEffects(item.type || '');
+
+  // 아이템 타입별 효과 설명 생성
+  const getEffectDescription = (type: string, level: number, effect: string) => {
+    switch (type?.toUpperCase()) {
+      case 'HEAD':
+        return `주사위 재충전 대기시간 ${effect}`;
+      case 'EYE':
+        return `미니게임 스타포인트 ${effect}`;
+      case 'EAR':
+        return `럭키다이스 성공 확률 ${effect}`;
+      case 'NECK':
+        return `주사위 스타포인트 배수 ${effect}`;
+      case 'BACK':
+        return `스핀 보상배수(토스포인트 제외) ${effect}`;
+      default:
+        return `찬스 게임 성공 확률 ${effect}`;
+    }
+  };
 
   const getLevelColor = (level: number) => {
     if (level <= 2) return "bg-purple-500";
@@ -77,189 +165,239 @@ function ItemModal({ isOpen, onClose, item }: ItemModalProps) {
     return "bg-orange-500";
   };
 
-  return (
-    <>
-      {/* 배경 블러 오버레이 */}
-      <div className="fixed inset-0 bg-opacity-30 backdrop-blur-md z-[9999]" />
+  // 강화도에 따른 배경 색상과 테두리 색상 결정 (ItemSlot과 동일)
+  const getEnhancementStyle = (level: number) => {
+    if (level <= 2) {
+      return {
+        background: "linear-gradient(180deg, #C655FD 0%, #EECAFF 100%)",
+        border: "2px solid #EECAFF",
+        numberBackground: "#C655FD",
+        numberBorder: "1px solid #EECAFF",
+      };
+    } else if (level <= 4) {
+      return {
+        background: "linear-gradient(180deg, #1FC9FE 0%, #87E2FF 100%)",
+        border: "2px solid #87E2FF",
+        numberBackground: "#1FC9FE",
+        numberBorder: "1px solid #87E2FF",
+      };
+    } else if (level <= 6) {
+      return {
+        background: "linear-gradient(180deg, #73DF28 0%, #ABEE7D 100%)",
+        border: "2px solid #ABEE7D",
+        numberBackground: "#73DF28",
+        numberBorder: "1px solid #ABEE7D",
+      };
+    } else if (level <= 8) {
+      return {
+        background: "linear-gradient(180deg, #FDE328 0%, #FFF3A1 100%)",
+        border: "2px solid #FFF3A1",
+        numberBackground: "#FDE328",
+        numberBorder: "1px solid #FFF3A1",
+      };
+    } else {
+      return {
+        background: "linear-gradient(180deg, #FE5A1F 0%, #FFAC8E 100%)",
+        border: "2px solid #FFAC8E",
+        numberBackground: "#FE5A1F",
+        numberBorder: "1px solid #FFAC8E",
+      };
+    }
+  };
 
-      {/* 모달 컨테이너 */}
-      <div className="fixed inset-0 flex items-center justify-center z-[10000] p-4">
-        <div
-          className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl"
-          style={{
-            background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-            boxShadow:
-              "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-          }}
-        >
-          <div className="p-6">
-            {/* 헤더 */}
-            <div className="text-center mb-6">
-              <h2
-                className="mb-3"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "24px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
+        style={{
+          background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <div className="relative">
+          <DialogClose className="absolute top-0 right-0 p-2">
+            <HiX
+              className="w-5 h-5"
+              onClick={onClose}
+            />
+          </DialogClose>
+        </div>
+        
+        <div className="flex flex-col items-center justify-around">
+                     <div className="flex flex-col items-center gap-2 mb-[30px]">
+             <h1
+               className="text-center"
+               style={{
+                 fontFamily: "'ONE Mobile POP', sans-serif",
+                 fontSize: "30px",
+                 fontWeight: 400,
+                 color: "#FFFFFF",
+                 WebkitTextStroke: "2px #000000",
+               }}
+             >
+               {item.name}
+             </h1>
+             <div className="relative inline-block">
+               <div
+                 className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+                 style={{
+                   background: getEnhancementStyle(item.level).background,
+                   border: getEnhancementStyle(item.level).border,
+                   boxShadow:
+                     "0px 2px 2px 0px rgba(0, 0, 0, 0.35), inset 0px 0px 2px 2px rgba(255, 255, 255, 0.2)",
+                 }}
+               >
+                 <img
+                   src={item.icon}
+                   alt={item.alt}
+                   className="w-16 h-16"
+                 />
+               </div>
+               <div 
+                 className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center"
+                 style={{
+                   background: getEnhancementStyle(item.level).numberBackground,
+                   border: getEnhancementStyle(item.level).numberBorder,
+                 }}
+               >
+                 <span className="text-white text-xs font-bold">
+                   {item.level}
+                 </span>
+               </div>
+             </div>
+           </div>
+
+          {/* 강화 효과 목록 */}
+          <div
+            className="space-y-3 mb-6 w-full"
+            style={{
+              background: "rgba(194, 213, 232, 0.1)",
+              border: "2px solid #B4CADA",
+              borderRadius: "20px",
+              padding: "16px",
+              boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+              backdropFilter: "blur(15px)",
+              WebkitBackdropFilter: "blur(15px)",
+            }}
+          >
+            {enhancementEffects.map((enhancement) => (
+              <div
+                key={enhancement.level}
+                className="flex items-center space-x-3"
               >
-                {item.name}
-              </h2>
-              <div className="relative inline-block">
-                <img
-                  src={item.icon}
-                  alt={item.alt}
-                  className="w-20 h-20 rounded-2xl"
-                />
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-500 w-6 h-6 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">
-                    {item.level}
+                <div
+                  className={`w-8 h-8 rounded-full ${getLevelColor(
+                    enhancement.level
+                  )} flex items-center justify-center`}
+                >
+                  <span className="text-white text-sm font-bold">
+                    {enhancement.level}
                   </span>
                 </div>
+                <div className="w-6 h-6">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6 text-amber-600"
+                  >
+                    <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
+                  </svg>
+                </div>
+                <span className="text-white font-bold text-sm">
+                  {getEffectDescription(item.type || '', enhancement.level, enhancement.effect)}
+                </span>
               </div>
-            </div>
+            ))}
+          </div>
 
-            {/* 강화 효과 목록 */}
-            <div
-              className="space-y-3 mb-6"
+          {/* 액션 버튼 */}
+          <div className="flex space-x-3 w-full justify-center">
+            <button
+              className={`w-[150px] h-14 py-3 rounded-[10px] relative`}
               style={{
-                background: "rgba(194, 213, 232, 0.1)",
-                border: "2px solid #B4CADA",
-                borderRadius: "20px",
-                padding: "16px",
-                boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-                backdropFilter: "blur(15px)",
-                WebkitBackdropFilter: "blur(15px)",
+                background: item.isEquipped
+                  ? "linear-gradient(180deg, #FF6D70 0%, #FF6D70 50%, #FF2F32 50%, #FF2F32 100%)"
+                  : "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                border: item.isEquipped
+                  ? "2px solid #FF8E8E"
+                  : "2px solid #76C1FF",
+                outline: "2px solid #000000",
+                boxShadow:
+                  "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                color: "#FFFFFF",
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "18px",
+                fontWeight: "400",
+                WebkitTextStroke: "1px #000000",
+                opacity: 1,
+              }}
+              onClick={() => {
+                // TODO: 장착/해제 로직 구현
+                console.log(item.isEquipped ? "해제" : "장착");
               }}
             >
-              {enhancementEffects.map((enhancement) => (
-                <div
-                  key={enhancement.level}
-                  className="flex items-center space-x-3"
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full ${getLevelColor(
-                      enhancement.level
-                    )} flex items-center justify-center`}
-                  >
-                    <span className="text-white text-sm font-bold">
-                      {enhancement.level}
-                    </span>
-                  </div>
-                  <div className="w-6 h-6">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-6 h-6 text-amber-600"
-                    >
-                      <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
-                    </svg>
-                  </div>
-                  <span className="text-white font-bold">
-                    {enhancement.level === 1
-                      ? "+10%"
-                      : `찬스 게임 성공 확률 ${enhancement.effect}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="flex space-x-3">
-              <button
-                className={`w-[150px] h-14 flex-1 py-3 rounded-[10px] relative`}
+              <img
+                src={
+                  item.isEquipped
+                    ? Images.ButtonPointRed
+                    : Images.ButtonPointBlue
+                }
+                alt={
+                  item.isEquipped ? "button-point-red" : "button-point-blue"
+                }
                 style={{
-                  background: item.isEquipped
-                    ? "linear-gradient(180deg, #FF6D70 0%, #FF6D70 50%, #FF2F32 50%, #FF2F32 100%)"
-                    : "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                  border: item.isEquipped
-                    ? "2px solid #FF8E8E"
-                    : "2px solid #76C1FF",
-                  outline: "2px solid #000000",
-                  boxShadow:
-                    "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                  color: "#FFFFFF",
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: "400",
-                  WebkitTextStroke: "1px #000000",
-                  opacity: 1,
+                  position: "absolute",
+                  top: "3px",
+                  left: "3px",
+                  width: "8.47px",
+                  height: "6.3px",
+                  pointerEvents: "none",
                 }}
-                onClick={() => {
-                  // TODO: 장착/해제 로직 구현
-                  console.log(item.isEquipped ? "해제" : "장착");
-                }}
-              >
-                <img
-                  src={
-                    item.isEquipped
-                      ? Images.ButtonPointRed
-                      : Images.ButtonPointBlue
-                  }
-                  alt={
-                    item.isEquipped ? "button-point-red" : "button-point-blue"
-                  }
-                  style={{
-                    position: "absolute",
-                    top: "3px",
-                    left: "3px",
-                    width: "8.47px",
-                    height: "6.3px",
-                    pointerEvents: "none",
-                  }}
-                />
-                {item.isEquipped ? "해제" : "장착"}
-              </button>
-              <button
-                className="w-[150px] h-14 flex-1 py-3 rounded-[10px] relative"
-                style={{
-                  background:
-                    "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                  border: "2px solid #76C1FF",
-                  outline: "2px solid #000000",
-                  boxShadow:
-                    "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                  color: "#FFFFFF",
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: "400",
-                  WebkitTextStroke: "1px #000000",
-                  opacity: 1,
-                }}
-                onClick={() => {
-                  // TODO: 강화 로직 구현
-                  console.log("강화");
-                }}
-              >
-                <img
-                  src={Images.ButtonPointBlue}
-                  alt="button-point-blue"
-                  style={{
-                    position: "absolute",
-                    top: "3px",
-                    left: "3px",
-                    width: "8.47px",
-                    height: "6.3px",
-                    pointerEvents: "none",
-                  }}
-                />
-                강화
-              </button>
-            </div>
-
-            {/* 닫기 버튼 */}
+              />
+              {item.isEquipped ? "해제" : "장착"}
+            </button>
             <button
-              className="absolute top-4 right-4 text-white text-2xl"
-              onClick={onClose}
+              className="w-[150px] h-14 py-3 rounded-[10px] relative"
+              style={{
+                background:
+                  "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                border: "2px solid #76C1FF",
+                outline: "2px solid #000000",
+                boxShadow:
+                  "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                color: "#FFFFFF",
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "18px",
+                fontWeight: "400",
+                WebkitTextStroke: "1px #000000",
+                opacity: 1,
+              }}
+              onClick={() => {
+                // TODO: 강화 로직 구현
+                console.log("강화");
+              }}
             >
-              ×
+              <img
+                src={Images.ButtonPointBlue}
+                alt="button-point-blue"
+                style={{
+                  position: "absolute",
+                  top: "3px",
+                  left: "3px",
+                  width: "8.47px",
+                  height: "6.3px",
+                  pointerEvents: "none",
+                }}
+              />
+              강화
             </button>
           </div>
         </div>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -320,7 +458,7 @@ function ItemSlot({
   return (
     <div className="relative flex flex-col items-center">
       <div
-        className="w-[60px] h-[60px] min-[376px]:w-20 min-[376px]:h-20 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer"
+        className="w-[46px] h-[46px] min-[376px]:w-[66px] min-[376px]:h-[66px] rounded-2xl flex items-center justify-center shadow-lg cursor-pointer"
         style={{
           background: enhancementStyle.background,
           border: enhancementStyle.border,
@@ -332,12 +470,12 @@ function ItemSlot({
         <img
           src={icon}
           alt={alt}
-          className="w-9 h-9 min-[376px]:w-12 min-[376px]:h-12"
+          className="w-7 h-7 min-[376px]:w-10 min-[376px]:h-10"
         />
       </div>
       {/* 등급 표시: 원형, 모바일 퍼스트 분기 */}
       <div
-        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[18px] h-[18px] min-[376px]:w-[22px] min-[376px]:h-[22px] rounded-full flex items-center justify-center"
+        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[16px] h-[16px] min-[376px]:w-[20px] min-[376px]:h-[20px] rounded-full flex items-center justify-center"
         style={{
           background: enhancementStyle.numberBackground,
           border: enhancementStyle.numberBorder,
@@ -367,7 +505,7 @@ function EmptySlot({ type }: { type: string }) {
   return (
     <div className="relative flex flex-col items-center">
       <div
-        className="w-[60px] h-[60px] min-[376px]:w-20 min-[376px]:h-20 rounded-2xl flex items-center justify-center shadow-lg border-2 border-dashed border-gray-400 bg-gray-800/30"
+        className="w-[46px] h-[46px] min-[376px]:w-[66px] min-[376px]:h-[66px] rounded-2xl flex items-center justify-center shadow-lg border-2 border-dashed border-gray-400 bg-gray-800/30"
         style={{
           boxShadow: "0px 2px 2px 0px rgba(0, 0, 0, 0.35), inset 0px 0px 2px 2px rgba(255, 255, 255, 0.1)",
         }}
@@ -379,7 +517,7 @@ function EmptySlot({ type }: { type: string }) {
       </div>
       {/* 빈 슬롯 표시 */}
       <div
-        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[18px] h-[18px] min-[376px]:w-[22px] min-[376px]:h-[22px] rounded-full flex items-center justify-center bg-gray-500 border border-gray-400"
+        className="absolute left-1/2 translate-x-[-50%] bottom-[-6px] min-[376px]:bottom-[-8px] w-[16px] h-[16px] min-[376px]:w-[20px] min-[376px]:h-[20px] rounded-full flex items-center justify-center bg-gray-500 border border-gray-400"
       >
         <span className="text-[5px] min-[376px]:text-[6px] font-bold text-white">-</span>
       </div>
@@ -475,13 +613,14 @@ const Inventory: React.FC = () => {
   const charactorImageSrc = location.state?.charactorImageSrc || Images.Cat1;
 
   // 모달 상태 관리
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<{
     icon: string;
     alt: string;
     name: string;
     level: number;
     isEquipped: boolean;
+    type: string;
   } | null>(null);
 
   // 인벤토리 데이터 상태
@@ -526,8 +665,10 @@ const Inventory: React.FC = () => {
       name: itemNames[item.type] || item.type,
       level: item.rarity,
       isEquipped,
+      type: item.type,
     });
     setIsModalOpen(true);
+    console.log('Modal opened, isModalOpen:', true); // 디버깅용
   };
 
   // 장착된 아이템 클릭 핸들러
@@ -576,18 +717,17 @@ const Inventory: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center text-white relative min-h-screen">
-      {/* 상단 40% (TopTitle 포함) */}
+    <div className="flex flex-col items-center relative min-h-screen">
       <div
         style={{
           backgroundImage: `url(${Images.BackgroundHome})`,
           backgroundSize: "cover",
           backgroundPosition: "center bottom",
           width: "100%",
-          height: "50vh",
+          height: "55vh",
           minHeight: 200,
         }}
-        className="w-full mx-6 flex flex-col"
+        className="w-full mx-6 flex flex-col pt-2"
       >
         <TopTitle title={"인벤토리"} back={false} />
         {/* 착용 중인 아이템 및 캐릭터 표시 영역 */}
@@ -624,7 +764,7 @@ const Inventory: React.FC = () => {
             className="min-[376px]:w-[200px] min-[376px]:h-[200px] w-[180px] h-[180px] min-[376px]:-translate-y-4 -translate-y-12"
           />
           {/* 우측 아이템 슬롯 */}
-          <div className="flex flex-col gap-[30px] items-center">
+          <div className="flex flex-col gap-[20px] items-center">
             {/* NECK 슬롯 */}
             {getEquippedItem('NECK') ? (
               <ItemSlot
@@ -664,7 +804,7 @@ const Inventory: React.FC = () => {
 
       {/* 보유 중인 아이템 목록 영역 */}
       <div
-        className="w-full h-[50vh] mx-6 overflow-hidden"
+        className="w-full h-[45vh] mx-6 overflow-hidden"
         style={{
           background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
         }}
@@ -682,32 +822,6 @@ const Inventory: React.FC = () => {
           >
             내 아이템
           </div>
-          
-          {/* 인벤토리 통계 정보 */}
-          {/* {inventoryData && (
-            <div className="mb-4 p-3 rounded-lg bg-blue-900/30 border border-blue-400/50">
-              <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                <div>
-                  <div className="text-blue-300 font-bold">장착된 아이템</div>
-                  <div className="text-white text-lg">
-                    {inventoryData.slot.length}/5
-                  </div>
-                </div>
-                <div>
-                  <div className="text-green-300 font-bold">보유 아이템</div>
-                  <div className="text-white text-lg">
-                    {inventoryData.myItems.length}개
-                  </div>
-                </div>
-                <div>
-                  <div className="text-yellow-300 font-bold">빈 슬롯</div>
-                  <div className="text-white text-lg">
-                    {5 - inventoryData.slot.length}개
-                  </div>
-                </div>
-              </div>
-            </div>
-          )} */}
           
           <div className="grid grid-cols-4 gap-3 gap-y-4 justify-items-center">
             {inventoryData?.myItems && inventoryData.myItems.length > 0 ? (
@@ -741,19 +855,22 @@ const Inventory: React.FC = () => {
         </div>
       </div>
 
-      {/* 아이템 상세 모달 */}
-      {selectedItem && (
-        <ItemModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedItem(null);
-          }}
-          item={selectedItem}
-        />
-      )}
-    </div>
-  );
-};
+             {/* 아이템 상세 모달 */}
+       {selectedItem && (
+         <ItemModal
+           isOpen={isModalOpen}
+           onClose={() => {
+             setIsModalOpen(false);
+             setSelectedItem(null);
+           }}
+           item={selectedItem}
+         />
+       )}
+
+       {/* 하단 네비게이션 */}
+       <BottomNavigation hidden={isModalOpen} />
+     </div>
+   );
+ };
 
 export default Inventory;

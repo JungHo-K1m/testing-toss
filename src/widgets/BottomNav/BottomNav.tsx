@@ -20,12 +20,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ hidden }) => {
     playSfx(Audios.button_click);
   };
 
+  // hidden이 true면 아예 렌더링하지 않음
+  if (hidden) {
+    return null;
+  }
+
   return (
     <div
       id="bottomNav"
-      className={`fixed bottom-8 self-center rounded-full flex flex-row items-center justify-evenly bottomNav-bg h-16 w-80 font-medium text-[10px] shadow-lg z-30 ${
-        hidden ? "hidden" : ""
-      }`}
+      className="fixed bottom-8 self-center rounded-full flex flex-row items-center justify-evenly h-16 w-80 font-medium text-[10px] shadow-lg z-30"
       style={{
         background: "rgba(255,255,255,0.65)",
         borderRadius: "52px",
