@@ -1237,7 +1237,7 @@ const Inventory: React.FC = () => {
               <img
                 src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
                 alt="BACK"
-                className="absolute -top-14 left-1/2 transform -translate-x-1/2 w-20 h-20 min-[376px]:w-24 min-[376px]:h-24 opacity-90"
+                className="absolute -top-20 left-1/2 transform -translate-x-[60%] w-20 h-20 min-[376px]:w-24 min-[376px]:h-24 opacity-90"
                 style={{ zIndex: 5 }}
               />
             )}
@@ -1267,7 +1267,7 @@ const Inventory: React.FC = () => {
                 className="absolute top-[18px] left-[33%] transform -translate-x-1/2 w-12 h-12 min-[376px]:w-20 min-[376px]:h-20 opacity-90"
                 style={{
                   zIndex: 15,
-                  transform: "rotate(-5deg)",
+                  transform: "rotate(-2deg)",
                 }}
               />
             )}
