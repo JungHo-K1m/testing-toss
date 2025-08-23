@@ -5,7 +5,11 @@ import Images from "@/shared/assets/images";
 import ReactCardFlip from "react-card-flip";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/shared/api/axiosInstance";
-import { flipCard, CardFlipRequest, CardFlipResponseData } from "@/features/DiceEvent/api/cardFlipApi";
+import {
+  flipCard,
+  CardFlipRequest,
+  CardFlipResponseData,
+} from "@/features/DiceEvent/api/cardFlipApi";
 
 const COLORS: ("RED" | "BLACK")[] = ["RED", "BLACK"];
 const SUITS = [
@@ -126,7 +130,7 @@ const CardBettingModal = ({ myPoint, onStart, onCancel }: any) => {
         승부를 가릅니다!
       </div>
       {/* 2. 카드 애니메이션 */}
-      <div className="flex flex-col items-center justify-center mt-4 mb-6">
+      <div className="flex flex-col items-center justify-center mt-4 mb-2">
         <AnimatedCard />
       </div>
       {/* 3. 설명/포인트 영역 - 중앙으로 이동 */}
@@ -493,35 +497,46 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
 
     try {
       setIsLoading(true);
-      
+
       // API 요청 데이터 준비
       const requestData: CardFlipRequest = {
         type: mode === "color" ? "COLOR" : "FLIP",
         bettingAmount: betAmount,
-        num: mode === "color" 
-          ? (selectedColor === "RED" ? 1 : 2) // RED = 1, BLACK = 2
-          : SUITS.findIndex(suit => suit.value === selectedSuit) + 1 // 스페이드=1, 다이아=2, 하트=3, 클럽=4
+        num:
+          mode === "color"
+            ? selectedColor === "RED"
+              ? 1
+              : 2 // RED = 1, BLACK = 2
+            : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1, // 스페이드=1, 다이아=2, 하트=3, 클럽=4
       };
 
       console.log("카드 플립 API 요청:", requestData);
-      
+
       // API 호출
       const response: CardFlipResponseData = await flipCard(requestData);
-      
+
       console.log("카드 플립 API 응답:", response);
-      
+
       // 결과 처리
       const win = response.result === "WIN";
       const reward = response.reward;
-      
+
       // API 응답에서 정답 정보 추출 (실제로는 서버에서 제공해야 함)
       const answer = {
-        color: mode === "color" ? (selectedColor === "RED" ? "RED" : "BLACK") : "UNKNOWN",
-        suit: mode === "suit" ? SUITS.find(suit => suit.value === selectedSuit) || SUITS[0] : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" }
+        color:
+          mode === "color"
+            ? selectedColor === "RED"
+              ? "RED"
+              : "BLACK"
+            : "UNKNOWN",
+        suit:
+          mode === "suit"
+            ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
+            : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
       };
-      
+
       onResult(win, reward, answer);
-      
+
       // 게임 상태 리셋
       setMode(null);
       setSelectedColor(null);
@@ -529,19 +544,26 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
       setCardRevealed(false);
       setTopSelected(false);
       setBottomSelected(false);
-      
     } catch (error: any) {
       console.error("카드 플립 API 에러:", error);
       // 에러 발생 시 기본 결과 처리
       const win = false;
       const reward = 0;
       const answer = {
-        color: mode === "color" ? (selectedColor === "RED" ? "RED" : "BLACK") : "UNKNOWN",
-        suit: mode === "suit" ? SUITS.find(suit => suit.value === selectedSuit) || SUITS[0] : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" }
+        color:
+          mode === "color"
+            ? selectedColor === "RED"
+              ? "RED"
+              : "BLACK"
+            : "UNKNOWN",
+        suit:
+          mode === "suit"
+            ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
+            : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
       };
-      
+
       onResult(win, reward, answer);
-      
+
       // 에러 발생 시에도 게임 상태 리셋
       setMode(null);
       setSelectedColor(null);
@@ -597,7 +619,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                   </p>
                 </div>
                 <div
-                  className="rounded-full flex items-center justify-center h-[35px] w-[66px] "
+                  className="rounded-full flex items-center justify-center h-[32px] w-[66px] "
                   style={{
                     background: "rgba(0, 94, 170, 0.5)",
                     backdropFilter: "blur(10px)",
@@ -690,12 +712,18 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
             src={Images.CardBack}
             alt="card"
             className={`mb-4 w-[200px] h-[280px] rounded-xl shadow-lg bg-transparent object-cover border-none ${
-              !cardRevealed && (mode === "color" || mode === "suit") && !isLoading
+              !cardRevealed &&
+              (mode === "color" || mode === "suit") &&
+              !isLoading
                 ? "cursor-pointer"
                 : "cursor-not-allowed opacity-50"
             }`}
             onClick={() => {
-              if (!cardRevealed && (mode === "color" || mode === "suit") && !isLoading) {
+              if (
+                !cardRevealed &&
+                (mode === "color" || mode === "suit") &&
+                !isLoading
+              ) {
                 handleSubmit();
               }
             }}
@@ -705,7 +733,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
             alt="card-game"
             className="w-[155px] bg-transparent object-cover"
           />
-          
+
           {/* 로딩 인디케이터 */}
           {isLoading && (
             <div className="mt-4 text-center">
@@ -766,7 +794,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                   </p>
                 </div>
                 <div
-                  className="rounded-full flex items-center justify-center h-[35px] w-[66px]"
+                  className="rounded-full flex items-center justify-center h-[32px] w-[66px]"
                   style={{
                     background: "rgba(0, 94, 170, 0.5)",
                     backdropFilter: "blur(10px)",
@@ -861,7 +889,7 @@ const CardGameResultDialog = ({
               <div className="text-6xl mb-2">😢</div>
             )}
           </div>
-          
+
           {/* 결과 텍스트 */}
           <h3
             className="text-2xl font-bold mb-4"
@@ -873,7 +901,7 @@ const CardGameResultDialog = ({
           >
             {win ? "성공!" : "실패!"}
           </h3>
-          
+
           {/* 상세 정보 */}
           <div className="mb-6 space-y-2">
             {answer && (
@@ -886,10 +914,11 @@ const CardGameResultDialog = ({
                 }}
               >
                 {answer.color !== "UNKNOWN" && `색상: ${answer.color}`}
-                {answer.suit.label !== "UNKNOWN" && ` 문양: ${answer.suit.label}`}
+                {answer.suit.label !== "UNKNOWN" &&
+                  ` 문양: ${answer.suit.label}`}
               </p>
             )}
-            
+
             <p
               className="text-xl font-bold"
               style={{
@@ -898,10 +927,12 @@ const CardGameResultDialog = ({
                 WebkitTextStroke: "1px #000000",
               }}
             >
-              {win ? `획득 금액: ${reward.toLocaleString()}` : "베팅 금액이 차감되었습니다"}
+              {win
+                ? `획득 금액: ${reward.toLocaleString()}`
+                : "베팅 금액이 차감되었습니다"}
             </p>
           </div>
-          
+
           {/* 종료 버튼 */}
           <button
             className="w-full py-3 rounded-xl font-bold text-white"

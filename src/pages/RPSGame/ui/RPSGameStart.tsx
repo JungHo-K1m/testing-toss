@@ -117,11 +117,11 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
         </h1>
 
         <div className="flex flex-col items-center justify-center mt-4">
-          <img src={Images.RPSExample} alt="RPSExample" className="w-[240px]" />
+          <img src={Images.RPSExample} alt="RPSExample" className="w-[300px]" />
 
-          <div className="flex flex-row gap-3 mt-4">
+          <div className="flex flex-row gap-3 mt-6">
             <button
-              className="flex flex-row gap-1 rounded-3xl text-center font-medium w-[165px] h-[72px] items-center justify-center"
+              className="flex flex-row gap-1 rounded-[56px] text-center font-medium w-[165px] h-[72px] items-center justify-center"
               style={{
                 fontFamily: "'ONE Mobile POP', sans-serif",
                 fontSize: "14px",
@@ -139,7 +139,7 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
             </button>
 
             <div
-              className="flex flex-col gap-1 rounded-3xl text-center font-medium w-[165px] h-[72px] items-center justify-center"
+              className="flex flex-col gap-1 rounded-[56px] text-center font-medium w-[165px] h-[72px] items-center justify-center"
               style={{
                 background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
                 boxShadow:
