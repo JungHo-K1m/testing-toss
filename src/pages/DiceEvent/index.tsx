@@ -38,6 +38,8 @@ import {
   purchaseRandomBox,
   RandomBoxResult,
 } from "@/entities/User/api/purchaseRandomBox";
+import { useAdMob } from "@/hooks/useAdMob";
+import { getPlatform } from "@/types/adMob";
 
 const levelRewards = [
   // 2~9 레벨 보상 예시
@@ -331,6 +333,10 @@ const DiceEventPage: React.FC = () => {
   const [isLoadingBox, setIsLoadingBox] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
+  
+  // 광고 관련 상태 및 훅
+  const { adLoadStatus, loadAd, showAd, isSupported } = useAdMob();
+  const [platform] = useState(getPlatform());
 
   // 리필 시간 클릭 핸들러
   const handleRefillTimeClick = (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => {
@@ -340,6 +346,35 @@ const DiceEventPage: React.FC = () => {
     setRefillTimeInfo(timeInfo); // 시간 정보를 상태에 저장
     setShowAdModal(true);
   };
+
+  // 광고 버튼 클릭 핸들러
+  const handleAdButtonClick = async () => {
+    if (adLoadStatus === 'not_loaded') {
+      // 광고가 로드되지 않은 경우 로드 시작
+      await loadAd();
+    } else if (adLoadStatus === 'loaded') {
+      // 광고가 로드된 경우 표시
+      await showAd();
+    }
+  };
+
+  // 광고 상태에 따른 버튼 텍스트 및 비활성화 여부
+  const getAdButtonText = () => {
+    switch (adLoadStatus) {
+      case 'not_loaded':
+        return '광고 로드하기';
+      case 'loading':
+        return '광고 로딩 중...';
+      case 'loaded':
+        return '광고 시청 후 주사위 얻기';
+      case 'failed':
+        return '광고 로드 실패 - 다시 시도';
+      default:
+        return '광고 시청 후 주사위 얻기';
+    }
+  };
+
+  const isAdButtonDisabled = adLoadStatus === 'loading' || adLoadStatus === 'failed';
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
@@ -1540,28 +1575,62 @@ const DiceEventPage: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                      )}
+                                            )}
                     </div>
                   </div>
+                  
+                  {/* 광고 상태 및 플랫폼 정보 표시 */}
+                  <div className="flex flex-col items-center gap-2 mb-4">
+                    <div className="text-center">
+                      <p
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "14px",
+                          fontWeight: "400",
+                          color: "#B4CADA",
+                          WebkitTextStroke: "0.5px #000000",
+                        }}
+                      >
+                        플랫폼: {platform.toUpperCase()}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "14px",
+                          fontWeight: "400",
+                          color: "#B4CADA",
+                          WebkitTextStroke: "0.5px #000000",
+                        }}
+                      >
+                        광고 상태: {adLoadStatus === 'not_loaded' ? '대기 중' : 
+                                   adLoadStatus === 'loading' ? '로딩 중' : 
+                                   adLoadStatus === 'loaded' ? '로드 완료' : '로드 실패'}
+                      </p>
+                    </div>
+                  </div>
+                  
                   <div className="flex flex-col gap-6">
-                    <button
-                      className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
-                      style={{
-                        background:
-                          "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                        border: "2px solid #76C1FF",
-                        outline: "2px solid #000000",
-                        boxShadow:
-                          "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                        color: "#FFFFFF",
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "18px",
-                        fontWeight: "400",
-                        WebkitTextStroke: "1px #000000",
-                        opacity: 1,
-                      }}
-                      // onClick={handleAdButtonClick}
-                    >
+                     <button
+                       className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+                         isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                       }`}
+                       style={{
+                         background:
+                           "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                         border: "2px solid #76C1FF",
+                         outline: "2px solid #000000",
+                         boxShadow:
+                           "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                         color: "#FFFFFF",
+                         fontFamily: "'ONE Mobile POP', sans-serif",
+                         fontSize: "18px",
+                         fontWeight: "400",
+                         WebkitTextStroke: "1px #000000",
+                         opacity: isAdButtonDisabled ? 0.5 : 1,
+                       }}
+                       onClick={handleAdButtonClick}
+                       disabled={isAdButtonDisabled}
+                     >
                       <img
                         src={Images.ButtonPointBlue}
                         alt="button-point-blue"
@@ -1583,7 +1652,7 @@ const DiceEventPage: React.FC = () => {
                         }}
                       />
 
-                      <span>광고 시청 후 주사위 얻기</span>
+                                             <span>{getAdButtonText()}</span>
                     </button>
                   </div>
                 </div>
