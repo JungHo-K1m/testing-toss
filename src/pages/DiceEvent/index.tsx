@@ -34,7 +34,10 @@ import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
 import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
 import BottomNav from "@/widgets/BottomNav/BottomNav";
 import NewMyRanking from "@/widgets/NewMyRanking";
-import { purchaseRandomBox, RandomBoxResult } from "@/entities/User/api/purchaseRandomBox";
+import {
+  purchaseRandomBox,
+  RandomBoxResult,
+} from "@/entities/User/api/purchaseRandomBox";
 
 const levelRewards = [
   // 2~9 레벨 보상 예시
@@ -143,7 +146,6 @@ const DiceEventPage: React.FC = () => {
     }
   }, []);
 
-
   // 현재 레벨 보상 찾기
   const currentReward = levelRewards.find((r) => r.level === userLv);
 
@@ -199,7 +201,6 @@ const DiceEventPage: React.FC = () => {
 
     initializeUserData();
   }, [fetchUserData]);
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -328,19 +329,33 @@ const DiceEventPage: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [boxResult, setBoxResult] = useState<RandomBoxResult | null>(null);
   const [isLoadingBox, setIsLoadingBox] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
+  const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
+
+  // 리필 시간 클릭 핸들러
+  const handleRefillTimeClick = (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => {
+    // if (!timeInfo.canRefill) {
+    //   alert(`다이스 리필까지 ${timeInfo.timeUntilRefill} 남았습니다.`);
+    // }
+    setRefillTimeInfo(timeInfo); // 시간 정보를 상태에 저장
+    setShowAdModal(true);
+  };
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
   // 디버깅용: 랜덤박스 결과 로깅
   useEffect(() => {
     if (boxResult) {
-      console.log('랜덤박스 결과:', boxResult);
-      console.log('결과 타입:', boxResult.type);
+      console.log("랜덤박스 결과:", boxResult);
+      console.log("결과 타입:", boxResult.type);
       if (boxResult.equipment) {
-        console.log('장비 정보:', boxResult.equipment);
-        console.log('장비 타입:', boxResult.equipment.type);
-        console.log('장비 희귀도:', boxResult.equipment.rarity);
-        console.log('이미지 경로:', getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity));
+        console.log("장비 정보:", boxResult.equipment);
+        console.log("장비 타입:", boxResult.equipment.type);
+        console.log("장비 희귀도:", boxResult.equipment.rarity);
+        console.log(
+          "이미지 경로:",
+          getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
+        );
       }
     }
   }, [boxResult]);
@@ -369,49 +384,59 @@ const DiceEventPage: React.FC = () => {
   // 장비 타입별 이미지 가져오기 함수 (Attendance.tsx와 동일)
   const getEquipmentIcon = (type: string, rarity: number) => {
     const getRarityImageIndex = (rarity: number): number => {
-      if (rarity <= 1) return 1;      // 보라색
-      if (rarity <= 3) return 2;      // 하늘색
-      if (rarity <= 5) return 3;      // 초록색
-      if (rarity <= 7) return 4;      // 노란색
-      return 5;                        // 빨간색
+      if (rarity <= 1) return 1; // 보라색
+      if (rarity <= 3) return 2; // 하늘색
+      if (rarity <= 5) return 3; // 초록색
+      if (rarity <= 7) return 4; // 노란색
+      return 5; // 빨간색
     };
 
     const imageIndex = getRarityImageIndex(rarity);
-    
+
     let imageKey: string;
     switch (type.toUpperCase()) {
-      case 'HEAD': 
+      case "HEAD":
         imageKey = `Crown${imageIndex}`;
         break;
-      case 'EAR': 
+      case "EAR":
         imageKey = `Hairpin${imageIndex}`;
         break;
-      case 'EYE': 
+      case "EYE":
         imageKey = `Sunglass${imageIndex}`;
         break;
-      case 'NECK': 
+      case "NECK":
         imageKey = `Muffler${imageIndex}`;
         break;
-      case 'BACK': 
+      case "BACK":
         imageKey = `Ballon${imageIndex}`;
         break;
-      default: 
-        imageKey = 'Ballon1';
+      default:
+        imageKey = "Ballon1";
     }
-    
+
     // 디버깅용 로그
-    console.log('이미지 키:', imageKey);
-    console.log('Images 객체에서 해당 키 존재 여부:', imageKey in Images);
-    console.log('사용 가능한 이미지 키들:', Object.keys(Images).filter(key => key.includes('Crown') || key.includes('Hairpin') || key.includes('Sunglass') || key.includes('Muffler') || key.includes('Ballon')));
-    
+    console.log("이미지 키:", imageKey);
+    console.log("Images 객체에서 해당 키 존재 여부:", imageKey in Images);
+    console.log(
+      "사용 가능한 이미지 키들:",
+      Object.keys(Images).filter(
+        (key) =>
+          key.includes("Crown") ||
+          key.includes("Hairpin") ||
+          key.includes("Sunglass") ||
+          key.includes("Muffler") ||
+          key.includes("Ballon")
+      )
+    );
+
     const result = Images[imageKey as keyof typeof Images];
-    
+
     if (!result) {
       console.error(`이미지를 찾을 수 없습니다: ${imageKey}`);
-      console.error('사용 가능한 이미지들:', Object.keys(Images));
+      console.error("사용 가능한 이미지들:", Object.keys(Images));
       return Images.Ballon1; // 기본값
     }
-    
+
     return result;
   };
 
@@ -430,7 +455,7 @@ const DiceEventPage: React.FC = () => {
   // 랜덤박스 열기 함수
   const handleOpenRaffleBox = async () => {
     if (lotteryCount < 100) {
-      alert('열쇠가 부족합니다. 최소 100개가 필요합니다.');
+      alert("열쇠가 부족합니다. 최소 100개가 필요합니다.");
       return;
     }
 
@@ -452,16 +477,16 @@ const DiceEventPage: React.FC = () => {
             // 실제 API 호출
             const result = await purchaseRandomBox();
             setBoxResult(result);
-            
+
             // 보유 열쇠 차감 - lotteryCount 직접 업데이트
             // TODO: API 응답에서 업데이트된 열쇠 개수를 받아와서 업데이트
             // 현재는 임시로 로컬 상태만 업데이트
-            
+
             setIsVibrating(false);
             setShowResult(true);
           } catch (error) {
-            console.error('랜덤박스 구매 실패:', error);
-            alert('랜덤박스 구매에 실패했습니다. 다시 시도해주세요.');
+            console.error("랜덤박스 구매 실패:", error);
+            alert("랜덤박스 구매에 실패했습니다. 다시 시도해주세요.");
             setShowRaffleBoxOpenModal(false);
           } finally {
             setIsLoadingBox(false);
@@ -469,7 +494,7 @@ const DiceEventPage: React.FC = () => {
         }, 2000);
       }, 500);
     } catch (error) {
-      console.error('랜덤박스 열기 오류:', error);
+      console.error("랜덤박스 열기 오류:", error);
       setIsLoadingBox(false);
     }
   };
@@ -574,8 +599,9 @@ const DiceEventPage: React.FC = () => {
               rollDice={game.rollDice}
               isCardGameActive={game.isCardGameActive}
               handleCardGameEnd={game.handleCardGameEnd}
+              onRefillTimeClick={handleRefillTimeClick} 
             />
-            
+
             {/* 카드게임 모달 - 한 번만 진행되는 게임 */}
             {game.isCardGameActive && (
               <CardGameModal onClose={game.handleCardGameEnd} />
@@ -586,7 +612,7 @@ const DiceEventPage: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl">
                   <img
-                    src={Images.Airplane}
+                    src={Images.AirplaneIcon}
                     alt="airplane"
                     className="h-20 md:h-28"
                   />
@@ -606,7 +632,7 @@ const DiceEventPage: React.FC = () => {
             <br />
 
             {/* 랜덤박스 아이콘 */}
-            <div className="w-full max-w-[332px] md:max-w-full flex justify-center">
+            <div className="w-full max-w-[332px] md:max-w-full flex justify-center -mt-4">
               <div
                 style={{
                   width: "100%",
@@ -696,13 +722,13 @@ const DiceEventPage: React.FC = () => {
                 <div className="relative z-10 flex flex-col h-full">
                   <DialogHeader className="flex w-full items-end">
                     <DialogClose>
-                      <HiX 
+                      <HiX
                         className="w-5 h-5"
                         style={{
                           backgroundColor: "transparent",
                           outline: "none",
                           border: "none",
-                        }} 
+                        }}
                       />
                     </DialogClose>
                   </DialogHeader>
@@ -722,10 +748,10 @@ const DiceEventPage: React.FC = () => {
                 style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                    position: "fixed",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                 }}
               >
                 <DialogTitle className="sr-only">레벨별 보상</DialogTitle>
@@ -740,10 +766,10 @@ const DiceEventPage: React.FC = () => {
                 style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                    position: "fixed",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                 }}
               >
                 <div className="flex flex-col items-center justify-around">
@@ -942,22 +968,22 @@ const DiceEventPage: React.FC = () => {
 
             {/* Random Box 모달 */}
             <Dialog
-               open={showRaffleBoxModal}
-               onOpenChange={setShowRaffleBoxModal}
-             >
-               <DialogContent
-                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
-                 style={{
-                   background:
-                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                   boxShadow:
-                     "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-                   position: "fixed",
-                   top: "50%",
-                   left: "50%",
-                   transform: "translate(-50%, -50%)",
-                 }}
-               >
+              open={showRaffleBoxModal}
+              onOpenChange={setShowRaffleBoxModal}
+            >
+              <DialogContent
+                className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  boxShadow:
+                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
                 {/* 닫기 버튼 */}
                 <button
                   onClick={() => setShowRaffleBoxModal(false)}
@@ -965,8 +991,8 @@ const DiceEventPage: React.FC = () => {
                 >
                   <HiX className="w-5 h-5 text-white" />
                 </button>
-                 
-                 <div className="flex flex-col items-center w-full">
+
+                <div className="flex flex-col items-center w-full">
                   <h2
                     className="font-bold text-lg mb-4"
                     style={{
@@ -1123,32 +1149,32 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-              {/* Random Box 열기 모달 */}
-             <Dialog
-               open={showRaffleBoxOpenModal}
-               onOpenChange={setShowRaffleBoxOpenModal}
-             >
-               <DialogContent
-                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
-                 style={{
-                   background:
-                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-                   boxShadow:
-                     "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-                   position: "fixed",
-                   top: "50%",
-                   left: "50%",
-                   transform: "translate(-50%, -50%)",
-                 }}
-               >
-                  {/* 닫기 버튼 */}
-                  <DialogHeader className="flex w-full items-end">
+            {/* Random Box 열기 모달 */}
+            <Dialog
+              open={showRaffleBoxOpenModal}
+              onOpenChange={setShowRaffleBoxOpenModal}
+            >
+              <DialogContent
+                className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  boxShadow:
+                    "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {/* 닫기 버튼 */}
+                <DialogHeader className="flex w-full items-end">
                   <DialogClose>
                     <HiX className="w-5 h-5 text-white" />
                   </DialogClose>
                 </DialogHeader>
-                 
-                 <div className="flex flex-col items-center w-full">
+
+                <div className="flex flex-col items-center w-full">
                   <h2
                     className="font-bold text-lg mb-6"
                     style={{
@@ -1206,16 +1232,25 @@ const DiceEventPage: React.FC = () => {
                   {/* 결과 표시 */}
                   {showResult && boxResult && (
                     <div className="flex flex-col items-center mb-4">
-                      {boxResult.type === 'EQUIPMENT' && boxResult.equipment ? (
+                      {boxResult.type === "EQUIPMENT" && boxResult.equipment ? (
                         <div className="flex items-center gap-3 mb-2">
                           <img
-                            src={getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)}
+                            src={getEquipmentIcon(
+                              boxResult.equipment.type,
+                              boxResult.equipment.rarity
+                            )}
                             style={{ width: 40, height: 40 }}
                             alt={boxResult.equipment.type}
                             onError={(e) => {
-                              console.error('이미지 로드 실패:', e);
+                              console.error("이미지 로드 실패:", e);
                               if (boxResult.equipment) {
-                                console.error('시도한 이미지 경로:', getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity));
+                                console.error(
+                                  "시도한 이미지 경로:",
+                                  getEquipmentIcon(
+                                    boxResult.equipment.type,
+                                    boxResult.equipment.rarity
+                                  )
+                                );
                               }
                             }}
                           />
@@ -1231,7 +1266,7 @@ const DiceEventPage: React.FC = () => {
                             {getEquipmentName(boxResult.equipment.type)} 장비
                           </span>
                         </div>
-                      ) : boxResult.type === 'DICE' ? (
+                      ) : boxResult.type === "DICE" ? (
                         <div className="flex items-center gap-3 mb-2">
                           <img
                             src={Images.Dice}
@@ -1250,7 +1285,7 @@ const DiceEventPage: React.FC = () => {
                             다이스 획득!
                           </span>
                         </div>
-                      ) : boxResult.type === 'SL' ? (
+                      ) : boxResult.type === "SL" ? (
                         <div className="flex items-center gap-3 mb-2">
                           <img
                             src={Images.LotteryTicket}
@@ -1293,7 +1328,9 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "0.5px #000000",
                         }}
                       >
-                        {boxResult.type === 'NONE' ? '다음 기회에!' : '획득하셨습니다!'}
+                        {boxResult.type === "NONE"
+                          ? "다음 기회에!"
+                          : "획득하셨습니다!"}
                       </p>
                     </div>
                   )}
@@ -1332,7 +1369,7 @@ const DiceEventPage: React.FC = () => {
             <Dialog open={showItemDialog}>
               <DialogContent
                 className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
-                 style={{
+                style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
                   position: "fixed",
@@ -1407,6 +1444,152 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
+            
+
+         {/* 리필 시간 및 광고 버튼 모달 */}
+         <Dialog open={showAdModal}>
+              <DialogContent
+                className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
+                 style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <div className="relative">
+                  <DialogClose className="absolute top-0 right-0 p-2">
+                    <HiX
+                      className="w-5 h-5"
+                      onClick={() => {
+                        playSfx(Audios.button_click);
+                        setShowAdModal(false);
+                        setRefillTimeInfo(null); // 모달 닫을 때 시간 정보 초기화
+                      }}
+                    />
+                  </DialogClose>
+                </div>
+                <div className="flex flex-col items-center justify-around">
+                  <div className=" flex flex-col items-center gap-2 mb-[30px]">
+                    <h1
+                      className="text-center"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: 400,
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                      }}
+                    >
+                      주사위 리필
+                    </h1>
+                    <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
+                      {/* 리필 시간 표시 */}
+                      {refillTimeInfo ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <img
+                            src={Images.RefillDice}
+                            alt="Refill Dice"
+                            className="w-16 h-16"
+                          />
+                          <div className="text-center">
+                            <p
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "18px",
+                                fontWeight: 400,
+                                color: "#FFFFFF",
+                                WebkitTextStroke: "1px #000000",
+                              }}
+                            >
+                              다음 리필까지
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "24px",
+                                fontWeight: 400,
+                                color: "#FDE047",
+                                WebkitTextStroke: "1px #000000",
+                              }}
+                            >
+                              {refillTimeInfo.timeUntilRefill}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <img
+                            src={Images.RefillDice}
+                            alt="Refill Dice"
+                            className="w-16 h-16"
+                          />
+                          <div className="text-center">
+                            <p
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "18px",
+                                fontWeight: "400",
+                                color: "#FFFFFF",
+                                WebkitTextStroke: "1px #000000",
+                              }}
+                            >
+                              대기 중...
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    <button
+                      className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                        border: "2px solid #76C1FF",
+                        outline: "2px solid #000000",
+                        boxShadow:
+                          "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                        color: "#FFFFFF",
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "18px",
+                        fontWeight: "400",
+                        WebkitTextStroke: "1px #000000",
+                        opacity: 1,
+                      }}
+                      // onClick={handleAdButtonClick}
+                    >
+                      <img
+                        src={Images.ButtonPointBlue}
+                        alt="button-point-blue"
+                        style={{
+                          position: "absolute",
+                          top: "3px",
+                          left: "3px",
+                          width: "8.47px",
+                          height: "6.3px",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <img
+                        src={Images.AdButton}
+                        alt="광고 버튼"
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                        }}
+                      />
+
+                      <span>광고 시청 후 주사위 얻기</span>
+                    </button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <br />
             <br />
             <br />
@@ -1416,8 +1599,11 @@ const DiceEventPage: React.FC = () => {
           </>
         )}
 
+
         {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
-        {!game.isSpinGameActive && !game.isRPSGameActive && !game.isCardGameActive && <BottomNav />}
+        {!game.isSpinGameActive &&
+          !game.isRPSGameActive &&
+          !game.isCardGameActive && <BottomNav />}
       </div>
     </div>
   );

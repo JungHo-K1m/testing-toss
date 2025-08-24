@@ -8,7 +8,8 @@
     "build": "bedrock build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "ait deploy"
+    "deploy": "ait deploy",
+    "ait:build": "ait build"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^0.0.29",
@@ -55,6 +56,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@apps-in-toss/cli": "^0.0.39",
     "@eslint/js": "^9.30.1",
     "@types/body-scroll-lock": "^3.1.2",
     "@types/js-cookie": "^3.0.6",

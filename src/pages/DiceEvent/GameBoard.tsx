@@ -53,9 +53,11 @@ interface GameBoardProps {
   handleMouseUp: () => void;
   isLuckyVisible: boolean;
   rollDice: () => void;
-  isCardGameActive: boolean; // 카드게임 활성화 상태 추가
-  handleCardGameEnd: () => void; // 카드게임 종료 함수 추가
+  isCardGameActive: boolean;
+  handleCardGameEnd: () => void;
+  onRefillTimeClick: (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => void; // 수정된 prop
 }
+
 
 const GameBoard: React.FC<GameBoardProps> = ({
   position,
@@ -76,6 +78,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   rollDice,
   isCardGameActive,
   handleCardGameEnd,
+  onRefillTimeClick,
 }) => {
   // Zustand 스토어에서 필요한 상태와 함수 가져오기
   const {
@@ -175,6 +178,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
       // 실패 시 오류 처리 (예: alert 등)
     }
   };
+
+    // 리필 영역 클릭 핸들러 수정
+    const handleRefillAreaClick = () => {
+      if (timeUntilRefill === "Refill dice") {
+        // 리필 가능한 경우 기존 로직 실행
+        handleRefillDice();
+      } else {
+        // 시간이 남아있는 경우 모달 열기 (시간 정보와 함께)
+        onRefillTimeClick({
+          canRefill: false,
+          timeUntilRefill: timeUntilRefill
+        });
+      }
+    };
 
   // Refill Dice API 호출 함수
   const handleRefillDice = async () => {
@@ -547,21 +564,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
             {/* 리필 영역 - 중앙 */}
             <div
-              className="flex flex-row items-center justify-center w-[72px]"
+              className="flex flex-row items-center justify-center w-[72px] cursor-pointer"
               style={{
                 transform: "translateY(8px)",
               }}
+              onClick={handleRefillAreaClick}
             >
               {timeUntilRefill === "Refill dice" ? (
                 <motion.div
-                  onClick={handleRefillDice}
-                  className="flex flex-row items-center justify-center gap-1 cursor-pointer w-full"
+                  className="flex flex-row items-center justify-center gap-1 w-full"
                   animate={{
-                    opacity: [1, 0.5, 1], // 반짝이는 효과
+                    opacity: [1, 0.5, 1],
                   }}
                   transition={{
-                    duration: 1, // 1초 동안 애니메이션 반복
-                    repeat: Infinity, // 무한 반복
+                    duration: 1,
+                    repeat: Infinity,
                   }}
                 >
                   <img
