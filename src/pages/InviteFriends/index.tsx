@@ -9,6 +9,7 @@ import getFriends from "@/entities/Mission/api/friends";
 import { formatNumber } from "@/shared/utils/formatNumber";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
+import { contactsViral } from '@apps-in-toss/web-framework';
 
 interface TruncateMiddleProps {
   text: string;
@@ -50,6 +51,7 @@ const InviteFriends: React.FC = () => {
   const [referralLink, setReferralLink] = useState<string>(""); // 레퍼럴 코드 상태
   const [friends, setFriends] = useState<Friend[]>([]); // 친구 목록 상태
   const [loading, setLoading] = useState<boolean>(true); // 로딩 상태
+  const [cleanup, setCleanup] = useState<(() => void) | null>(null); // contactsViral cleanup 함수
 
   // 클립보드 복사 함수
   const copyToClipboard = async () => {
@@ -64,26 +66,26 @@ const InviteFriends: React.FC = () => {
     }
   };
 
+  // 친구 목록 새로고침 함수
+  const fetchFriendsData = async () => {
+    try {
+      const data = await getFriends(); // API 호출
+      setReferralLink(data.referralCode.referralUrl); // 레퍼럴 코드 설정
+      setFriends(data.friends || []); // 친구 목록 설정 (없으면 빈 배열)
+      setLoading(false); // 로딩 완료
+    } catch (error) {
+      // console.error('Error fetching friends data:', error);
+      setLoading(false); // 에러 시 로딩 종료
+    }
+  };
+
   // 페이지 로드 시 API 호출
   useEffect(() => {
-    const fetchFriendsData = async () => {
-      try {
-        const data = await getFriends(); // API 호출
-        setReferralLink(data.referralCode.referralUrl); // 레퍼럴 코드 설정
-        setFriends(data.friends || []); // 친구 목록 설정 (없으면 빈 배열)
-        setLoading(false); // 로딩 완료
-      } catch (error) {
-        // console.error('Error fetching friends data:', error);
-        setLoading(false); // 에러 시 로딩 종료
-      }
-    };
-
     fetchFriendsData();
   }, []);
 
-  const handleInviteClick = async () => {
-    playSfx(Audios.button_click);
-
+  // 기존 Web Share API 방식으로 fallback
+  const fallbackToWebShare = async () => {
     try {
       const shareData = {
         title: "Awesome App Invitation",
@@ -91,31 +93,70 @@ const InviteFriends: React.FC = () => {
         url: referralLink,
       };
 
-      if (navigator.share) {
-        // Web Share API 지원 여부 확인
-        if (navigator.canShare && navigator.canShare(shareData)) {
-          try {
-            await navigator.share(shareData);
-            // console.log('Content shared successfully');
-          } catch (error) {
-            // console.error('Error sharing content:', error);
-          }
-        } else {
-          // console.error('This data type cannot be shared using Web Share API.');
-          // 대체 처리: 클립보드에 링크 복사
-          await navigator.clipboard.writeText(referralLink);
-          // console.log('Referral link copied to clipboard.');
-        }
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
       } else {
-        // console.error('Web Share API is not supported in this browser.');
-        // 대체 처리: 클립보드에 링크 복사
         await navigator.clipboard.writeText(referralLink);
-        // console.log('Referral link copied to clipboard.');
+        setCopySuccess("Referral link copied to clipboard!");
+        setTimeout(() => setCopySuccess(""), 2000);
       }
     } catch (error) {
-      // console.error('Error sharing message:', error);
+      console.error('Fallback sharing failed:', error);
     }
   };
+
+  const handleInviteClick = async () => {
+    playSfx(Audios.button_click);
+
+    try {
+      // 기존 cleanup 함수가 있다면 호출
+      if (cleanup) {
+        cleanup();
+      }
+
+      // contactsViral API 호출
+      const cleanupFn = contactsViral({
+        options: {
+          moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b' // 앱인토스 콘솔에서 설정한 moduleId로 변경 필요
+        },
+        onEvent: (event) => {
+          if (event.type === 'sendViral') {
+            console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
+            // 리워드 지급 성공 시 처리 로직 추가 가능
+          } else if (event.type === 'close') {
+            console.log('모듈 종료:', event.data.closeReason);
+            console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+            
+            // 모듈이 닫힌 후 친구 목록 새로고침
+            if (event.data.sentRewardsCount > 0) {
+              // 친구 목록 새로고침 로직
+              fetchFriendsData();
+            }
+          }
+        },
+        onError: (error) => {
+          console.error('에러 발생:', error);
+          // 에러 발생 시 기존 공유 방식으로 fallback
+          fallbackToWebShare();
+        }
+      });
+
+      setCleanup(cleanupFn);
+    } catch (error) {
+      console.error('실행 중 에러:', error);
+      // 에러 발생 시 기존 공유 방식으로 fallback
+      fallbackToWebShare();
+    }
+  };
+
+  // 컴포넌트 언마운트 시 cleanup 실행
+  useEffect(() => {
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
+  }, [cleanup]);
 
   // 로딩 상태 처리
   if (loading) {

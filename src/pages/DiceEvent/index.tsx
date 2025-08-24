@@ -374,6 +374,40 @@ const DiceEventPage: React.FC = () => {
     }
   };
 
+  // 광고보고 랜덤박스 열기 핸들러
+  const handleAdRandomBox = async () => {
+    if (!isSupported) {
+      console.log('광고가 지원되지 않는 환경입니다');
+      return;
+    }
+
+    try {
+      // 광고가 로드되지 않은 경우 먼저 로드
+      if (adLoadStatus !== 'loaded') {
+        await loadAd();
+        return;
+      }
+
+      // 광고 표시
+      await showAd();
+      
+      // 광고 시청 완료 후 랜덤박스 열기 로직
+      // useAdMob에서 userEarnedReward 이벤트 발생 시 자동으로 API 호출됨
+      console.log('광고 시청 시작 - 랜덤박스 보상 대기 중...');
+      
+    } catch (error) {
+      console.error('광고 표시 중 오류:', error);
+    }
+  };
+
+
+  // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
+  useEffect(() => {
+    if (showRaffleBoxModal) {
+      autoLoadAd();
+    }
+  }, [showRaffleBoxModal, autoLoadAd]);
+
   const isAdButtonDisabled = adLoadStatus === 'loading' || adLoadStatus === 'failed';
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
@@ -1012,6 +1046,7 @@ const DiceEventPage: React.FC = () => {
               open={showRaffleBoxModal}
               onOpenChange={setShowRaffleBoxModal}
             >
+              <DialogTitle>랜덤박스 구매</DialogTitle>
               <DialogContent
                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
                 style={{
@@ -1185,6 +1220,121 @@ const DiceEventPage: React.FC = () => {
                         열기
                       </button>
                     </div>
+                    
+                    {/* 광고보고 랜덤박스 열기 버튼 추가 */}
+                    <div className="flex items-center justify-between px-1 py-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          style={{
+                            width: 70,
+                            height: 70,
+                            position: "relative",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 13,
+                            border: "2px solid #B4CADA",
+                            padding: 5,
+                          }}
+                        >
+                          {/* Background layer with blur effect */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: 11,
+                              background: "#C2D5E8",
+                              opacity: 0.5,
+                              backdropFilter: "blur(10px)",
+                              boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.04)",
+                            }}
+                          />
+                          {/* Image layer without blur */}
+                          <img
+                            src={Images.RandomBox}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              position: "relative",
+                              zIndex: 1,
+                            }}
+                            alt="bronze"
+                          />
+                        </div>
+                        <div>
+                          <div
+                            className="font-semibold text-base"
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            광고 랜덤박스
+                          </div>
+                          <div
+                            className="flex items-center gap-1"
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "1px #000000",
+                            }}
+                          >
+                            <img
+                              src={Images.AdButton}
+                              className="w-[30px] h-[30px]"
+                              alt="ad"
+                            />
+                            광고 시청
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAdRandomBox}
+                        disabled={adLoadStatus !== 'loaded'}
+                        className={`w-[120px] h-14 rounded-[10px] flex items-center justify-center relative whitespace-nowrap ${
+                          adLoadStatus === 'loaded' ? 'hover:scale-105' : 'opacity-50 cursor-not-allowed'
+                        }`}
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                          border: "2px solid #76C1FF",
+                          outline: "2px solid #000000",
+                          boxShadow:
+                            "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                          color: "#FFFFFF",
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "18px",
+                          fontWeight: "400",
+                          WebkitTextStroke: "1px #000000",
+                          opacity: adLoadStatus === 'loaded' ? 1 : 0.5,
+                        }}
+                      >
+                        <img
+                          src={Images.ButtonPointBlue}
+                          alt="button-point-blue"
+                          style={{
+                            position: "absolute",
+                            top: "3px",
+                            left: "3px",
+                            width: "8.47px",
+                            height: "6.3px",
+                            pointerEvents: "none",
+                          }}
+                        />
+                        {adLoadStatus === 'loading' && '로딩 중...'}
+                        {adLoadStatus === 'loaded' && '광고보고 열기'}
+                        {adLoadStatus === 'failed' && '로드 실패'}
+                        {adLoadStatus === 'not_loaded' && '준비 중...'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </DialogContent>
@@ -1195,6 +1345,7 @@ const DiceEventPage: React.FC = () => {
               open={showRaffleBoxOpenModal}
               onOpenChange={setShowRaffleBoxOpenModal}
             >
+              <DialogTitle className="sr-only">랜덤박스 구매</DialogTitle>
               <DialogContent
                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
                 style={{
@@ -1408,6 +1559,7 @@ const DiceEventPage: React.FC = () => {
 
             {/* 장착 중인 아이템 모달 */}
             <Dialog open={showItemDialog}>
+              <DialogTitle className="sr-only">장착 중인 아이템</DialogTitle>
               <DialogContent
                 className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
                 style={{
@@ -1484,8 +1636,6 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
-
-            
 
             {/* 리필 시간 및 광고 버튼 모달 */} 
             <Dialog open={showAdModal}>
