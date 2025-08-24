@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getAdUnitId } from '@/types/adMob';
 import { AdMobRewardedAdEvent, ShowAdMobRewardedAdEvent } from '@/types/adMob';
+import { getRandomBoxAdReward } from '@/entities/User/api/randomBoxAdReward';
 
 // 광고 상태 타입
 export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed';
@@ -102,7 +103,7 @@ export const useAdMob = (): UseAdMobReturn => {
       
       const cleanup = await loadAdMobRewardedAd({
         options: { adUnitId },
-        onEvent: (event) => {
+        onEvent: async (event) => {
           console.log('광고 이벤트:', event.type);
           
           switch (event.type) {
@@ -126,11 +127,33 @@ export const useAdMob = (): UseAdMobReturn => {
             case 'show':
               console.log('광고 컨텐츠 보여졌음');
               break;
-            case 'userEarnedReward':
-              console.log('사용자가 광고 시청을 완료했습니다');
-              setAdLoadStatus('not_loaded');
-              break;
-          }
+              case 'userEarnedReward':
+                console.log('사용자가 광고 시청을 완료했습니다');
+                try {
+                  // 광고 보상 API 호출
+                  const rewardData = await getRandomBoxAdReward();
+                  console.log('광고 보상 API 응답:', rewardData);
+                  
+                  // 보상 결과에 따른 처리
+                  if (rewardData.randomBox.result === 'DICE') {
+                    console.log('주사위 보상 획득!');
+                    // TODO: 주사위 개수 증가 로직 추가
+                  } else if (rewardData.randomBox.result === 'EQUIPMENT') {
+                    console.log('장비 보상 획득!', rewardData.randomBox.equipment);
+                    // TODO: 장비 획득 로직 추가
+                  } else if (rewardData.randomBox.result === 'SL') {
+                    console.log('슬롯 보상 획득!');
+                    // TODO: 슬롯 증가 로직 추가
+                  } else {
+                    console.log('보상 없음');
+                  }
+                } catch (error) {
+                  console.error('광고 보상 API 호출 실패:', error);
+                  // 에러 처리: 사용자에게 알림 등
+                }
+                setAdLoadStatus('not_loaded');
+                break;
+            }
         },
         onError: (error) => {
           console.error('광고 불러오기 실패:', error);
