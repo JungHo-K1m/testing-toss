@@ -12,7 +12,7 @@ export interface RandomBoxResult {
 
 // 랜덤박스 구매 API 함수
 export const purchaseRandomBox = async (): Promise<RandomBoxResult> => {
-  const response = await api.post('/randombox');
+  const response = await api.get('/randombox');
 
   if (response.data.code === 'OK') {
     // API 응답 구조에 맞게 수정 - data.data에서 가져오기

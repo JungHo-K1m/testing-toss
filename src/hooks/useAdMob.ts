@@ -12,19 +12,21 @@ export interface UseAdMobReturn {
   loadAd: () => void;
   showAd: () => void;
   isSupported: boolean;
+  autoLoadAd: () => void;
 }
 
-// 광고 지원 여부 확인 (실제 구현에서는 @apps-in-toss/framework의 GoogleAdMob 사용)
-const checkAdSupport = (): boolean => {
-  // 실제 구현에서는 다음과 같이 사용:
-  // import { GoogleAdMob } from '@apps-in-toss/framework';
-  // return GoogleAdMob.loadAdMobRewardedAd.isSupported();
-  
-  // 현재는 웹 환경에서 테스트할 수 있도록 true 반환
-  return true;
+// 광고 지원 여부 확인
+const checkAdSupport = async (): Promise<boolean> => {
+  try {
+    const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
+    return GoogleAdMob.loadAdMobRewardedAd.isSupported();
+  } catch (error) {
+    console.warn('GoogleAdMob을 불러올 수 없습니다:', error);
+    return false;
+  }
 };
 
-// 광고 로딩 함수 (실제 구현에서는 @apps-in-toss/framework의 GoogleAdMob 사용)
+// 광고 로딩 함수
 const loadAdMobRewardedAd = async (
   params: {
     options: { adUnitId: string };
@@ -32,25 +34,16 @@ const loadAdMobRewardedAd = async (
     onError: (reason: unknown) => void;
   }
 ): Promise<() => void> => {
-  // 실제 구현에서는 다음과 같이 사용:
-  // import { GoogleAdMob } from '@apps-in-toss/framework';
-  // return GoogleAdMob.loadAdMobRewardedAd(params);
-  
-  // 현재는 시뮬레이션을 위한 더미 구현
-  console.log('광고 로딩 시작:', params.options.adUnitId);
-  
-  // 광고 로딩 시뮬레이션 (2초 후 로드 완료)
-  setTimeout(() => {
-    params.onEvent({ type: 'loaded', data: { adUnitId: params.options.adUnitId } });
-  }, 2000);
-  
-  // 클린업 함수 반환
-  return () => {
-    console.log('광고 로딩 정리');
-  };
+  try {
+    const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
+    return GoogleAdMob.loadAdMobRewardedAd(params);
+  } catch (error) {
+    console.error('GoogleAdMob 로딩 실패:', error);
+    throw error;
+  }
 };
 
-// 광고 표시 함수 (실제 구현에서는 @apps-in-toss/framework의 GoogleAdMob 사용)
+// 광고 표시 함수
 const showAdMobRewardedAd = async (
   params: {
     options: { adUnitId: string };
@@ -58,26 +51,24 @@ const showAdMobRewardedAd = async (
     onError: (reason: unknown) => void;
   }
 ): Promise<void> => {
-  // 실제 구현에서는 다음과 같이 사용:
-  // import { GoogleAdMob } from '@apps-in-toss/framework';
-  // await GoogleAdMob.showAdMobRewardedAd(params);
-  
-  // 현재는 시뮬레이션을 위한 더미 구현
-  console.log('광고 표시 시작:', params.options.adUnitId);
-  
-  // 광고 표시 시뮬레이션
-  params.onEvent({ type: 'requested' });
-  
-  // 광고 시청 완료 시뮬레이션 (5초 후)
-  setTimeout(() => {
-    console.log('사용자가 광고 시청을 완료했습니다');
-  }, 5000);
+  try {
+    const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
+    await GoogleAdMob.showAdMobRewardedAd(params);
+  } catch (error) {
+    console.error('GoogleAdMob 표시 실패:', error);
+    throw error;
+  }
 };
 
 export const useAdMob = (): UseAdMobReturn => {
   const [adLoadStatus, setAdLoadStatus] = useState<AdLoadStatus>('not_loaded');
-  const [isSupported] = useState<boolean>(checkAdSupport());
+  const [isSupported, setIsSupported] = useState<boolean>(false);
   const cleanupRef = useRef<(() => void) | null>(null);
+
+  // 광고 지원 여부 확인
+  useEffect(() => {
+    checkAdSupport().then(setIsSupported);
+  }, []);
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
@@ -103,8 +94,8 @@ export const useAdMob = (): UseAdMobReturn => {
       
       const cleanup = await loadAdMobRewardedAd({
         options: { adUnitId },
-        onEvent: async (event) => {
-          console.log('광고 이벤트:', event.type);
+        onEvent: async (event: AdMobRewardedAdEvent) => {
+          console.log('광고 로딩 이벤트:', event.type);
           
           switch (event.type) {
             case 'loaded':
@@ -127,35 +118,40 @@ export const useAdMob = (): UseAdMobReturn => {
             case 'show':
               console.log('광고 컨텐츠 보여졌음');
               break;
-              case 'userEarnedReward':
-                console.log('사용자가 광고 시청을 완료했습니다');
-                try {
-                  // 광고 보상 API 호출
-                  const rewardData = await getRandomBoxAdReward();
-                  console.log('광고 보상 API 응답:', rewardData);
-                  
-                  // 보상 결과에 따른 처리
-                  if (rewardData.randomBox.result === 'DICE') {
-                    console.log('주사위 보상 획득!');
-                    // TODO: 주사위 개수 증가 로직 추가
-                  } else if (rewardData.randomBox.result === 'EQUIPMENT') {
-                    console.log('장비 보상 획득!', rewardData.randomBox.equipment);
-                    // TODO: 장비 획득 로직 추가
-                  } else if (rewardData.randomBox.result === 'SL') {
-                    console.log('슬롯 보상 획득!');
-                    // TODO: 슬롯 증가 로직 추가
-                  } else {
-                    console.log('보상 없음');
-                  }
-                } catch (error) {
-                  console.error('광고 보상 API 호출 실패:', error);
-                  // 에러 처리: 사용자에게 알림 등
+            case 'userEarnedReward':
+              console.log('사용자가 광고 시청을 완료했습니다');
+              console.log('광고 보상 API 호출 시작...');
+              try {
+                // 광고 보상 API 호출
+                const rewardData = await getRandomBoxAdReward();
+                console.log('광고 보상 API 응답:', rewardData);
+                
+                // 보상 결과에 따른 처리
+                if (rewardData.result === 'EQUIPMENT') {
+                  console.log('장비 보상 획득!', rewardData.equipment);
+                  // TODO: 장비 획득 로직 추가
+                } else if (rewardData.result === 'DICE') {
+                  console.log('주사위 보상 획득!');
+                  // TODO: 주사위 개수 증가 로직 추가
+                } else if (rewardData.result === 'SL') {
+                  console.log('슬롯 보상 획득!');
+                  // TODO: 슬롯 증가 로직 추가
+                } else if (rewardData.result === 'NONE') {
+                  console.log('보상 없음');
                 }
-                setAdLoadStatus('not_loaded');
-                break;
-            }
+              } catch (error: any) {
+                console.error('광고 보상 API 호출 실패:', error);
+                console.error('에러 상세 정보:', {
+                  message: error.message,
+                  stack: error.stack,
+                  response: error.response
+                });
+              }
+              setAdLoadStatus('not_loaded');
+              break;
+          }
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error('광고 불러오기 실패:', error);
           setAdLoadStatus('failed');
         }
@@ -182,16 +178,49 @@ export const useAdMob = (): UseAdMobReturn => {
 
     try {
       const adUnitId = getAdUnitId();
+      console.log('광고 표시 시작, adUnitId:', adUnitId);
       
       await showAdMobRewardedAd({
         options: { adUnitId },
-        onEvent: (event) => {
+        onEvent: async (event: ShowAdMobRewardedAdEvent) => {
+          console.log('광고 표시 이벤트:', event.type);
+          
           if (event.type === 'requested') {
             console.log('광고 보여주기 요청 완료');
             setAdLoadStatus('not_loaded');
+          } else if (event.type === 'userEarnedReward') {
+            console.log('사용자가 광고 시청을 완료했습니다');
+            console.log('광고 보상 API 호출 시작...');
+            try {
+              // 광고 보상 API 호출
+              const rewardData = await getRandomBoxAdReward();
+              console.log('광고 보상 API 응답:', rewardData);
+              
+              // 보상 결과에 따른 처리
+              if (rewardData.result === 'EQUIPMENT') {
+                console.log('장비 보상 획득!', rewardData.equipment);
+                // TODO: 장비 획득 로직 추가
+              } else if (rewardData.result === 'DICE') {
+                console.log('주사위 보상 획득!');
+                // TODO: 주사위 개수 증가 로직 추가
+              } else if (rewardData.result === 'SL') {
+                console.log('슬롯 보상 획득!');
+                // TODO: 슬롯 증가 로직 추가
+              } else if (rewardData.result === 'NONE') {
+                console.log('보상 없음');
+              }
+            } catch (error: any) {
+              console.error('광고 보상 API 호출 실패:', error);
+              console.error('에러 상세 정보:', {
+                message: error.message,
+                stack: error.stack,
+                response: error.response
+              });
+            }
+            setAdLoadStatus('not_loaded');
           }
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error('광고 보여주기 실패:', error);
           setAdLoadStatus('failed');
         }
@@ -202,10 +231,27 @@ export const useAdMob = (): UseAdMobReturn => {
     }
   }, [isSupported, adLoadStatus]);
 
+  // 자동 광고 로드 함수 (모달 열릴 때 호출)
+  const autoLoadAd = useCallback(async () => {
+    if (!isSupported) {
+      console.log('광고가 지원되지 않는 환경입니다');
+      return;
+    }
+
+    // 이미 로드된 상태면 다시 로드하지 않음
+    if (adLoadStatus === 'loaded' || adLoadStatus === 'loading') {
+      return;
+    }
+
+    console.log('모달 열림으로 인한 자동 광고 로드 시작');
+    await loadAd();
+  }, [isSupported, adLoadStatus, loadAd]);
+
   return {
     adLoadStatus,
     loadAd,
     showAd,
-    isSupported
+    isSupported,
+    autoLoadAd
   };
 };

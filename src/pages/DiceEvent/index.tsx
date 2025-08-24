@@ -335,7 +335,7 @@ const DiceEventPage: React.FC = () => {
   const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
   
   // 광고 관련 상태 및 훅
-  const { adLoadStatus, loadAd, showAd, isSupported } = useAdMob();
+  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd } = useAdMob();
   const [platform] = useState(getPlatform());
 
   // 리필 시간 클릭 핸들러
@@ -407,6 +407,12 @@ const DiceEventPage: React.FC = () => {
 
     initializeUserData();
   }, [fetchUserData]);
+  
+  useEffect(() => {
+    if (showAdModal) {
+      autoLoadAd();
+    }
+  }, [showAdModal, autoLoadAd]);
 
   if (isLoading) {
     return <LoadingSpinner className="h-screen" />;
@@ -1481,11 +1487,12 @@ const DiceEventPage: React.FC = () => {
 
             
 
-         {/* 리필 시간 및 광고 버튼 모달 */}
-         <Dialog open={showAdModal}>
+            {/* 리필 시간 및 광고 버튼 모달 */} 
+            <Dialog open={showAdModal}>
+              <DialogTitle>광고 시청 후 주사위 얻기</DialogTitle>
               <DialogContent
                 className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
-                 style={{
+                style={{
                   background:
                     "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
                   position: "fixed",
@@ -1507,7 +1514,7 @@ const DiceEventPage: React.FC = () => {
                   </DialogClose>
                 </div>
                 <div className="flex flex-col items-center justify-around">
-                  <div className=" flex flex-col items-center gap-2 mb-[30px]">
+                  <div className="flex flex-col items-center gap-2 mb-[30px]">
                     <h1
                       className="text-center"
                       style={{
@@ -1575,7 +1582,7 @@ const DiceEventPage: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                                            )}
+                      )}
                     </div>
                   </div>
                   
@@ -1603,34 +1610,34 @@ const DiceEventPage: React.FC = () => {
                         }}
                       >
                         광고 상태: {adLoadStatus === 'not_loaded' ? '대기 중' : 
-                                   adLoadStatus === 'loading' ? '로딩 중' : 
-                                   adLoadStatus === 'loaded' ? '로드 완료' : '로드 실패'}
+                                  adLoadStatus === 'loading' ? '로딩 중' : 
+                                  adLoadStatus === 'loaded' ? '로드 완료' : '로드 실패'}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex flex-col gap-6">
-                     <button
-                       className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                         isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                       }`}
-                       style={{
-                         background:
-                           "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                         border: "2px solid #76C1FF",
-                         outline: "2px solid #000000",
-                         boxShadow:
-                           "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                         color: "#FFFFFF",
-                         fontFamily: "'ONE Mobile POP', sans-serif",
-                         fontSize: "18px",
-                         fontWeight: "400",
-                         WebkitTextStroke: "1px #000000",
-                         opacity: isAdButtonDisabled ? 0.5 : 1,
-                       }}
-                       onClick={handleAdButtonClick}
-                       disabled={isAdButtonDisabled}
-                     >
+                    <button
+                      className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+                        isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                      }`}
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                        border: "2px solid #76C1FF",
+                        outline: "2px solid #000000",
+                        boxShadow:
+                          "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                        color: "#FFFFFF",
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "18px",
+                        fontWeight: "400",
+                        WebkitTextStroke: "1px #000000",
+                        opacity: isAdButtonDisabled ? 0.5 : 1,
+                      }}
+                      onClick={handleAdButtonClick}
+                      disabled={isAdButtonDisabled}
+                    >
                       <img
                         src={Images.ButtonPointBlue}
                         alt="button-point-blue"
@@ -1651,8 +1658,7 @@ const DiceEventPage: React.FC = () => {
                           height: "32px",
                         }}
                       />
-
-                                             <span>{getAdButtonText()}</span>
+                      <span>{getAdButtonText()}</span>
                     </button>
                   </div>
                 </div>
