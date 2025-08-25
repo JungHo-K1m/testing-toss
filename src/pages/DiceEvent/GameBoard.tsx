@@ -566,7 +566,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             <div
               className="flex flex-row items-center justify-center w-[72px] cursor-pointer"
               style={{
-                transform: "translateY(8px)",
+                transform: "translateY(4px)",
               }}
               onClick={handleRefillAreaClick}
             >
@@ -638,7 +638,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
                 backgroundColor: "transparent",
-                transform: "translate(10px, -18px)",
+                transform: "translate(10px, -20px)",
                 outline: "none",
                 border: "none",
               }}

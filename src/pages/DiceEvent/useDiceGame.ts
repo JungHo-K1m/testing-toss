@@ -115,13 +115,13 @@ export const useDiceGame = () => {
           // applyReward(currentPosition);
           stopSfx(Audios.move);
           switch (currentPosition) {
-            case 2:
-              setTimeout(() => {
-                setPosition(15);
-                setMoving(false);
-                onMoveComplete(15); // 최종 위치 전달
-              }, 300);
-              break;
+            // case 2:
+            //   setTimeout(() => {
+            //     setPosition(15);
+            //     setMoving(false);
+            //     onMoveComplete(15); // 최종 위치 전달
+            //   }, 300);
+            //   break;
             case 8:
               setTimeout(() => {
                 // anywhere 비행기 활성화 시에는 주사위를 숨김
@@ -132,14 +132,14 @@ export const useDiceGame = () => {
                 onMoveComplete(8); // 8번 위치에서 멈춤
               }, 300);
               break;
-            case 13:
-              setTimeout(() => {
-                setPosition(0);
-                // applyReward(0)를 제거하여 중복 보상 방지
-                setMoving(false);
-                onMoveComplete(0); // 최종 위치 전달
-              }, 300);
-              break;
+            // case 13:
+            //   setTimeout(() => {
+            //     setPosition(0);
+            //     // applyReward(0)를 제거하여 중복 보상 방지
+            //     setMoving(false);
+            //     onMoveComplete(0); // 최종 위치 전달
+            //   }, 300);
+            //   break;
             case 18:
               if (!isAuto) { // isAuto가 false일 때만 활성화
                 setSelectingTile(true);

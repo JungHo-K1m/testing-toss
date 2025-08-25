@@ -2,7 +2,7 @@ import api from '@/shared/api/axiosInstance';
 
 // 광고 시청 후 랜덤박스 보상 API
 export interface RandomBoxAdRewardResponse {
-  result: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';
+  type: 'EQUIPMENT' | 'DICE' | 'SL' | 'NONE';  // result → type으로 변경
   equipment?: {
     ownedEquipmentId: number;
     type: 'HEAD' | 'EYE' | 'EAR' | 'NECK' | 'BACK';

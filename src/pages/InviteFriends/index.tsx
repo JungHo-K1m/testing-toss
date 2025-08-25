@@ -11,6 +11,18 @@ import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import { contactsViral } from '@apps-in-toss/web-framework';
 
+// contactsViral 이벤트 타입 정의
+interface ContactsViralEvent {
+  type: 'sendViral' | 'close' | string;
+  data: {
+    rewardAmount?: number;
+    rewardUnit?: string;
+    closeReason?: string;
+    sentRewardsCount?: number;
+    [key: string]: any;
+  };
+}
+
 interface TruncateMiddleProps {
   text: string;
   maxLength: number;
@@ -86,6 +98,8 @@ const InviteFriends: React.FC = () => {
 
   // 기존 Web Share API 방식으로 fallback
   const fallbackToWebShare = async () => {
+    console.log('🔄 Web Share API fallback 시작');
+    
     try {
       const shareData = {
         title: "Awesome App Invitation",
@@ -93,57 +107,107 @@ const InviteFriends: React.FC = () => {
         url: referralLink,
       };
 
+      console.log('공유 데이터:', shareData);
+
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        console.log('📤 네이티브 공유 API 사용');
         await navigator.share(shareData);
+        console.log('✅ 네이티브 공유 완료');
       } else {
+        console.log('📋 클립보드 복사로 fallback');
         await navigator.clipboard.writeText(referralLink);
         setCopySuccess("Referral link copied to clipboard!");
         setTimeout(() => setCopySuccess(""), 2000);
+        console.log('✅ 클립보드 복사 완료');
       }
     } catch (error) {
-      console.error('Fallback sharing failed:', error);
+      console.error('❌ fallback 공유 실패:', error);
     }
   };
 
   const handleInviteClick = async () => {
     playSfx(Audios.button_click);
+    console.log('🚀 친구초대 시작');
 
     try {
       // 기존 cleanup 함수가 있다면 호출
       if (cleanup) {
+        console.log('🧹 기존 cleanup 함수 실행');
         cleanup();
       }
 
+      console.log('📱 contactsViral API 호출 시작');
+      console.log('모듈 ID:', '5682bc17-9e30-4491-aed0-1cd0f1f36f4b');
+      
       // contactsViral API 호출
       const cleanupFn = contactsViral({
         options: {
           moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b' // 앱인토스 콘솔에서 설정한 moduleId로 변경 필요
         },
-        onEvent: (event) => {
+        onEvent: (event: ContactsViralEvent) => {
+          console.log('=== 친구초대 이벤트 발생 ===');
+          console.log('이벤트 타입:', event.type);
+          console.log('이벤트 데이터:', event.data);
+          
           if (event.type === 'sendViral') {
-            console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
+            console.log('🎉 리워드 지급 성공!');
+            console.log('보상 금액:', event.data.rewardAmount);
+            console.log('보상 단위:', event.data.rewardUnit);
+            console.log('전체 이벤트 데이터:', event.data);
+            
             // 리워드 지급 성공 시 처리 로직 추가 가능
+            // 예: 토스트 메시지, 상태 업데이트 등
           } else if (event.type === 'close') {
-            console.log('모듈 종료:', event.data.closeReason);
+            console.log('🔒 모듈 종료');
+            console.log('종료 사유:', event.data.closeReason);
             console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+            console.log('전체 이벤트 데이터:', event.data);
             
             // 모듈이 닫힌 후 친구 목록 새로고침
-            if (event.data.sentRewardsCount > 0) {
-              // 친구 목록 새로고침 로직
+            if (event.data.sentRewardsCount && event.data.sentRewardsCount > 0) {
+              console.log('✅ 친구 초대 성공 - 친구 목록 새로고침 시작');
               fetchFriendsData();
+            } else {
+              console.log('ℹ️ 친구 초대 없음 - 친구 목록 새로고침 건너뜀');
             }
+          } else {
+            console.log('📝 기타 이벤트:', event.type);
+            console.log('이벤트 상세:', event.data);
           }
+          console.log('=== 이벤트 처리 완료 ===');
         },
         onError: (error) => {
-          console.error('에러 발생:', error);
+          console.error('❌ 친구초대 에러 발생');
+          console.error('에러 타입:', typeof error);
+          console.error('에러 내용:', error);
+          
+          // 에러 객체의 상세 정보 출력
+          if (error && typeof error === 'object') {
+            console.error('에러 키들:', Object.keys(error));
+            if ('message' in error) {
+              console.error('에러 메시지:', (error as any).message);
+            }
+            if ('code' in error) {
+              console.error('에러 코드:', (error as any).code);
+            }
+            if ('stack' in error) {
+              console.error('에러 스택:', (error as any).stack);
+            }
+          }
+          
+          console.error('에러 발생 시 기존 공유 방식으로 fallback');
           // 에러 발생 시 기존 공유 방식으로 fallback
           fallbackToWebShare();
         }
       });
 
+      console.log('✅ contactsViral API 호출 성공');
+      console.log('cleanup 함수 설정:', typeof cleanupFn);
       setCleanup(cleanupFn);
+      
     } catch (error) {
-      console.error('실행 중 에러:', error);
+      console.error('💥 친구초대 실행 중 에러 발생');
+      console.error('에러 상세:', error);
       // 에러 발생 시 기존 공유 방식으로 fallback
       fallbackToWebShare();
     }

@@ -38,6 +38,7 @@ import {
   purchaseRandomBox,
   RandomBoxResult,
 } from "@/entities/User/api/purchaseRandomBox";
+import { getRandomBoxAdReward, RandomBoxAdRewardResponse } from "@/entities/User/api/randomBoxAdReward";
 import { useAdMob } from "@/hooks/useAdMob";
 import { getPlatform } from "@/types/adMob";
 
@@ -382,21 +383,72 @@ const DiceEventPage: React.FC = () => {
     }
 
     try {
+      console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
+      
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
+        console.log('광고 로드 시작...');
         await loadAd();
+        console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
-      // 광고 표시
-      await showAd();
+      console.log('광고 표시 시작...');
       
-      // 광고 시청 완료 후 랜덤박스 열기 로직
-      // useAdMob에서 userEarnedReward 이벤트 발생 시 자동으로 API 호출됨
-      console.log('광고 시청 시작 - 랜덤박스 보상 대기 중...');
+      // 광고 표시 및 보상 결과 대기
+      console.log('showAd() Promise 대기 시작...');
+      const rewardData: RandomBoxAdRewardResponse = await showAd();
+      console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
       
-    } catch (error) {
+      if (rewardData) {
+        console.log('보상 결과 처리 시작...');
+        console.log('원본 rewardData:', rewardData);
+        
+        // rewardData 구조 확인 및 안전한 매핑
+        if (!rewardData.type) {
+          console.error('rewardData.type이 없습니다:', rewardData);
+          alert('보상 데이터 형식이 올바르지 않습니다.');
+          return;
+        }
+        
+        // 보상 결과를 상태에 저장
+        const newBoxResult: RandomBoxResult = {
+          type: rewardData.type,  // type → type으로 매핑
+          equipment: rewardData.equipment || undefined
+        };
+        
+        console.log('새로운 boxResult 설정:', newBoxResult);
+        console.log('boxResult.type 확인:', newBoxResult.type);
+        console.log('boxResult.equipment 확인:', newBoxResult.equipment);
+        
+        setBoxResult(newBoxResult);
+        
+        console.log('결과 모달 표시 설정...');
+        // 결과 모달 표시
+        setShowResult(true);
+        setShowRaffleBoxOpenModal(true);
+        
+        console.log('진동 효과 시작...');
+        // 진동 효과 (선택사항)
+        setIsVibrating(true);
+        setTimeout(() => setIsVibrating(false), 1000);
+        
+        console.log('사용자 데이터 새로고침 시작...');
+        // 사용자 데이터 새로고침 (보상 반영)
+        await fetchUserData();
+        
+        console.log('광고보고 랜덤박스 완료!');
+      } else {
+        console.log('보상 결과가 없습니다.');
+      }
+      
+    } catch (error: any) {
       console.error('광고 표시 중 오류:', error);
+      console.error('에러 상세 정보:', {
+        message: error.message,
+        stack: error.stack
+      });
+      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -428,6 +480,15 @@ const DiceEventPage: React.FC = () => {
       }
     }
   }, [boxResult]);
+
+  // 디버깅용: 모달 상태 변경 감지
+  useEffect(() => {
+    console.log("모달 상태 변경:", {
+      showResult,
+      showRaffleBoxOpenModal,
+      boxResult: boxResult ? '있음' : '없음'
+    });
+  }, [showResult, showRaffleBoxOpenModal, boxResult]);
 
   // 사용자 데이터 초기 로딩
   useEffect(() => {
@@ -468,7 +529,9 @@ const DiceEventPage: React.FC = () => {
 
     const imageIndex = getRarityImageIndex(rarity);
 
-    let imageKey: string;
+    // 기본값으로 초기화하여 초기화되지 않은 변수 사용 방지
+    let imageKey: string = "Ballon1"; // 기본값 설정
+
     switch (type.toUpperCase()) {
       case "HEAD":
         imageKey = `Crown${imageIndex}`;
@@ -486,7 +549,8 @@ const DiceEventPage: React.FC = () => {
         imageKey = `Ballon${imageIndex}`;
         break;
       default:
-        imageKey = "Ballon1";
+        imageKey = "Ballon1"; // 기본값 유지
+        break;
     }
 
     // 디버깅용 로그
@@ -1046,7 +1110,7 @@ const DiceEventPage: React.FC = () => {
               open={showRaffleBoxModal}
               onOpenChange={setShowRaffleBoxModal}
             >
-              <DialogTitle>랜덤박스 구매</DialogTitle>
+              <DialogTitle></DialogTitle>
               <DialogContent
                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
                 style={{
@@ -1220,88 +1284,12 @@ const DiceEventPage: React.FC = () => {
                         열기
                       </button>
                     </div>
-                    
-                    {/* 광고보고 랜덤박스 열기 버튼 추가 */}
-                    <div className="flex items-center justify-between px-1 py-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          style={{
-                            width: 70,
-                            height: 70,
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderRadius: 13,
-                            border: "2px solid #B4CADA",
-                            padding: 5,
-                          }}
-                        >
-                          {/* Background layer with blur effect */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              width: "100%",
-                              height: "100%",
-                              borderRadius: 11,
-                              background: "#C2D5E8",
-                              opacity: 0.5,
-                              backdropFilter: "blur(10px)",
-                              boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.04)",
-                            }}
-                          />
-                          {/* Image layer without blur */}
-                          <img
-                            src={Images.RandomBox}
-                            style={{
-                              width: 60,
-                              height: 60,
-                              position: "relative",
-                              zIndex: 1,
-                            }}
-                            alt="bronze"
-                          />
-                        </div>
-                        <div>
-                          <div
-                            className="font-semibold text-base"
-                            style={{
-                              fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              color: "#FFFFFF",
-                              WebkitTextStroke: "1px #000000",
-                            }}
-                          >
-                            광고 랜덤박스
-                          </div>
-                          <div
-                            className="flex items-center gap-1"
-                            style={{
-                              fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              color: "#FFFFFF",
-                              WebkitTextStroke: "1px #000000",
-                            }}
-                          >
-                            <img
-                              src={Images.AdButton}
-                              className="w-[30px] h-[30px]"
-                              alt="ad"
-                            />
-                            광고 시청
-                          </div>
-                        </div>
-                      </div>
+
+                    <div className="mt-3 mb-5 w-full flex justify-center">
                       <button
                         onClick={handleAdRandomBox}
                         disabled={adLoadStatus !== 'loaded'}
-                        className={`w-[120px] h-14 rounded-[10px] flex items-center justify-center relative whitespace-nowrap ${
-                          adLoadStatus === 'loaded' ? 'hover:scale-105' : 'opacity-50 cursor-not-allowed'
-                        }`}
+                        className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
                         style={{
                           background:
                             "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
@@ -1314,7 +1302,7 @@ const DiceEventPage: React.FC = () => {
                           fontSize: "18px",
                           fontWeight: "400",
                           WebkitTextStroke: "1px #000000",
-                          opacity: adLoadStatus === 'loaded' ? 1 : 0.5,
+                          opacity: 1,
                         }}
                       >
                         <img
@@ -1329,12 +1317,24 @@ const DiceEventPage: React.FC = () => {
                             pointerEvents: "none",
                           }}
                         />
-                        {adLoadStatus === 'loading' && '로딩 중...'}
-                        {adLoadStatus === 'loaded' && '광고보고 열기'}
-                        {adLoadStatus === 'failed' && '로드 실패'}
-                        {adLoadStatus === 'not_loaded' && '준비 중...'}
+                        <img
+                          src={Images.AdButton}
+                          alt="광고 버튼"
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                          }}
+                        />
+
+                        <span>
+                          {adLoadStatus === 'loading' && '로딩 중...'}
+                          {adLoadStatus === 'loaded' && '광고보고 램덤박스 열기'}
+                          {adLoadStatus === 'failed' && '로드 실패'}
+                          {adLoadStatus === 'not_loaded' && '준비 중...'}
+                        </span>
                       </button>
                     </div>
+                    
                   </div>
                 </div>
               </DialogContent>
@@ -1345,7 +1345,7 @@ const DiceEventPage: React.FC = () => {
               open={showRaffleBoxOpenModal}
               onOpenChange={setShowRaffleBoxOpenModal}
             >
-              <DialogTitle className="sr-only">랜덤박스 구매</DialogTitle>
+              <DialogTitle className="sr-only"></DialogTitle>
               <DialogContent
                 className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
                 style={{
@@ -1424,106 +1424,145 @@ const DiceEventPage: React.FC = () => {
                   {/* 결과 표시 */}
                   {showResult && boxResult && (
                     <div className="flex flex-col items-center mb-4">
-                      {boxResult.type === "EQUIPMENT" && boxResult.equipment ? (
-                        <div className="flex items-center gap-3 mb-2">
-                          <img
-                            src={getEquipmentIcon(
-                              boxResult.equipment.type,
-                              boxResult.equipment.rarity
-                            )}
-                            style={{ width: 40, height: 40 }}
-                            alt={boxResult.equipment.type}
-                            onError={(e) => {
-                              console.error("이미지 로드 실패:", e);
-                              if (boxResult.equipment) {
-                                console.error(
-                                  "시도한 이미지 경로:",
-                                  getEquipmentIcon(
-                                    boxResult.equipment.type,
-                                    boxResult.equipment.rarity
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                          <span
+                      {boxResult.type && ['EQUIPMENT', 'DICE', 'SL', 'NONE'].includes(boxResult.type) ? (
+                        <>
+                          {boxResult.type === "EQUIPMENT" && boxResult.equipment ? (
+                            <div className="flex items-center gap-3 mb-2">
+                              <img
+                                src={getEquipmentIcon(
+                                  boxResult.equipment.type,
+                                  boxResult.equipment.rarity
+                                )}
+                                style={{ width: 40, height: 40 }}
+                                alt={boxResult.equipment.type}
+                                onError={(e) => {
+                                  console.error("이미지 로드 실패:", e);
+                                  if (boxResult.equipment) {
+                                    console.error(
+                                      "시도한 이미지 경로:",
+                                      getEquipmentIcon(
+                                        boxResult.equipment.type,
+                                        boxResult.equipment.rarity
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "20px",
+                                  fontWeight: 400,
+                                  color: "#FFFFFF",
+                                  WebkitTextStroke: "1px #000000",
+                                }}
+                              >
+                                {getEquipmentName(boxResult.equipment.type)} 장비
+                              </span>
+                            </div>
+                          ) : boxResult.type === "DICE" ? (
+                            <div className="flex items-center gap-3 mb-2">
+                              <img
+                                src={Images.Dice}
+                                style={{ width: 40, height: 40 }}
+                                alt="dice"
+                              />
+                              <span
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "20px",
+                                  fontWeight: 400,
+                                  color: "#FFFFFF",
+                                  WebkitTextStroke: "1px #000000",
+                                }}
+                              >
+                                다이스 획득!
+                              </span>
+                            </div>
+                          ) : boxResult.type === "SL" ? (
+                            <div className="flex items-center gap-3 mb-2">
+                              <img
+                                src={Images.LotteryTicket}
+                                style={{ width: 40, height: 40 }}
+                                alt="lottery"
+                              />
+                              <span
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "20px",
+                                  fontWeight: 400,
+                                  color: "#FFFFFF",
+                                  WebkitTextStroke: "1px #000000",
+                                }}
+                              >
+                                래플권 획득!
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3 mb-2">
+                              <span
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "20px",
+                                  fontWeight: 400,
+                                  color: "#FFFFFF",
+                                  WebkitTextStroke: "1px #000000",
+                                }}
+                              >
+                                아쉽게도 아무것도...
+                              </span>
+                            </div>
+                          )}
+                          <p
                             style={{
                               fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "20px",
+                              fontSize: "16px",
                               fontWeight: 400,
                               color: "#FFFFFF",
-                              WebkitTextStroke: "1px #000000",
+                              WebkitTextStroke: "0.5px #000000",
                             }}
                           >
-                            {getEquipmentName(boxResult.equipment.type)} 장비
-                          </span>
-                        </div>
-                      ) : boxResult.type === "DICE" ? (
-                        <div className="flex items-center gap-3 mb-2">
-                          <img
-                            src={Images.Dice}
-                            style={{ width: 40, height: 40 }}
-                            alt="dice"
-                          />
-                          <span
-                            style={{
-                              fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "20px",
-                              fontWeight: 400,
-                              color: "#FFFFFF",
-                              WebkitTextStroke: "1px #000000",
-                            }}
-                          >
-                            다이스 획득!
-                          </span>
-                        </div>
-                      ) : boxResult.type === "SL" ? (
-                        <div className="flex items-center gap-3 mb-2">
-                          <img
-                            src={Images.LotteryTicket}
-                            style={{ width: 40, height: 40 }}
-                            alt="lottery"
-                          />
-                          <span
-                            style={{
-                              fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "20px",
-                              fontWeight: 400,
-                              color: "#FFFFFF",
-                              WebkitTextStroke: "1px #000000",
-                            }}
-                          >
-                            래플권 획득!
-                          </span>
-                        </div>
+                            {boxResult.type === "NONE"
+                              ? "다음 기회에!"
+                              : "획득하셨습니다!"}
+                          </p>
+                        </>
                       ) : (
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex flex-col items-center gap-2">
                           <span
                             style={{
                               fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "20px",
+                              fontSize: "18px",
                               fontWeight: 400,
-                              color: "#FFFFFF",
+                              color: "#FF6B6B",
                               WebkitTextStroke: "1px #000000",
                             }}
                           >
-                            아쉽게도 아무것도...
+                            보상 데이터 오류
                           </span>
+                          <p
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "#FFFFFF",
+                              WebkitTextStroke: "0.5px #000000",
+                            }}
+                          >
+                            다시 시도해주세요
+                          </p>
+                          <button
+                            onClick={() => {
+                              setShowRaffleBoxOpenModal(false);
+                              setShowResult(false);
+                              setBoxResult(null);
+                            }}
+                            className="mt-2 px-4 py-2 rounded bg-red-500 text-white"
+                          >
+                            닫기
+                          </button>
                         </div>
                       )}
-                      <p
-                        style={{
-                          fontFamily: "'ONE Mobile POP', sans-serif",
-                          fontSize: "16px",
-                          fontWeight: 400,
-                          color: "#FFFFFF",
-                          WebkitTextStroke: "0.5px #000000",
-                        }}
-                      >
-                        {boxResult.type === "NONE"
-                          ? "다음 기회에!"
-                          : "획득하셨습니다!"}
-                      </p>
                     </div>
                   )}
 
@@ -1639,7 +1678,7 @@ const DiceEventPage: React.FC = () => {
 
             {/* 리필 시간 및 광고 버튼 모달 */} 
             <Dialog open={showAdModal}>
-              <DialogTitle>광고 시청 후 주사위 얻기</DialogTitle>
+              <DialogTitle></DialogTitle>
               <DialogContent
                 className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[80%]"
                 style={{

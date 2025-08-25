@@ -10,7 +10,7 @@ export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed';
 export interface UseAdMobReturn {
   adLoadStatus: AdLoadStatus;
   loadAd: () => void;
-  showAd: () => void;
+  showAd: () => Promise<any>; // 광고 보상 결과를 반환하도록 수정
   isSupported: boolean;
   autoLoadAd: () => void;
 }
@@ -64,6 +64,8 @@ export const useAdMob = (): UseAdMobReturn => {
   const [adLoadStatus, setAdLoadStatus] = useState<AdLoadStatus>('not_loaded');
   const [isSupported, setIsSupported] = useState<boolean>(false);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const adInstanceRef = useRef<any>(null); // 광고 인스턴스 참조 추가
+  const pendingAdPromiseRef = useRef<{ resolve: (value: any) => void; reject: (reason: any) => void } | null>(null); // 보류 중인 광고 Promise 참조 추가
 
   // 광고 지원 여부 확인
   useEffect(() => {
@@ -75,6 +77,14 @@ export const useAdMob = (): UseAdMobReturn => {
     return () => {
       if (cleanupRef.current) {
         cleanupRef.current();
+      }
+      // 광고 인스턴스 정리
+      if (adInstanceRef.current) {
+        adInstanceRef.current = null;
+      }
+      // 보류 중인 광고 Promise 정리
+      if (pendingAdPromiseRef.current) {
+        pendingAdPromiseRef.current = null;
       }
     };
   }, []);
@@ -107,10 +117,12 @@ export const useAdMob = (): UseAdMobReturn => {
             case 'dismissed':
               console.log('광고 닫힘');
               setAdLoadStatus('not_loaded');
+              adInstanceRef.current = null; // 광고 인스턴스 정리
               break;
             case 'failedToShow':
               console.log('광고 보여주기 실패');
               setAdLoadStatus('failed');
+              adInstanceRef.current = null; // 광고 인스턴스 정리
               break;
             case 'impression':
               console.log('광고 노출');
@@ -119,48 +131,76 @@ export const useAdMob = (): UseAdMobReturn => {
               console.log('광고 컨텐츠 보여졌음');
               break;
             case 'userEarnedReward':
-              console.log('사용자가 광고 시청을 완료했습니다');
-              console.log('광고 보상 API 호출 시작...');
-              try {
-                // 광고 보상 API 호출
-                const rewardData = await getRandomBoxAdReward();
-                console.log('광고 보상 API 응답:', rewardData);
+              // loadAd에서 userEarnedReward 이벤트를 처리하여 showAd의 Promise를 resolve
+              console.log('loadAd: userEarnedReward 이벤트 발생 - 보상 처리 시작');
+              
+              // 보류 중인 광고 Promise가 있으면 resolve
+              if (pendingAdPromiseRef.current) {
+                console.log('loadAd: 보류 중인 광고 Promise 발견 - 보상 API 호출 시작');
                 
-                // 보상 결과에 따른 처리
-                if (rewardData.result === 'EQUIPMENT') {
-                  console.log('장비 보상 획득!', rewardData.equipment);
-                  // TODO: 장비 획득 로직 추가
-                } else if (rewardData.result === 'DICE') {
-                  console.log('주사위 보상 획득!');
-                  // TODO: 주사위 개수 증가 로직 추가
-                } else if (rewardData.result === 'SL') {
-                  console.log('슬롯 보상 획득!');
-                  // TODO: 슬롯 증가 로직 추가
-                } else if (rewardData.result === 'NONE') {
-                  console.log('보상 없음');
-                }
-              } catch (error: any) {
-                console.error('광고 보상 API 호출 실패:', error);
-                console.error('에러 상세 정보:', {
-                  message: error.message,
-                  stack: error.stack,
-                  response: error.response
-                });
+                (async () => {
+                  try {
+                    // 광고 보상 API 호출
+                    const rewardData = await getRandomBoxAdReward();
+                    console.log('loadAd: 광고 보상 API 응답:', rewardData);
+                    console.log('loadAd: rewardData 타입:', typeof rewardData);
+                    console.log('loadAd: rewardData.type:', rewardData?.type);
+                    console.log('loadAd: rewardData.equipment:', rewardData?.equipment);
+                    
+                    // 데이터 유효성 검사
+                    if (!rewardData || !rewardData.type) {
+                      console.error('loadAd: 유효하지 않은 보상 데이터:', rewardData);
+                      throw new Error('유효하지 않은 보상 데이터');
+                    }
+                    
+                    console.log('loadAd: 보상 데이터 유효성 검사 통과:', rewardData);
+                    
+                    // Promise resolve
+                    pendingAdPromiseRef.current!.resolve(rewardData);
+                    pendingAdPromiseRef.current = null;
+                    console.log('loadAd: 광고 Promise resolve 완료');
+                    
+                    // 보상 결과에 따른 처리
+                    if (rewardData.type === 'EQUIPMENT') {
+                      console.log('loadAd: 장비 보상 획득!', rewardData.equipment);
+                    } else if (rewardData.type === 'DICE') {
+                      console.log('loadAd: 주사위 보상 획득!');
+                    } else if (rewardData.type === 'SL') {
+                      console.log('loadAd: 슬롯 보상 획득!');
+                    } else if (rewardData.type === 'NONE') {
+                      console.log('loadAd: 보상 없음');
+                    } else {
+                      console.log('loadAd: 알 수 없는 보상 타입:', rewardData.type);
+                    }
+                  } catch (error: any) {
+                    console.error('loadAd: 광고 보상 API 호출 실패:', error);
+                    // Promise reject
+                    pendingAdPromiseRef.current!.reject(error);
+                    pendingAdPromiseRef.current = null;
+                  }
+                })();
+              } else {
+                console.log('loadAd: 보류 중인 광고 Promise 없음 - 이벤트 무시');
               }
-              setAdLoadStatus('not_loaded');
+              
+              // 광고 인스턴스 정리
+              adInstanceRef.current = null;
               break;
           }
         },
         onError: (error: unknown) => {
           console.error('광고 불러오기 실패:', error);
           setAdLoadStatus('failed');
+          adInstanceRef.current = null; // 광고 인스턴스 정리
         }
       });
       
       cleanupRef.current = cleanup;
+      adInstanceRef.current = cleanup; // 광고 인스턴스 저장
     } catch (error) {
       console.error('광고 로딩 중 오류:', error);
       setAdLoadStatus('failed');
+      adInstanceRef.current = null; // 광고 인스턴스 정리
     }
   }, [isSupported]);
 
@@ -168,66 +208,75 @@ export const useAdMob = (): UseAdMobReturn => {
   const showAd = useCallback(async () => {
     if (!isSupported) {
       console.log('광고가 지원되지 않는 환경입니다');
-      return;
+      return null;
     }
 
     if (adLoadStatus !== 'loaded') {
       console.log('광고가 로드되지 않았습니다');
-      return;
+      return null;
+    }
+
+    // 이미 사용된 광고인지 확인
+    if (!adInstanceRef.current) {
+      console.log('광고 인스턴스가 없습니다. 다시 로드해주세요.');
+      setAdLoadStatus('not_loaded');
+      return null;
     }
 
     try {
       const adUnitId = getAdUnitId();
       console.log('광고 표시 시작, adUnitId:', adUnitId);
       
-      await showAdMobRewardedAd({
-        options: { adUnitId },
-        onEvent: async (event: ShowAdMobRewardedAdEvent) => {
-          console.log('광고 표시 이벤트:', event.type);
-          
-          if (event.type === 'requested') {
-            console.log('광고 보여주기 요청 완료');
-            setAdLoadStatus('not_loaded');
-          } else if (event.type === 'userEarnedReward') {
-            console.log('사용자가 광고 시청을 완료했습니다');
-            console.log('광고 보상 API 호출 시작...');
-            try {
-              // 광고 보상 API 호출
-              const rewardData = await getRandomBoxAdReward();
-              console.log('광고 보상 API 응답:', rewardData);
-              
-              // 보상 결과에 따른 처리
-              if (rewardData.result === 'EQUIPMENT') {
-                console.log('장비 보상 획득!', rewardData.equipment);
-                // TODO: 장비 획득 로직 추가
-              } else if (rewardData.result === 'DICE') {
-                console.log('주사위 보상 획득!');
-                // TODO: 주사위 개수 증가 로직 추가
-              } else if (rewardData.result === 'SL') {
-                console.log('슬롯 보상 획득!');
-                // TODO: 슬롯 증가 로직 추가
-              } else if (rewardData.result === 'NONE') {
-                console.log('보상 없음');
-              }
-            } catch (error: any) {
-              console.error('광고 보상 API 호출 실패:', error);
-              console.error('에러 상세 정보:', {
-                message: error.message,
-                stack: error.stack,
-                response: error.response
-              });
-            }
-            setAdLoadStatus('not_loaded');
+      // 광고 표시 즉시 상태를 'not_loaded'로 변경하여 중복 사용 방지
+      setAdLoadStatus('not_loaded');
+      
+      return new Promise((resolve, reject) => {
+        let isResolved = false;
+        
+        // 타임아웃 시간을 2분으로 늘림 (광고 시청 시간 고려)
+        const timeoutId = setTimeout(() => {
+          if (!isResolved) {
+            console.log('showAd: 광고 응답 시간 초과 - 타임아웃');
+            isResolved = true;
+            pendingAdPromiseRef.current = null;
+            reject(new Error('광고 응답 시간 초과'));
           }
-        },
-        onError: (error: unknown) => {
-          console.error('광고 보여주기 실패:', error);
-          setAdLoadStatus('failed');
-        }
+        }, 120000); // 2분 타임아웃
+        
+        // Promise를 pendingAdPromiseRef에 저장하여 loadAd에서 resolve할 수 있도록 함
+        pendingAdPromiseRef.current = { resolve, reject };
+        console.log('showAd: 광고 Promise를 pendingAdPromiseRef에 저장');
+        
+        // 기존 광고 인스턴스를 사용하여 광고 표시
+        // loadAd에서 이미 이벤트 핸들러가 연결되어 있으므로
+        // 여기서는 Promise만 관리하고 이벤트는 loadAd의 핸들러에서 처리
+        
+        // 광고 표시 시작
+        showAdMobRewardedAd({
+          options: { adUnitId },
+          onEvent: async (event: ShowAdMobRewardedAdEvent) => {
+            console.log('showAd: 광고 표시 이벤트:', event.type);
+            
+            if (event.type === 'requested') {
+              console.log('showAd: 광고 보여주기 요청 완료');
+            }
+            // userEarnedReward는 loadAd의 이벤트 핸들러에서 처리됨
+          },
+          onError: (error: unknown) => {
+            console.error('showAd: 광고 표시 중 오류:', error);
+            if (!isResolved) {
+              console.log('showAd: Promise reject - 광고 표시 오류');
+              isResolved = true;
+              pendingAdPromiseRef.current = null;
+              clearTimeout(timeoutId);
+              reject(error);
+            }
+          }
+        });
       });
     } catch (error) {
       console.error('광고 표시 중 오류:', error);
-      setAdLoadStatus('failed');
+      throw error;
     }
   }, [isSupported, adLoadStatus]);
 
