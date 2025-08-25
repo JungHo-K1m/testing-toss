@@ -58,6 +58,17 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         // 토큰이 이미 있으므로 fetchUserData만 호출
         await fetchUserData();
         
+        // API 응답 메시지 저장 (캐릭터 선택 필요 여부 확인용)
+        try {
+          // fetchUserData의 응답을 확인하여 메시지 저장
+          const lastMessage = localStorage.getItem('lastApiMessage');
+          if (lastMessage) {
+            console.log("[AppInitializer] 마지막 API 응답 메시지:", lastMessage);
+          }
+        } catch (error) {
+          console.log("[AppInitializer] API 응답 메시지 확인 중 오류:", error);
+        }
+        
         // 사용자 상태 확인 및 페이지 이동
         await handleUserDataAndNavigation();
         
@@ -70,6 +81,17 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
         // 로그인 성공 후 fetchUserData 호출
         await fetchUserData();
+        
+        // API 응답 메시지 저장 (캐릭터 선택 필요 여부 확인용)
+        try {
+          // fetchUserData의 응답을 확인하여 메시지 저장
+          const lastMessage = localStorage.getItem('lastApiMessage');
+          if (lastMessage) {
+            console.log("[AppInitializer] 마지막 API 응답 메시지:", lastMessage);
+          }
+        } catch (error) {
+          console.log("[AppInitializer] API 응답 메시지 확인 중 오류:", error);
+        }
         
         // 사용자 상태 확인 및 페이지 이동
         await handleUserDataAndNavigation();
@@ -96,12 +118,16 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // localStorage에서 isInitial 확인
       const isInitial = localStorage.getItem('isInitial') === 'true';
       
-      // isInitial에 따른 페이지 이동 로직
-      if (isInitial) {
-        console.log("[AppInitializer] 신규 사용자: choose-character 페이지로 이동");
+      // fetchUserData 응답에서 "Please choose your character first" 메시지 확인
+      // 이 메시지가 오면 캐릭터 선택이 필요한 상태
+      const needsCharacterSelection = !uid || !nickName || isInitial || 
+        (localStorage.getItem('lastApiMessage') === 'Please choose your character first.');
+      
+      if (needsCharacterSelection) {
+        console.log("[AppInitializer] 캐릭터 선택 필요 - choose-character 페이지로 이동");
         navigate("/choose-character");
       } else {
-        console.log("[AppInitializer] 기존 사용자: dice-event 페이지로 이동");
+        console.log("[AppInitializer] 기존 사용자 - dice-event 페이지로 이동");
         navigate("/dice-event");
       }
     } catch (error) {
