@@ -10,6 +10,7 @@ import {
   CardFlipRequest,
   CardFlipResponseData,
 } from "@/features/DiceEvent/api/cardFlipApi";
+import { getBettingAmount } from "@/features/DiceEvent/api/getBettingAmount";
 
 const COLORS: ("RED" | "BLACK")[] = ["RED", "BLACK"];
 const SUITS = [
@@ -43,7 +44,7 @@ const AnimatedCard = () => {
   );
 };
 
-const CardBettingModal = ({ myPoint, onStart, onCancel }: any) => {
+const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) => {
   const [bet, setBet] = useState("");
   const [error, setError] = useState("");
   const [showGameGuide, setShowGameGuide] = useState(false);
@@ -191,6 +192,18 @@ const CardBettingModal = ({ myPoint, onStart, onCancel }: any) => {
                 {myPoint.toLocaleString()}
               </span>
             </div>
+            <span
+              className="text-center text-xs"
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "10px",
+                fontWeight: 400,
+                color: "#FDE047",
+                WebkitTextStroke: "0.5px #000000",
+              }}
+            >
+              베팅가능: {allowedBetting.toLocaleString()}
+            </span>
           </div>
         </div>
         {/* 4. 배팅 입력 */}
@@ -972,12 +985,9 @@ const CardGameModal = ({ onClose }: any) => {
   const fetchBettingInfo = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/bettingAmount");
-      if (response.data.code === "OK") {
-        const { starCount, allowedBetting: allowed } = response.data.data;
-        setMyPoint(starCount);
-        setAllowedBetting(allowed);
-      }
+      const bettingInfo = await getBettingAmount();
+      setMyPoint(bettingInfo.starCount);
+      setAllowedBetting(bettingInfo.allowedBetting);
     } catch (error) {
       console.error("Error fetching betting info:", error);
       // 에러 발생 시 기본값 설정
@@ -995,7 +1005,7 @@ const CardGameModal = ({ onClose }: any) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center h-screen w-full"
+      className="fixed inset-0 z-[9999] flex items-center justify-center h-screen w-full"
       style={{
         minHeight: "100vh",
         minWidth: "100vw",
@@ -1026,6 +1036,7 @@ const CardGameModal = ({ onClose }: any) => {
         ) : !isGameStarted ? (
           <CardBettingModal
             myPoint={myPoint}
+            allowedBetting={allowedBetting}
             onStart={(amount: React.SetStateAction<number>) => {
               setBetAmount(amount);
               setIsGameStarted(true);

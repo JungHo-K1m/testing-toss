@@ -759,15 +759,18 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </div>
             )}
-            <Board
-              position={position}
-              charactorImageSrc={charactorImageSrc}
-              initialX={initialX}
-              initialY={initialY}
-              delta={delta}
-              equippedItems={equippedItems}
-              characterType={characterType || "cat"}
-            />
+            {/* 카드게임이 활성화되지 않았을 때만 Board(캐릭터) 표시 */}
+            {!game.isCardGameActive && (
+              <Board
+                position={position}
+                charactorImageSrc={charactorImageSrc}
+                initialX={initialX}
+                initialY={initialY}
+                delta={delta}
+                equippedItems={equippedItems}
+                characterType={characterType || "cat"}
+              />
+            )}
             <br />
 
             {/* 랜덤박스 아이콘 */}

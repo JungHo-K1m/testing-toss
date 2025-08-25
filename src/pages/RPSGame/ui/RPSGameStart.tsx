@@ -176,6 +176,18 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
                   {formatNumber(allowedBetting)}
                 </p>
               </div>
+              <span
+                className="text-center text-xs"
+                style={{
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "8px",
+                  fontWeight: 400,
+                  color: "#FDE047",
+                  WebkitTextStroke: "0.5px #000000",
+                }}
+              >
+                베팅가능: {formatNumber(allowedBetting)}
+              </span>
             </div>
           </div>
           <form onSubmit={handleStartClick}>
