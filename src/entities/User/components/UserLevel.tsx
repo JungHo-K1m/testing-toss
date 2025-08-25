@@ -122,7 +122,7 @@ const UserLevel: React.FC<{
           <img
             src={getItemImage("balloon", equippedItems.find(item => item.type === "balloon")!.rarity)}
             alt={`${characterType} balloon`}
-            className="absolute -top-12 left-1/2 transform -translate-x-[60%] w-16 h-16 opacity-90"
+            className="absolute -top-6 left-1/2 transform -translate-x-[60%] w-16 h-16 opacity-90"
             style={{ zIndex: 5 }}
           />
         )}
@@ -139,7 +139,6 @@ const UserLevel: React.FC<{
         {equippedItems
           .filter(item => item.type !== "balloon") // BACK 아이템 제외
           .map((item, index) => {
-            console.log(`🎯 UserLevel 아이템 렌더링: ${item.type} (인덱스: ${index}, 희귀도: ${item.rarity})`);
             
             // 아이템 타입별 위치와 사이즈 설정
             let itemStyle: React.CSSProperties = {};
@@ -148,7 +147,7 @@ const UserLevel: React.FC<{
               case "crown": // HEAD
                 itemStyle = {
                   position: "absolute",
-                  top: "-28px",
+                  top: "-2px",
                   left: "50%",
                   transform: "translateX(-50%)",
                   width: "32px",
@@ -160,11 +159,11 @@ const UserLevel: React.FC<{
               case "sunglasses": // EYE
                 itemStyle = {
                   position: "absolute",
-                  top: "14px",
-                  left: "33%",
+                  top: "20px",
+                  left: "52%",
                   transform: "translateX(-50%) rotate(-2deg)",
-                  width: "32px",
-                  height: "32px",
+                  width: "34px",
+                  height: "34px",
                   zIndex: 15,
                   opacity: 0.9
                 };
@@ -173,7 +172,7 @@ const UserLevel: React.FC<{
                 itemStyle = {
                   position: "absolute",
                   top: "8px",
-                  right: "32px",
+                  right: "20px",
                   transform: "rotate(45deg)",
                   width: "24px",
                   height: "24px",
@@ -184,8 +183,8 @@ const UserLevel: React.FC<{
               case "muffler": // NECK
                 itemStyle = {
                   position: "absolute",
-                  bottom: "8px",
-                  left: "50%",
+                  bottom: "14px",
+                  left: "52%",
                   transform: "translateX(-50%)",
                   width: "32px",
                   height: "32px",

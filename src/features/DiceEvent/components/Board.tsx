@@ -47,8 +47,8 @@ const Board: React.FC<BoardProps> = ({
 
   const { x, y } = calculateTilePosition(position, initialX, initialY, delta);
 
-  // position이 10보다 큰 경우 좌우 반전 스타일 적용
-  const flipStyle = position > 10 ? { transform: "scaleX(-1)" } : {};
+  // 좌우 반전 스타일 제거 (캐릭터가 항상 정면을 향하도록)
+  const flipStyle = {};
 
   // 캐릭터 이미지 선택 (index.tsx와 동일한 로직)
   const getCharacterImageSrc = () => {
@@ -126,8 +126,7 @@ const Board: React.FC<BoardProps> = ({
         alt="character"
         className="w-12 h-12 relative"
         style={{
-          ...flipStyle,
-          transform: `${flipStyle.transform || ""} translateX(4px)`.trim(),
+          transform: "translateX(4px)",
           zIndex: 10
         }}
       />
@@ -136,7 +135,6 @@ const Board: React.FC<BoardProps> = ({
       {equippedItems
         .filter(item => item.type !== "balloon") // BACK 아이템 제외
         .map((item, index) => {
-          console.log(`🎯 Board 아이템 렌더링: ${item.type} (인덱스: ${index}, 희귀도: ${item.rarity})`);
           
           // 아이템 타입별 위치와 사이즈 설정
           let itemStyle: React.CSSProperties = {};
@@ -145,11 +143,11 @@ const Board: React.FC<BoardProps> = ({
             case "crown": // HEAD
               itemStyle = {
                 position: "absolute",
-                top: "-14px",
-                left: "50%",
-                transform: `${flipStyle.transform || ""} translateX(-50%)`.trim(),
-                width: "16px",
-                height: "16px",
+                top: "1px",
+                left: "60%",
+                transform: "translateX(-50%)",
+                width: "12px",
+                height: "12px",
                 zIndex: 15,
                 opacity: 0.9
               };
@@ -157,11 +155,11 @@ const Board: React.FC<BoardProps> = ({
             case "sunglasses": // EYE
               itemStyle = {
                 position: "absolute",
-                top: "7px",
-                left: "33%",
-                transform: `${flipStyle.transform || ""} translateX(-50%) rotate(-2deg)`.trim(),
-                width: "16px",
-                height: "16px",
+                top: "10px",
+                left: "62%",
+                transform: "translateX(-50%) rotate(-2deg)",
+                width: "18px",
+                height: "18px",
                 zIndex: 15,
                 opacity: 0.9
               };
@@ -170,8 +168,8 @@ const Board: React.FC<BoardProps> = ({
               itemStyle = {
                 position: "absolute",
                 top: "4px",
-                right: "16px",
-                transform: `${flipStyle.transform || ""} rotate(45deg)`.trim(),
+                right: "6px",
+                transform: "rotate(45deg)",
                 width: "12px",
                 height: "12px",
                 zIndex: 15,
@@ -181,9 +179,9 @@ const Board: React.FC<BoardProps> = ({
             case "muffler": // NECK
               itemStyle = {
                 position: "absolute",
-                bottom: "4px",
-                left: "50%",
-                transform: `${flipStyle.transform || ""} translateX(-50%)`.trim(),
+                bottom: "6px",
+                left: "60%",
+                transform: "translateX(-50%)",
                 width: "16px",
                 height: "16px",
                 zIndex: 15,
@@ -198,8 +196,7 @@ const Board: React.FC<BoardProps> = ({
                 width: "48px",
                 height: "48px",
                 zIndex: 15,
-                opacity: 0.9,
-                ...flipStyle
+                opacity: 0.9
               };
           }
           

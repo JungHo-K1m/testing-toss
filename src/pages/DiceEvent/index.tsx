@@ -738,53 +738,6 @@ const DiceEventPage: React.FC = () => {
                         className="w-[50px] h-[50px] rounded-full"
                       />
                     </div>
-                    
-                    {/* 장착된 아이템 오버레이 */}
-                    {getEquippedItem("HEAD") && (
-                      <img
-                        src={getEquipmentIcon("HEAD", getEquippedItem("HEAD")!.rarity)}
-                        alt="HEAD"
-                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 opacity-90"
-                        style={{ zIndex: 15 }}
-                      />
-                    )}
-                    
-                    {getEquippedItem("EYE") && (
-                      <img
-                        src={getEquipmentIcon("EYE", getEquippedItem("EYE")!.rarity)}
-                        alt="EYE"
-                        className="absolute top-1 left-[40%] transform -translate-x-1/2 w-4 h-4 opacity-90"
-                        style={{ zIndex: 15, transform: "rotate(-2deg)" }}
-                      />
-                    )}
-                    
-                    {getEquippedItem("EAR") && (
-                      <img
-                        src={getEquipmentIcon("EAR", getEquippedItem("EAR")!.rarity)}
-                        alt="EAR"
-                        className="absolute top-1 right-1 w-3 h-3 opacity-90"
-                        style={{ zIndex: 15, transform: "rotate(45deg)" }}
-                      />
-                    )}
-                    
-                    {getEquippedItem("NECK") && (
-                      <img
-                        src={getEquipmentIcon("NECK", getEquippedItem("NECK")!.rarity)}
-                        alt="NECK"
-                        className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-4 h-4 opacity-90"
-                        style={{ zIndex: 15 }}
-                      />
-                    )}
-                    
-                    {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
-                    {getEquippedItem("BACK") && (
-                      <img
-                        src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
-                        alt="BACK"
-                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-6 h-6 opacity-90"
-                        style={{ zIndex: 5 }}
-                      />
-                    )}
                   </div>
                   <div className="ml-2">
                     <button
@@ -1810,16 +1763,16 @@ const DiceEventPage: React.FC = () => {
                      >
                        장착된 아이템
                      </h1>
-                     <div className="relative flex items-center justify-center w-[150px] h-[150px] mb-5">
-                       {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
-                       {getEquippedItem("BACK") && (
-                         <img
-                           src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
-                           alt="BACK"
-                           className="absolute -top-20 left-1/2 transform -translate-x-[60%] w-20 h-20 opacity-90"
-                           style={{ zIndex: 5 }}
-                         />
-                       )}
+                     <div className="relative flex items-center justify-center w-[150px] h-[150px] mb-5 mt-4">
+                                               {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
+                        {getEquippedItem("BACK") && (
+                          <img
+                            src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
+                            alt="BACK"
+                            className="absolute -top-6 left-1/2 transform -translate-x-[60%] w-20 h-20 opacity-90"
+                            style={{ zIndex: 0 }}
+                          />
+                        )}
                        
                        {/* 기본 캐릭터 이미지 */}
                        <img
@@ -1833,7 +1786,7 @@ const DiceEventPage: React.FC = () => {
                          <img
                            src={getEquipmentIcon("HEAD", getEquippedItem("HEAD")!.rarity)}
                            alt="HEAD"
-                           className="absolute -top-7 left-1/2 transform -translate-x-1/2 w-12 h-12 opacity-90"
+                           className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-12 opacity-90"
                            style={{ zIndex: 15 }}
                          />
                        )}
@@ -1842,7 +1795,7 @@ const DiceEventPage: React.FC = () => {
                          <img
                            src={getEquipmentIcon("EYE", getEquippedItem("EYE")!.rarity)}
                            alt="EYE"
-                           className="absolute top-[18px] left-[33%] transform -translate-x-1/2 w-12 h-12 opacity-90"
+                           className="absolute top-[36px] left-[36%] transform -translate-x-1/2 w-12 h-12 opacity-90"
                            style={{ zIndex: 15, transform: "rotate(-2deg)" }}
                          />
                        )}
@@ -1851,7 +1804,7 @@ const DiceEventPage: React.FC = () => {
                          <img
                            src={getEquipmentIcon("EAR", getEquippedItem("EAR")!.rarity)}
                            alt="EAR"
-                           className="absolute top-1 right-8 w-10 h-10 opacity-90"
+                           className="absolute top-2 right-8 w-10 h-10 opacity-90"
                            style={{ zIndex: 15, transform: "rotate(45deg)" }}
                          />
                        )}
@@ -1860,7 +1813,7 @@ const DiceEventPage: React.FC = () => {
                          <img
                            src={getEquipmentIcon("NECK", getEquippedItem("NECK")!.rarity)}
                            alt="NECK"
-                           className="absolute top-[88px] left-[51%] transform -translate-x-1/2 w-14 h-14 opacity-90"
+                           className="absolute top-[80px] left-[51%] transform -translate-x-1/2 w-14 h-14 opacity-90"
                            style={{ zIndex: 15 }}
                          />
                        )}
