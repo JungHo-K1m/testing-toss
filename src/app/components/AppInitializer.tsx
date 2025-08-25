@@ -56,7 +56,19 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         console.log("[AppInitializer] URL 파라미터에서 토큰 추출 완료, fetchUserData 진행");
         
         // 토큰이 이미 있으므로 fetchUserData만 호출
-        await fetchUserData();
+        try {
+          await fetchUserData();
+          console.log("[AppInitializer] fetchUserData 성공");
+        } catch (error: any) {
+          // "Please choose your character first" 메시지는 에러가 아닌 정상적인 응답
+          if (error.message && error.message.includes('Please choose your character first')) {
+            console.log("[AppInitializer] 캐릭터 선택 필요 메시지 감지 - 정상 처리");
+            // 에러가 아니므로 계속 진행
+          } else {
+            // 다른 에러인 경우 다시 throw
+            throw error;
+          }
+        }
         
         // API 응답 메시지 저장 (캐릭터 선택 필요 여부 확인용)
         try {
@@ -80,7 +92,19 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         console.log("[AppInitializer] 테스트 로그인 성공:", loginResult);
 
         // 로그인 성공 후 fetchUserData 호출
-        await fetchUserData();
+        try {
+          await fetchUserData();
+          console.log("[AppInitializer] fetchUserData 성공");
+        } catch (error: any) {
+          // "Please choose your character first" 메시지는 에러가 아닌 정상적인 응답
+          if (error.message && error.message.includes('Please choose your character first')) {
+            console.log("[AppInitializer] 캐릭터 선택 필요 메시지 감지 - 정상 처리");
+            // 에러가 아니므로 계속 진행
+          } else {
+            // 다른 에러인 경우 다시 throw
+            throw error;
+          }
+        }
         
         // API 응답 메시지 저장 (캐릭터 선택 필요 여부 확인용)
         try {
@@ -118,10 +142,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // localStorage에서 isInitial 확인
       const isInitial = localStorage.getItem('isInitial') === 'true';
       
-      // fetchUserData 응답에서 "Please choose your character first" 메시지 확인
-      // 이 메시지가 오면 캐릭터 선택이 필요한 상태
-      const needsCharacterSelection = !uid || !nickName || isInitial || 
-        (localStorage.getItem('lastApiMessage') === 'Please choose your character first.');
+      // 캐릭터 선택 필요 여부 판단
+      // 1. 사용자 정보가 불완전한 경우
+      // 2. isInitial이 true인 경우
+      // 3. API에서 "Please choose your character first" 메시지가 온 경우
+      const needsCharacterSelection = !uid || !nickName || isInitial;
       
       if (needsCharacterSelection) {
         console.log("[AppInitializer] 캐릭터 선택 필요 - choose-character 페이지로 이동");
