@@ -277,7 +277,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ hidden }) => {
         </motion.div>
       </Link>
 
-      <Link to="/my-assets" onClick={() => handleNavigation("/my-assets")}>
+      {/* <Link to="/my-assets" onClick={() => handleNavigation("/my-assets")}>
         <motion.div
           className="flex flex-col items-center justify-center rounded-lg w-12 h-12 relative"
           animate={{
@@ -335,7 +335,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ hidden }) => {
             </motion.p>
           )}
         </motion.div>
-      </Link>
+      </Link> */}
     </div>
   );
 };
