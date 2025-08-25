@@ -41,6 +41,9 @@ import {
 import { getRandomBoxAdReward, RandomBoxAdRewardResponse } from "@/entities/User/api/randomBoxAdReward";
 import { useAdMob } from "@/hooks/useAdMob";
 import { getPlatform } from "@/types/adMob";
+import { FaChevronRight } from "react-icons/fa";
+import { BiCopy } from "react-icons/bi";
+import { IoSettingsOutline } from "react-icons/io5";
 
 const levelRewards = [
   // 2~9 레벨 보상 예시
@@ -85,6 +88,8 @@ const DiceEventPage: React.FC = () => {
     suspend,
     setSuspend,
     lotteryCount, // lotteryCount로 변경 (열쇠 개수)
+    nickName,
+    uid,
   } = useUserStore();
 
   const game = useDiceGame();
@@ -643,6 +648,20 @@ const DiceEventPage: React.FC = () => {
     fetchUserData();
     game.handleRPSGameEnd(result, winnings);
   };
+  
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // 클립보드 복사 함수
+  const copyToClipboard = async () => {
+    playSfx(Audios.button_click);
+
+    try {
+      await navigator.clipboard.writeText(String(uid));
+      setCopySuccess(true);
+    } catch (err) {
+      setCopySuccess(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
@@ -667,6 +686,62 @@ const DiceEventPage: React.FC = () => {
         ) : (
           <>
             <div className="w-full flex justify-center mb-4 mt-8 gap-[10px]">
+            {/* 상단 사용자 정보 */}
+            <div className="flex items-center justify-between w-full mt-6">
+              <div className="flex items-center">
+                <div
+                  className="flex flex-col items-center justify-center rounded-full w-9 h-9 md:w-10 md:h-10"
+                >
+                  <img
+                    src={charactorImageSrc}
+                    alt="User Profile"
+                    className="w-8 h-8 rounded-full"
+                  />
+                </div>
+                <div className="ml-2">
+                  <button
+                    className="flex items-center text-white text-xs"
+                    onClick={() => {
+                      navigate("/edit-nickname");
+                    }}
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "1px #000000",
+                    }}
+                  >
+                    {nickName} <FaChevronRight className="ml-1 w-3 h-3" />
+                  </button>
+                  <button
+                    className="flex items-center"
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "1px #000000",
+                    }}
+                    onClick={copyToClipboard}
+                  >
+                    UID: {uid} <BiCopy className="ml-1 w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  onClick={() => {
+                    playSfx(Audios.button_click);
+                    navigate("/settings");
+                  }}
+                >
+                  <IoSettingsOutline className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
               {/* 현재 캐릭터 레벨 및 AlertIcon 클릭 시 레벨 별 보상 다이얼로그 표시 */}
               <div
                 onClick={(e) => {
@@ -1856,6 +1931,24 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* UID 클립 복사 알림 모달창 */}
+            {copySuccess && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 w-full">
+                <div className="bg-white text-black p-6 rounded-lg text-center w-[70%] max-w-[550px]">
+                  <p>UID: {uid}</p>
+                  <button
+                    className="mt-4 px-4 py-2 bg-[#0147E5] text-white rounded-lg"
+                    onClick={() => {
+                      playSfx(Audios.button_click);
+                      setCopySuccess(false);
+                    }}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
 
             <br />
             <br />
