@@ -137,7 +137,7 @@ function ItemModal({
         ];
       case "EYE": // 선글라스 - 미니게임 스타포인트 배수
         return [
-          { level: 1, effect: "×1.005" },
+          { level: 1, effect: "×1.01" },
           { level: 2, effect: "×1.02" },
           { level: 3, effect: "×1.11" },
           { level: 4, effect: "×1.35" },
@@ -161,14 +161,14 @@ function ItemModal({
         ];
       case "NECK": // 목도리 - 주사위 스타포인트 배수
         return [
-          { level: 1, effect: "×2.66" },
-          { level: 2, effect: "×3.04" },
-          { level: 3, effect: "×3.54" },
-          { level: 4, effect: "×4.35" },
-          { level: 5, effect: "×5.83" },
-          { level: 6, effect: "×8.55" },
-          { level: 7, effect: "×13.57" },
-          { level: 8, effect: "×23.89" },
+          { level: 1, effect: "×2.7" },
+          { level: 2, effect: "×3.1" },
+          { level: 3, effect: "×3.6" },
+          { level: 4, effect: "×4.4" },
+          { level: 5, effect: "×5.9" },
+          { level: 6, effect: "×8.6" },
+          { level: 7, effect: "×13.6" },
+          { level: 8, effect: "×24" },
           { level: 9, effect: "×50" },
         ];
       case "BACK": // 풍선 - 스핀 보상배수
@@ -176,11 +176,11 @@ function ItemModal({
           { level: 1, effect: "×1.33" },
           { level: 2, effect: "×1.52" },
           { level: 3, effect: "×1.77" },
-          { level: 4, effect: "×2.175" },
-          { level: 5, effect: "×2.915" },
-          { level: 6, effect: "×4.275" },
-          { level: 7, effect: "×6.785" },
-          { level: 8, effect: "×11.945" },
+          { level: 4, effect: "×2.17" },
+          { level: 5, effect: "×2.91" },
+          { level: 6, effect: "×4.27" },
+          { level: 7, effect: "×6.78" },
+          { level: 8, effect: "×11.94" },
           { level: 9, effect: "×25" },
         ];
       default:
@@ -269,6 +269,10 @@ function ItemModal({
       };
     }
   };
+
+  function fetchEquippedItems() {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -460,6 +464,11 @@ function ItemModal({
                   onEquipmentChange(newInventoryData);
                   console.log("✅ 인벤토리 데이터 업데이트 완료");
 
+                  // useUserStore의 장착 아이템 상태도 업데이트
+                  console.log("🔄 useUserStore 장착 아이템 상태 업데이트 시작...");
+                  await fetchEquippedItems();
+                  console.log("✅ useUserStore 장착 아이템 상태 업데이트 완료");
+
                   console.log("🚪 모달 닫기 시작...");
                   onClose();
                   console.log("✅ 모달 닫기 완료");
@@ -589,6 +598,11 @@ function ItemModal({
 
                     // 인벤토리 데이터 업데이트
                     onEquipmentChange(upgradeResult.inventory);
+
+                    // useUserStore의 장착 아이템 상태도 업데이트
+                    console.log("🔄 강화 후 useUserStore 장착 아이템 상태 업데이트 시작...");
+                    await fetchEquippedItems();
+                    console.log("✅ 강화 후 useUserStore 장착 아이템 상태 업데이트 완료");
 
                     // 강화 결과 모달 표시
                     setUpgradeResult({
@@ -1041,7 +1055,7 @@ const Inventory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // useUserStore에서 필요한 데이터 가져오기
-  const { fetchUserData } = useUserStore();
+  const { fetchUserData, fetchEquippedItems } = useUserStore();
 
   // 사용자 데이터 초기 로딩
   useEffect(() => {

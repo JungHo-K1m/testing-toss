@@ -230,29 +230,7 @@ const InviteFriends: React.FC = () => {
   return (
     <div className="flex flex-col mx-6 mb-44 text-white items-center min-h-screen">
       <TopTitle title="친구 초대" back={true} />
-      <p
-        style={{
-          fontFamily: "'ONE Mobile POP', sans-serif",
-          fontSize: "12px",
-          fontWeight: 400,
-          color: "#FEE900",
-          WebkitTextStroke: "1px #000000",
-        }}
-      >
-        추천인 코드
-      </p>
-      <button
-        className="flex flex-row gap-2 items-center border border-white rounded-full w-56 md:w-80 h-16 justify-center mt-2 px-4"
-        onClick={copyToClipboard}
-      >
-        <p className="truncate">
-          <TruncateMiddle text={referralLink} maxLength={20} />
-        </p>
-        <BiCopy className="min-w-5 min-h-5" />
-      </button>
-      {copySuccess && (
-        <p className="text-sm text-green-500 mt-2">{copySuccess}</p>
-      )}
+      
       <div className="invite-reward-box w-full md:w-[500px] h-[332px] rounded-3xl flex flex-col items-center justify-center mt-9 gap-4">
         <div className="flex flex-row items-center">
           <div className="flex flex-col items-center gap-2 justify-center">

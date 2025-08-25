@@ -9,6 +9,7 @@ import { autoAPI } from '@/features/DiceEvent/api/autoApi';
 import { completeTutorialAPI} from '@/features/DiceEvent/api/completeTutorialApi';
 import { useSoundStore } from '@/shared/store/useSoundStore';
 import { fetchLeaderTabAPI } from '@/entities/Leaderboard/api/leaderboardAPI';
+import { getItemList, InventoryResponse } from '@/entities/User/api/getItemList';
 
 // 팝업 정보 인터페이스 (새로 추가)
 interface PopUp {
@@ -157,6 +158,11 @@ interface UserState {
   modalLotteryCount: number | null;
   modalSlToken: number | null;
   resetModalData: () => void;
+
+  // 장착 아이템 관련 상태 추가
+  equippedItems: InventoryResponse | null;
+  setEquippedItems: (items: InventoryResponse | null) => void;
+  fetchEquippedItems: () => Promise<void>;
 }
 
 // 필요한 인터페이스 정의
@@ -760,5 +766,17 @@ export const useUserStore = create<UserState>((set, get) => ({
       modalLotteryCount: null,
       modalSlToken: null,
     });
+  },
+
+  // 장착 아이템 관련 상태 추가
+  equippedItems: null,
+  setEquippedItems: (items) => set({ equippedItems: items }),
+  fetchEquippedItems: async () => {
+    try {
+      const data = await getItemList();
+      set({ equippedItems: data });
+    } catch (err) {
+      console.error('fetchEquippedItems error', err);
+    }
   },
 }));

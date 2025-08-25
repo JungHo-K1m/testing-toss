@@ -114,56 +114,90 @@ const DiceEventPage: React.FC = () => {
   const [showLevelRewardsDialog, setShowLevelRewardsDialog] =
     useState<boolean>(false);
 
-  // 장착된 아이템 상태 (예시로 몇 개 아이템을 장착한 상태로 설정)
-  const [equippedItems, setEquippedItems] = useState<
-    Array<"balloon" | "crown" | "muffler" | "ribbon" | "sunglasses" | "wing">
-  >([
-    "crown",
-    "sunglasses", // 예시: 왕관과 선글라스 장착
-  ]);
+  // useUserStore에서 장착 아이템 상태 가져오기
+  const { equippedItems, fetchEquippedItems } = useUserStore();
 
-  // 레벨 업 감지: userLv가 이전 레벨보다 커질 때만 팝업 표시
-  useEffect(() => {
-    if (userLv > prevLevel) {
-      playSfx(Audios.level_up);
-      setShowLevelUpDialog(true);
+  // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (UserLevel용 - 희귀도 포함)
+  const getEquippedItemsForUserLevel = () => {
+    console.log("🔍 getEquippedItemsForUserLevel 호출됨");
+    console.log("📦 equippedItems:", equippedItems);
+    console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
+    
+    if (!equippedItems?.slot) return [];
+    
+    return equippedItems.slot.map(item => {
+      let type: string;
+      switch (item.type) {
+        case 'HEAD': type = 'crown'; break;
+        case 'EYE': type = 'sunglasses'; break;
+        case 'EAR': type = 'ribbon'; break;
+        case 'NECK': type = 'muffler'; break;
+        case 'BACK': type = 'balloon'; break;
+        default: type = 'crown'; break;
+      }
+      
+      return {
+        type: type as any,
+        rarity: item.rarity
+      };
+    });
+  };
+
+  // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (Board용 - 기존 방식 유지)
+  const getEquippedItemsForComponents = () => {
+    console.log("🔍 getEquippedItemsForComponents 호출됨");
+    console.log("📦 equippedItems:", equippedItems);
+    console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
+    
+    if (!equippedItems?.slot) return [];
+    
+    return equippedItems.slot.map(item => {
+      switch (item.type) {
+        case 'HEAD': return 'crown';
+        case 'EYE': return 'sunglasses';
+        case 'EAR': return 'ribbon';
+        case 'NECK': return 'muffler';
+        case 'BACK': return 'balloon';
+        default: return 'crown';
+      }
+    });
+  };
+
+  // 장착된 아이템 찾기 (아이템 오버레이 렌더링용)
+  const getEquippedItem = (type: string) => {
+    const item = equippedItems?.slot.find((item) => item.type === type);
+    console.log(`🔍 getEquippedItem(${type}):`, item);
+    return item;
+  };
+
+  // 장비 타입별 이미지 가져오기 함수 (아이템 오버레이용)
+  const getEquipmentIcon = (type: string, rarity: number) => {
+    console.log(`🎨 getEquipmentIcon 호출됨 - type: ${type}, rarity: ${rarity}`);
+    
+    const getRarityImageIndex = (rarity: number): number => {
+      if (rarity <= 1) return 1; // 보라색
+      if (rarity <= 3) return 2; // 하늘색
+      if (rarity <= 5) return 3; // 초록색
+      if (rarity <= 7) return 4; // 노란색
+      return 5; // 빨간색
+    };
+
+    const imageIndex = getRarityImageIndex(rarity);
+    let imageKey: string = "Ballon1";
+
+    switch (type.toUpperCase()) {
+      case "HEAD": imageKey = `Crown${imageIndex}`; break;
+      case "EAR": imageKey = `Hairpin${imageIndex}`; break;
+      case "EYE": imageKey = `Sunglass${imageIndex}`; break;
+      case "NECK": imageKey = `Muffler${imageIndex}`; break;
+      case "BACK": imageKey = `Ballon${imageIndex}`; break;
+      default: imageKey = "Ballon1";
     }
-    setPrevLevel(userLv);
-  }, [userLv, prevLevel]);
 
-  // 보상 링크를 통한 접근 여부 확인 및 보상 API 호출
-  useEffect(() => {
-    const referralCode = localStorage.getItem("referralCode");
-    if (referralCode === "from-dapp-portal") {
-      // console.log("[DiceEventPage] Dapp Portal referral detected. Calling reward API...");
-      getRewardPoints()
-        .then((message) => {
-          // console.log("[DiceEventPage] Reward API response:", message);
-          // 응답 메시지가 "Success"인 경우에만 다이얼로그 표시
-          if (message === "Success") {
-            setShowUrlReward(true);
-          } else if (message === "Already Rewarded") {
-            // console.log("[DiceEventPage] Reward already claimed.");
-          }
-          // 중복 호출 방지를 위해 referralCode 삭제
-          localStorage.removeItem("referralCode");
-        })
-        .catch((error) => {
-          // console.error("[DiceEventPage] Reward API error:", error);
-        });
-    }
-  }, []);
-
-  // 현재 레벨 보상 찾기
-  const currentReward = levelRewards.find((r) => r.level === userLv);
-
-  // UserLevel과 동일한 방식으로 캐릭터 이미지 선택
-  const getCharacterImageSrc = () => {
-    if (characterType === "cat") {
-      return Images.CatSmile;
-    } else {
-      return Images.DogSmile;
-    }
+    const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
+    console.log(`🎨 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
+    
+    return imagePath;
   };
 
   // 레벨에 따른 캐릭터 이미지 (Board 컴포넌트용)
@@ -199,7 +233,7 @@ const DiceEventPage: React.FC = () => {
     return Images[effectImageKey] || Images.LevelEffect1;
   };
 
-  const charactorImageSrc = getCharacterImageSrc();
+
 
   useEffect(() => {
     return () => {
@@ -212,13 +246,15 @@ const DiceEventPage: React.FC = () => {
     const initializeUserData = async () => {
       try {
         await fetchUserData();
+        await fetchEquippedItems(); // 장착 아이템 데이터도 함께 가져오기
+        console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
     };
 
     initializeUserData();
-  }, [fetchUserData]);
+  }, [fetchUserData]); // fetchEquippedItems 제거하여 무한 루프 방지
 
   useEffect(() => {
     const handleResize = () => {
@@ -505,24 +541,57 @@ const DiceEventPage: React.FC = () => {
     });
   }, [showResult, showRaffleBoxOpenModal, boxResult]);
 
-  // 사용자 데이터 초기 로딩
-  useEffect(() => {
-    const initializeUserData = async () => {
-      try {
-        await fetchUserData();
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-      }
-    };
-
-    initializeUserData();
-  }, [fetchUserData]);
+  // 사용자 데이터 초기 로딩 (중복 제거됨)
   
   useEffect(() => {
     if (showAdModal) {
       autoLoadAd();
     }
   }, [showAdModal, autoLoadAd]);
+
+  // 레벨 업 감지: userLv가 이전 레벨보다 커질 때만 팝업 표시
+  useEffect(() => {
+    if (userLv > prevLevel) {
+      playSfx(Audios.level_up);
+      setShowLevelUpDialog(true);
+    }
+    setPrevLevel(userLv);
+  }, [userLv, prevLevel]);
+
+  // 보상 링크를 통한 접근 여부 확인 및 보상 API 호출
+  useEffect(() => {
+    const referralCode = localStorage.getItem("referralCode");
+    if (referralCode === "from-dapp-portal") {
+      // console.log("[DiceEventPage] Dapp Portal referral detected. Calling reward API...");
+      getRewardPoints()
+        .then((message) => {
+          // console.log("[DiceEventPage] Reward API response:", message);
+          // 응답 메시지가 "Success"인 경우에만 다이얼로그 표시
+          if (message === "Success") {
+            setShowUrlReward(true);
+          } else if (message === "Already Rewarded") {
+            // console.log("[DiceEventPage] Reward already claimed.");
+          }
+          // 중복 호출 방지를 위해 referralCode 삭제
+          localStorage.removeItem("referralCode");
+        })
+        .catch((error) => {
+          // console.error("[DiceEventPage] Reward API error:", error);
+        });
+    }
+  }, []);
+
+  // 현재 레벨 보상 찾기
+  const currentReward = levelRewards.find((r) => r.level === userLv);
+
+  // UserLevel과 동일한 방식으로 캐릭터 이미지 선택
+  const getCharacterImageSrc = () => {
+    if (characterType === "cat") {
+      return Images.CatSmile;
+    } else {
+      return Images.DogSmile;
+    }
+  };
 
   if (isLoading) {
     return <LoadingSpinner className="h-screen" />;
@@ -532,79 +601,44 @@ const DiceEventPage: React.FC = () => {
     return <div>Error loading data: {error}</div>;
   }
 
-  // 장비 타입별 이미지 가져오기 함수 (Attendance.tsx와 동일)
-  const getEquipmentIcon = (type: string, rarity: number) => {
-    const getRarityImageIndex = (rarity: number): number => {
-      if (rarity <= 1) return 1; // 보라색
-      if (rarity <= 3) return 2; // 하늘색
-      if (rarity <= 5) return 3; // 초록색
-      if (rarity <= 7) return 4; // 노란색
-      return 5; // 빨간색
-    };
 
-    const imageIndex = getRarityImageIndex(rarity);
 
-    // 기본값으로 초기화하여 초기화되지 않은 변수 사용 방지
-    let imageKey: string = "Ballon1"; // 기본값 설정
+     // 장비 타입별 이름 가져오기 함수
+   const getEquipmentName = (type: string): string => {
+     const itemNames: { [key: string]: string } = {
+       HEAD: "크라운",
+       EAR: "머리핀",
+       EYE: "선글라스",
+       NECK: "목도리",
+       BACK: "풍선",
+     };
+     return itemNames[type] || type;
+   };
 
-    switch (type.toUpperCase()) {
-      case "HEAD":
-        imageKey = `Crown${imageIndex}`;
-        break;
-      case "EAR":
-        imageKey = `Hairpin${imageIndex}`;
-        break;
-      case "EYE":
-        imageKey = `Sunglass${imageIndex}`;
-        break;
-      case "NECK":
-        imageKey = `Muffler${imageIndex}`;
-        break;
-      case "BACK":
-        imageKey = `Ballon${imageIndex}`;
-        break;
-      default:
-        imageKey = "Ballon1"; // 기본값 유지
-        break;
-    }
+   // 아이템 효과 정보 가져오기 함수 (기획 피그마 기반)
+   const getEquipmentEffect = (type: string, rarity: number): string => {
+     // 희귀도에 따른 효과 배율 계산
+     const getRarityMultiplier = (rarity: number): number => {
+       if (rarity <= 1) return 1.0;      // 보라색
+       if (rarity <= 3) return 1.2;      // 하늘색
+       if (rarity <= 5) return 1.5;      // 초록색
+       if (rarity <= 7) return 1.8;      // 노란색
+       return 2.0;                        // 빨간색
+     };
 
-    // 디버깅용 로그
-    console.log("이미지 키:", imageKey);
-    console.log("Images 객체에서 해당 키 존재 여부:", imageKey in Images);
-    console.log(
-      "사용 가능한 이미지 키들:",
-      Object.keys(Images).filter(
-        (key) =>
-          key.includes("Crown") ||
-          key.includes("Hairpin") ||
-          key.includes("Sunglass") ||
-          key.includes("Muffler") ||
-          key.includes("Ballon")
-      )
-    );
-
-    const result = Images[imageKey as keyof typeof Images];
-
-    if (!result) {
-      console.error(`이미지를 찾을 수 없습니다: ${imageKey}`);
-      console.error("사용 가능한 이미지들:", Object.keys(Images));
-      return Images.Ballon1; // 기본값
-    }
-
-    return result;
-  };
-
-  // 장비 타입별 이름 가져오기 함수
-  const getEquipmentName = (type: string): string => {
-    const itemNames: { [key: string]: string } = {
-      HEAD: "크라운",
-      EAR: "머리핀",
-      EYE: "선글라스",
-      NECK: "목도리",
-      BACK: "풍선",
-    };
-    return itemNames[type] || type;
-  };
+     const multiplier = getRarityMultiplier(rarity);
+     
+     // 아이템 타입별 기본 효과
+     const baseEffects: { [key: string]: string } = {
+       HEAD: `주사위 재충전 대기시간 -${Math.round(95 * multiplier)}%`,
+       EAR: `미니게임 스타포인트 ×${(1.86 * multiplier).toFixed(2)}`,
+       EYE: `주사위 획득 확률 +${Math.round(15 * multiplier)}%`,
+       NECK: `경험치 획득량 +${Math.round(25 * multiplier)}%`,
+       BACK: `이동 속도 +${Math.round(20 * multiplier)}%`,
+     };
+     
+     return baseEffects[type] || "효과 없음";
+   };
 
   // 랜덤박스 열기 함수
   const handleOpenRaffleBox = async () => {
@@ -686,22 +720,71 @@ const DiceEventPage: React.FC = () => {
               {/* 왼쪽: 캐릭터 정보 */}
               <div className="flex items-center">
                 <div className="flex items-center">
-                  <div
-                    className={`flex flex-col items-center justify-center rounded-full w-[60px] h-[60px] md:w-10 md:h-10`}
-                    style={{
-                      background: "rgba(255,255,255,0.65)",
-                      borderRadius: "100%",
-                      boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
-                      backdropFilter: "blur(10px)",
-                      border: "none",
-                      WebkitBackdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <img
-                      src={charactorImageSrc}
-                      alt="User Profile"
-                      className="w-[50px] h-[50px] rounded-full"
-                    />
+                  <div className="relative">
+                    <div
+                      className={`flex flex-col items-center justify-center rounded-full w-[60px] h-[60px] md:w-10 md:h-10`}
+                      style={{
+                        background: "rgba(255,255,255,0.65)",
+                        borderRadius: "100%",
+                        boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
+                        backdropFilter: "blur(10px)",
+                        border: "none",
+                        WebkitBackdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <img
+                        src={getCharacterImageSrc()}
+                        alt="User Profile"
+                        className="w-[50px] h-[50px] rounded-full"
+                      />
+                    </div>
+                    
+                    {/* 장착된 아이템 오버레이 */}
+                    {getEquippedItem("HEAD") && (
+                      <img
+                        src={getEquipmentIcon("HEAD", getEquippedItem("HEAD")!.rarity)}
+                        alt="HEAD"
+                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 opacity-90"
+                        style={{ zIndex: 15 }}
+                      />
+                    )}
+                    
+                    {getEquippedItem("EYE") && (
+                      <img
+                        src={getEquipmentIcon("EYE", getEquippedItem("EYE")!.rarity)}
+                        alt="EYE"
+                        className="absolute top-1 left-[40%] transform -translate-x-1/2 w-4 h-4 opacity-90"
+                        style={{ zIndex: 15, transform: "rotate(-2deg)" }}
+                      />
+                    )}
+                    
+                    {getEquippedItem("EAR") && (
+                      <img
+                        src={getEquipmentIcon("EAR", getEquippedItem("EAR")!.rarity)}
+                        alt="EAR"
+                        className="absolute top-1 right-1 w-3 h-3 opacity-90"
+                        style={{ zIndex: 15, transform: "rotate(45deg)" }}
+                      />
+                    )}
+                    
+                    {getEquippedItem("NECK") && (
+                      <img
+                        src={getEquipmentIcon("NECK", getEquippedItem("NECK")!.rarity)}
+                        alt="NECK"
+                        className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-4 h-4 opacity-90"
+                        style={{ zIndex: 15 }}
+                      />
+                    )}
+                    
+                    {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
+                    {getEquippedItem("BACK") && (
+                      <img
+                        src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
+                        alt="BACK"
+                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-6 h-6 opacity-90"
+                        style={{ zIndex: 5 }}
+                      />
+                    )}
                   </div>
                   <div className="ml-2">
                     <button
@@ -789,10 +872,10 @@ const DiceEventPage: React.FC = () => {
               >
                 <UserLevel
                   userLv={userLv}
-                  charactorImageSrc={charactorImageSrc}
+                  charactorImageSrc={getCharacterImageSrc()}
                   exp={pet.exp}
                   characterType={characterType || "cat"}
-                  equippedItems={equippedItems}
+                  equippedItems={getEquippedItemsForUserLevel()}
                   onAlertClick={() => {
                     playSfx(Audios.button_click);
                     setShowLevelRewardsDialog(true);
@@ -849,18 +932,17 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </div>
             )}
-            {/* 카드게임이 활성화되지 않았을 때만 Board(캐릭터) 표시 */}
-            {!game.isCardGameActive && (
-              <Board
-                position={position}
-                charactorImageSrc={getLevelBasedCharacterImageSrc()}
-                initialX={initialX}
-                initialY={initialY}
-                delta={delta}
-                equippedItems={equippedItems}
-                characterType={characterType || "cat"}
-              />
-            )}
+                         {/* 카드게임이 활성화되지 않았을 때만 Board(캐릭터) 표시 */}
+             {!game.isCardGameActive && (
+               <Board
+                 position={position}
+                 initialX={initialX}
+                 initialY={initialY}
+                 delta={delta}
+                 equippedItems={getEquippedItemsForUserLevel()}
+                 characterType={characterType || "cat"}
+               />
+             )}
             <br />
 
             {/* 랜덤박스 아이콘 */}
@@ -1715,56 +1797,206 @@ const DiceEventPage: React.FC = () => {
                   </DialogClose>
                 </div>
                 <div className="flex flex-col items-center justify-around">
-                  <div className=" flex flex-col items-center gap-2 mb-[30px]">
-                    <h1
-                      className="text-center"
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "30px",
-                        fontWeight: 400,
-                        color: "#FDE047",
-                        WebkitTextStroke: "2px #000000",
-                      }}
-                    >
-                      장착된 아이템
-                    </h1>
-                    <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
-                      <img
-                        src={Images.DogSmile}
-                        alt="levelupEffect"
-                        className="w-[150px] h-[150px]"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-6">
-                    <div
-                      className="flex flex-row items-center justify-center gap-6"
-                      style={{
-                        width: "70vw",
-                        height: "120px",
-                        background: "rgba(194, 213, 232, 0.1)",
-                        border: "2px solid #B4CADA",
-                        borderRadius: "20px",
-                        padding: "16px",
-                        boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-                        backdropFilter: "blur(15px)",
-                        WebkitBackdropFilter: "blur(15px)",
-                      }}
-                    >
-                      <p
-                        className="text-center p-4"
-                        style={{
-                          fontFamily: "'ONE Mobile POP', sans-serif",
-                          fontSize: "24px",
-                          fontWeight: 400,
-                          color: "#FFFFFF",
-                          WebkitTextStroke: "1px #000000",
-                        }}
-                      >
-                        현재 장착 중인 아이템이 없습니다.
-                      </p>
-                    </div>
-                  </div>
+                                     <div className=" flex flex-col items-center gap-2 mb-[30px]">
+                     <h1
+                       className="text-center"
+                       style={{
+                         fontFamily: "'ONE Mobile POP', sans-serif",
+                         fontSize: "30px",
+                         fontWeight: 400,
+                         color: "#FDE047",
+                         WebkitTextStroke: "2px #000000",
+                       }}
+                     >
+                       장착된 아이템
+                     </h1>
+                     <div className="relative flex items-center justify-center w-[150px] h-[150px] mb-5">
+                       {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
+                       {getEquippedItem("BACK") && (
+                         <img
+                           src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
+                           alt="BACK"
+                           className="absolute -top-20 left-1/2 transform -translate-x-[60%] w-20 h-20 opacity-90"
+                           style={{ zIndex: 5 }}
+                         />
+                       )}
+                       
+                       {/* 기본 캐릭터 이미지 */}
+                       <img
+                         src={getCharacterImageSrc()}
+                         alt="Character"
+                         className="w-[150px] h-[150px] relative z-10"
+                       />
+                       
+                       {/* 장착된 아이템들을 캐릭터 위에 겹쳐서 표시 (BACK 제외) */}
+                       {getEquippedItem("HEAD") && (
+                         <img
+                           src={getEquipmentIcon("HEAD", getEquippedItem("HEAD")!.rarity)}
+                           alt="HEAD"
+                           className="absolute -top-7 left-1/2 transform -translate-x-1/2 w-12 h-12 opacity-90"
+                           style={{ zIndex: 15 }}
+                         />
+                       )}
+                       
+                       {getEquippedItem("EYE") && (
+                         <img
+                           src={getEquipmentIcon("EYE", getEquippedItem("EYE")!.rarity)}
+                           alt="EYE"
+                           className="absolute top-[18px] left-[33%] transform -translate-x-1/2 w-12 h-12 opacity-90"
+                           style={{ zIndex: 15, transform: "rotate(-2deg)" }}
+                         />
+                       )}
+                       
+                       {getEquippedItem("EAR") && (
+                         <img
+                           src={getEquipmentIcon("EAR", getEquippedItem("EAR")!.rarity)}
+                           alt="EAR"
+                           className="absolute top-1 right-8 w-10 h-10 opacity-90"
+                           style={{ zIndex: 15, transform: "rotate(45deg)" }}
+                         />
+                       )}
+                       
+                       {getEquippedItem("NECK") && (
+                         <img
+                           src={getEquipmentIcon("NECK", getEquippedItem("NECK")!.rarity)}
+                           alt="NECK"
+                           className="absolute top-[88px] left-[51%] transform -translate-x-1/2 w-14 h-14 opacity-90"
+                           style={{ zIndex: 15 }}
+                         />
+                       )}
+                     </div>
+                   </div>
+                                     <div className="flex flex-col gap-6">
+                                            {equippedItems?.slot && equippedItems.slot.length > 0 ? (
+                         // 장착된 아이템이 있는 경우
+                         <div className="flex flex-col gap-4">
+                           {equippedItems.slot.map((item, index) => (
+                             <div
+                               key={`${item.type}-${index}`}
+                               className="flex flex-row items-center justify-center gap-4"
+                               style={{
+                                 width: "70vw",
+                                 height: "100px",
+                                 background: "rgba(194, 213, 232, 0.1)",
+                                 border: "2px solid #B4CADA",
+                                 borderRadius: "20px",
+                                 padding: "16px",
+                                 boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                                 backdropFilter: "blur(15px)",
+                                 WebkitBackdropFilter: "blur(15px)",
+                               }}
+                             >
+                               {/* 아이템 이미지 */}
+                               <div className="relative">
+                                 <img
+                                   src={getEquipmentIcon(item.type, item.rarity)}
+                                   alt={item.type}
+                                   className="w-16 h-16"
+                                 />
+                                 {/* 희귀도 표시 (우측 하단) */}
+                                 <div
+                                   className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                                   style={{
+                                     background: item.rarity <= 1 ? "#9B59B6" :      // 보라색
+                                                item.rarity <= 3 ? "#3498DB" :      // 하늘색
+                                                item.rarity <= 5 ? "#2ECC71" :      // 초록색
+                                                item.rarity <= 7 ? "#F1C40F" :      // 노란색
+                                                "#E74C3C",                         // 빨간색
+                                     border: "2px solid #FFFFFF",
+                                     boxShadow: "0px 2px 4px rgba(0,0,0,0.3)"
+                                   }}
+                                 >
+                                   <span
+                                     style={{
+                                       fontFamily: "'ONE Mobile POP', sans-serif",
+                                       fontSize: "10px",
+                                       fontWeight: "bold",
+                                       color: "#FFFFFF",
+                                       WebkitTextStroke: "0.5px #000000",
+                                     }}
+                                   >
+                                     {item.rarity}
+                                   </span>
+                                 </div>
+                               </div>
+                               
+                               {/* 아이템 정보 */}
+                               <div className="flex flex-col items-start flex-1">
+                                 <p
+                                   style={{
+                                     fontFamily: "'ONE Mobile POP', sans-serif",
+                                     fontSize: "18px",
+                                     fontWeight: "bold",
+                                     color: "#FFFFFF",
+                                     WebkitTextStroke: "1px #000000",
+                                     marginBottom: "4px"
+                                   }}
+                                 >
+                                   {getEquipmentName(item.type)}
+                                 </p>
+                                 <p
+                                   style={{
+                                     fontFamily: "'ONE Mobile POP', sans-serif",
+                                     fontSize: "14px",
+                                     fontWeight: "400",
+                                     color: "#FDE047",
+                                     WebkitTextStroke: "0.5px #000000",
+                                     lineHeight: "1.3"
+                                   }}
+                                 >
+                                   {getEquipmentEffect(item.type, item.rarity)}
+                                 </p>
+                               </div>
+                               
+                               {/* 게임 컨트롤러 아이콘 (피그마 기획과 동일) */}
+                               <div className="flex items-center justify-center w-8 h-8">
+                                 <svg
+                                   width="24"
+                                   height="24"
+                                   viewBox="0 0 24 24"
+                                   fill="none"
+                                   xmlns="http://www.w3.org/2000/svg"
+                                 >
+                                   <path
+                                     d="M21 6H3C1.9 6 1 6.9 1 8V16C1 17.1 1.9 18 3 18H21C22.1 18 23 17.1 23 16V8C23 6.9 22.1 6 21 6ZM11 13H8V16H6V13H3V11H6V8H8V11H11M15.5 14C14.67 14 14 13.33 14 12.5C14 11.67 14.67 11 15.5 11C16.33 11 17 11.67 17 12.5C17 13.33 16.33 14 15.5 14ZM19.5 14C18.67 14 18 13.33 18 12.5C18 11.67 18.67 11 19.5 11C20.33 11 21 11.67 21 12.5C21 13.33 20.33 14 19.5 14Z"
+                                     fill="#B4CADA"
+                                   />
+                                 </svg>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                     ) : (
+                       // 장착된 아이템이 없는 경우
+                       <div
+                         className="flex flex-row items-center justify-center gap-6"
+                         style={{
+                           width: "70vw",
+                           height: "120px",
+                           background: "rgba(194, 213, 232, 0.1)",
+                           border: "2px solid #B4CADA",
+                           borderRadius: "20px",
+                           padding: "16px",
+                           boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                           backdropFilter: "blur(15px)",
+                           WebkitBackdropFilter: "blur(15px)",
+                         }}
+                       >
+                         <p
+                           className="text-center p-4"
+                           style={{
+                             fontFamily: "'ONE Mobile POP', sans-serif",
+                             fontSize: "24px",
+                             fontWeight: 400,
+                             color: "#FFFFFF",
+                             WebkitTextStroke: "1px #000000",
+                           }}
+                         >
+                           현재 장착 중인 아이템이 없습니다.
+                         </p>
+                       </div>
+                     )}
+                   </div>
                 </div>
               </DialogContent>
             </Dialog>

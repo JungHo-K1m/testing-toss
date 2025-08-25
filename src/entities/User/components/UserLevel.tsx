@@ -11,12 +11,18 @@ type ItemType =
   | "sunglasses"
   | "wing";
 
+// 장착된 아이템 정보 (희귀도 포함)
+interface EquippedItemInfo {
+  type: ItemType;
+  rarity: number;
+}
+
 const UserLevel: React.FC<{
   userLv: number;
   charactorImageSrc: string;
   exp: number;
   characterType?: "cat" | "dog";
-  equippedItems?: ItemType[];
+  equippedItems?: EquippedItemInfo[]; // 희귀도 정보를 포함하도록 변경
   onAlertClick?: () => void;
 }> = ({
   userLv,
@@ -26,6 +32,12 @@ const UserLevel: React.FC<{
   equippedItems = [],
   onAlertClick,
 }) => {
+  // 디버깅을 위한 로그 추가
+  console.log("🔍 UserLevel 컴포넌트 렌더링");
+  console.log("🎯 characterType:", characterType);
+  console.log("📦 equippedItems:", equippedItems);
+  console.log("📊 equippedItems.length:", equippedItems.length);
+
   // 레벨에 따른 캐릭터 이미지 선택 로직 (DiceEvent와 동일)
   const getCharacterImageSrc = () => {
     if (characterType === "cat") {
@@ -35,28 +47,35 @@ const UserLevel: React.FC<{
     }
   };
 
-  // 아이템 이미지 매핑 (Board 컴포넌트와 동일)
-  const getItemImage = (itemType: ItemType): string => {
-    const itemMap = {
-      cat: {
-        balloon: Images.CatGreenBallon,
-        crown: Images.CatGreenCrown,
-        muffler: Images.CatGreenMuffler,
-        ribbon: Images.CatGreenRibbon,
-        sunglasses: Images.CatGreenSunglasses,
-        wing: Images.CatGreenWing,
-      },
-      dog: {
-        balloon: Images.DogGreenBallon,
-        crown: Images.DogGreenCrown,
-        muffler: Images.DogGreenMuffler,
-        ribbon: Images.DogGreenRibbon,
-        sunglasses: Images.DogGreenSunglasses,
-        wing: Images.DogGreenWing,
-      },
+  // 아이템 이미지 매핑 (index.tsx의 getEquipmentIcon과 동일한 로직)
+  const getItemImage = (itemType: ItemType, rarity: number): string => {
+    console.log(`🎨 UserLevel getItemImage 호출됨 - itemType: ${itemType}, characterType: ${characterType}, rarity: ${rarity}`);
+    
+    const getRarityImageIndex = (rarity: number): number => {
+      if (rarity <= 1) return 1; // 보라색
+      if (rarity <= 3) return 2; // 하늘색
+      if (rarity <= 5) return 3; // 초록색
+      if (rarity <= 7) return 4; // 노란색
+      return 5; // 빨간색
     };
 
-    return itemMap[characterType][itemType];
+    const imageIndex = getRarityImageIndex(rarity);
+    let imageKey: string = "Ballon1";
+
+    switch (itemType) {
+      case "crown": imageKey = `Crown${imageIndex}`; break;
+      case "ribbon": imageKey = `Hairpin${imageIndex}`; break;
+      case "sunglasses": imageKey = `Sunglass${imageIndex}`; break;
+      case "muffler": imageKey = `Muffler${imageIndex}`; break;
+      case "balloon": imageKey = `Ballon${imageIndex}`; break;
+      case "wing": imageKey = `Wing${imageIndex}`; break;
+      default: imageKey = "Ballon1";
+    }
+
+    const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
+    console.log(`🎨 UserLevel 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
+    
+    return imagePath;
   };
 
   const roundedExp = Math.floor(exp);
@@ -98,22 +117,103 @@ const UserLevel: React.FC<{
 
       {/* 캐릭터와 아이템 겹치기 */}
       <div className="relative">
+        {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
+        {equippedItems.find(item => item.type === "balloon") && (
+          <img
+            src={getItemImage("balloon", equippedItems.find(item => item.type === "balloon")!.rarity)}
+            alt={`${characterType} balloon`}
+            className="absolute -top-12 left-1/2 transform -translate-x-[60%] w-16 h-16 opacity-90"
+            style={{ zIndex: 5 }}
+          />
+        )}
+        
         {/* 기본 캐릭터 이미지 */}
         <img
           src={characterImageSrc}
-          className="w-24 h-24 md:w-32 md:h-32 z-20"
+          className="w-24 h-24 relative"
           alt={`Character Level ${userLv}`}
+          style={{ zIndex: 10 }}
         />
 
-        {/* 장착된 아이템들을 기본 캐릭터 위에 겹쳐서 표시 */}
-        {/* {equippedItems.map((itemType, index) => (
-          <img
-            key={`${itemType}-${index}`}
-            src={getItemImage(itemType)}
-            alt={`${characterType} ${itemType}`}
-            className="absolute inset-0 w-24 h-24 md:w-32 md:h-32 z-30"
-          />
-        ))} */}
+        {/* 장착된 아이템들을 캐릭터 위에 겹쳐서 표시 (BACK 제외) */}
+        {equippedItems
+          .filter(item => item.type !== "balloon") // BACK 아이템 제외
+          .map((item, index) => {
+            console.log(`🎯 UserLevel 아이템 렌더링: ${item.type} (인덱스: ${index}, 희귀도: ${item.rarity})`);
+            
+            // 아이템 타입별 위치와 사이즈 설정
+            let itemStyle: React.CSSProperties = {};
+            
+            switch (item.type) {
+              case "crown": // HEAD
+                itemStyle = {
+                  position: "absolute",
+                  top: "-28px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "32px",
+                  height: "32px",
+                  zIndex: 15,
+                  opacity: 0.9
+                };
+                break;
+              case "sunglasses": // EYE
+                itemStyle = {
+                  position: "absolute",
+                  top: "14px",
+                  left: "33%",
+                  transform: "translateX(-50%) rotate(-2deg)",
+                  width: "32px",
+                  height: "32px",
+                  zIndex: 15,
+                  opacity: 0.9
+                };
+                break;
+              case "ribbon": // EAR
+                itemStyle = {
+                  position: "absolute",
+                  top: "8px",
+                  right: "32px",
+                  transform: "rotate(45deg)",
+                  width: "24px",
+                  height: "24px",
+                  zIndex: 15,
+                  opacity: 0.9
+                };
+                break;
+              case "muffler": // NECK
+                itemStyle = {
+                  position: "absolute",
+                  bottom: "8px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "32px",
+                  height: "32px",
+                  zIndex: 15,
+                  opacity: 0.9
+                };
+                break;
+              default:
+                itemStyle = {
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "96px",
+                  height: "96px",
+                  zIndex: 15,
+                  opacity: 0.9
+                };
+            }
+            
+            return (
+              <img
+                key={`${item.type}-${index}`}
+                src={getItemImage(item.type, item.rarity)}
+                alt={`${characterType} ${item.type}`}
+                style={itemStyle}
+              />
+            );
+          })}
       </div>
 
       <div className="flex flex-row items-center w-full px-4 gap-2">
