@@ -5,7 +5,7 @@ export const getBettingAmount = async (): Promise<{starCount: number, allowedBet
   const response = await api.get('/bettingAmount');
 
   if (response.data.code === 'OK') {
-    return response.data.message;
+    return response.data.data;
   } else {
     throw new Error(response.data.message || 'Failed to fetch betting amount information');
   }

@@ -51,6 +51,9 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
   const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>("");
 
+  // 디버깅을 위한 로깅
+  console.log("CardBettingModal 렌더링:", { myPoint, allowedBetting });
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const numericValue = parseInt(value);
@@ -58,14 +61,14 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
     console.log("=== 입력값 변화 ===");
     console.log("입력된 값:", value);
     console.log("숫자 변환 결과:", numericValue);
-    console.log("보유 포인트:", myPoint);
+    console.log("베팅 가능 금액:", allowedBetting);
     console.log(
       "입력 허용 조건:",
-      value === "" || (/^\d+$/.test(value) && numericValue <= myPoint + 1)
+      value === "" || (/^\d+$/.test(value) && numericValue <= allowedBetting)
     );
 
     // 빈 값이거나 숫자인 경우에만 입력 허용 (100단위 제한 제거)
-    if (value === "" || (/^\d+$/.test(value) && numericValue <= myPoint + 1)) {
+    if (value === "" || (/^\d+$/.test(value) && numericValue <= allowedBetting)) {
       setBet(value);
       console.log("✅ 입력값 설정됨:", value);
       console.log("현재 bet 상태:", value);
@@ -95,15 +98,15 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
     }
     console.log("✅ 100단위 검증 통과:", amount, "는 100의 배수");
 
-    if (amount > myPoint) {
-      console.log("❌ 포인트 초과:", amount, ">", myPoint);
+    if (amount > allowedBetting) {
+      console.log("❌ 베팅 가능 금액 초과:", amount, ">", allowedBetting);
       console.log("모달창 열기 시도...");
       setAlertMessage("베팅 가능한 금액보다 많이 입력하였습니다.");
       setIsAlertOpen(true);
       console.log("모달창 상태:", isAlertOpen);
       return;
     }
-    console.log("✅ 포인트 검증 통과:", amount, "<=", myPoint);
+    console.log("✅ 베팅 가능 금액 검증 통과:", amount, "<=", allowedBetting);
 
     // 모든 검증을 통과한 경우 에러와 알림 초기화
     console.log("🎉 모든 검증 통과! 게임 시작:", amount);
@@ -172,7 +175,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 WebkitTextStroke: "1px #000000",
               }}
             >
-              내 포인트
+              베팅 가능
             </span>
             <div className="flex flex-row items-center justify-center gap-3">
               <img
@@ -180,30 +183,18 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 alt="Star"
                 className="w-[30px] h-[30px]"
               />
-              <span
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                {myPoint.toLocaleString()}
-              </span>
+                             <span
+                 style={{
+                   fontFamily: "'ONE Mobile POP', sans-serif",
+                   fontSize: "18px",
+                   fontWeight: 400,
+                   color: "#FFFFFF",
+                   WebkitTextStroke: "1px #000000",
+                 }}
+               >
+                 {(allowedBetting || 0).toLocaleString()}
+               </span>
             </div>
-            <span
-              className="text-center text-xs"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "10px",
-                fontWeight: 400,
-                color: "#FDE047",
-                WebkitTextStroke: "0.5px #000000",
-              }}
-            >
-              베팅가능: {allowedBetting.toLocaleString()}
-            </span>
           </div>
         </div>
         {/* 4. 배팅 입력 */}
@@ -222,7 +213,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
             min="100"
             value={bet}
             onChange={handleInputChange}
-            max={myPoint}
+            max={allowedBetting}
             className="h-12 px-4 mt-4 w-[342px] text-start"
             style={{
               fontFamily: "'ONE Mobile POP', sans-serif",
@@ -276,7 +267,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
             <button
               type="button"
               className={`font-medium h-14 w-[160px] rounded-[10px] relative ${
-                !bet || parseInt(bet) <= 0 || parseInt(bet) > myPoint
+                !bet || parseInt(bet) <= 0 || parseInt(bet) > allowedBetting
                   ? "opacity-70 cursor-not-allowed"
                   : ""
               }`}
@@ -293,11 +284,11 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 fontWeight: "400",
                 WebkitTextStroke: "1px #000000",
                 opacity:
-                  !bet || parseInt(bet) <= 0 || parseInt(bet) > myPoint
+                  !bet || parseInt(bet) <= 0 || parseInt(bet) > allowedBetting
                     ? 0.7
                     : 1,
               }}
-              disabled={!bet || parseInt(bet) <= 0 || parseInt(bet) > myPoint}
+              disabled={!bet || parseInt(bet) <= 0 || parseInt(bet) > allowedBetting}
               onClick={handleBet}
             >
               <img
@@ -511,7 +502,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
     try {
       setIsLoading(true);
 
-      // API 요청 데이터 준비
+      // API 요청 데이터 준비 - API 문서에 따른 num 값 매핑
       const requestData: CardFlipRequest = {
         type: mode === "color" ? "COLOR" : "FLIP",
         bettingAmount: betAmount,
@@ -519,8 +510,8 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
           mode === "color"
             ? selectedColor === "RED"
               ? 1
-              : 2 // RED = 1, BLACK = 2
-            : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1, // 스페이드=1, 다이아=2, 하트=3, 클럽=4
+              : 2 // RED = 1, BLACK = 2 (왼쪽부터 1)
+            : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1, // 스페이드=1, 다이아=2, 하트=3, 클럽=4 (왼쪽부터 1)
       };
 
       console.log("카드 플립 API 요청:", requestData);
@@ -941,7 +932,7 @@ const CardGameResultDialog = ({
               }}
             >
               {win
-                ? `획득 금액: ${reward.toLocaleString()}`
+                ? `획득 금액: ${(reward || 0).toLocaleString()}`
                 : "베팅 금액이 차감되었습니다"}
             </p>
           </div>
@@ -985,9 +976,22 @@ const CardGameModal = ({ onClose }: any) => {
   const fetchBettingInfo = async () => {
     try {
       setIsLoading(true);
+      console.log("베팅 정보 API 호출 시작...");
       const bettingInfo = await getBettingAmount();
-      setMyPoint(bettingInfo.starCount);
-      setAllowedBetting(bettingInfo.allowedBetting);
+      console.log("베팅 정보 API 응답:", bettingInfo);
+      console.log("응답 타입:", typeof bettingInfo);
+      console.log("응답 구조:", JSON.stringify(bettingInfo, null, 2));
+      
+      // API 응답에서 값이 undefined인 경우 기본값 설정
+      const starCount = bettingInfo?.starCount || 0;
+      const allowedBetting = bettingInfo?.allowedBetting || 0;
+      
+      console.log("설정할 값들:", { starCount, allowedBetting });
+      
+      setMyPoint(starCount);
+      setAllowedBetting(allowedBetting);
+      
+      console.log("상태 업데이트 완료");
     } catch (error) {
       console.error("Error fetching betting info:", error);
       // 에러 발생 시 기본값 설정

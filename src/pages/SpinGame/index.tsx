@@ -16,115 +16,71 @@ import Audios from "@/shared/assets/audio";
 
 const data = [
   {
-    option: "2000 Stars",
+    option: "3 Keys",
     image: {
-      uri: `${Images.spinStar2000}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "STAR", amount: 2000 },
-    style: { backgroundColor: "#FBA629" },
+    prize: { type: "KEY", amount: 3 },
+    style: { backgroundColor: "#FFD700" },
+    probability: 35,
   },
   {
-    option: "1 Raffle Ticket",
+    option: "10 Keys",
     image: {
-      uri: `${Images.SpinRapple1Black}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "TICKET", amount: 1 },
-    style: { backgroundColor: "#F3F3E9" },
+    prize: { type: "KEY", amount: 10 },
+    style: { backgroundColor: "#FF6B6B" },
+    probability: 25,
   },
   {
-    option: "4000 Stars",
+    option: "20 Keys",
     image: {
-      uri: `${Images.spinStar4000}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "STAR", amount: 4000 },
-    style: { backgroundColor: "#2FAF74" },
+    prize: { type: "KEY", amount: 20 },
+    style: { backgroundColor: "#4ECDC4" },
+    probability: 15,
   },
   {
-    option: "1 Raffle Ticket",
+    option: "50 Keys",
     image: {
-      uri: `${Images.spinRapple1}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "TICKET", amount: 1 },
-    style: { backgroundColor: "#39A1E8" },
+    prize: { type: "KEY", amount: 50 },
+    style: { backgroundColor: "#9B59B6" },
+    probability: 5,
   },
   {
-    option: "1000 Stars",
+    option: "SL Points",
     image: {
-      uri: `${Images.spinStar1000}`,
+      uri: `${Images.TokenReward}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "STAR", amount: 1000 },
-    style: { backgroundColor: "#CA3D77" },
+    prize: { type: "SL", amount: 100 },
+    style: { backgroundColor: "#3498DB" },
+    probability: 15,
   },
   {
-    option: "1 Raffle Ticket",
+    option: "Boom!",
     image: {
-      uri: `${Images.spinRapple1}`,
+      uri: `${Images.Boom}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "TICKET", amount: 1 },
-    style: { backgroundColor: "#FBA629" },
+    prize: { type: "BOOM", amount: 0 },
+    style: { backgroundColor: "#E74C3C" },
+    probability: 5,
   },
-  {
-    option: "5000 Stars",
-    image: {
-      uri: `${Images.spinStar5000}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "STAR", amount: 5000 },
-    style: { backgroundColor: "#F3F3E9" },
-  },
-  {
-    option: "1 Dice",
-    image: {
-      uri: `${Images.SpinDice1}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "DICE", amount: 1 },
-    style: { backgroundColor: "#2FAF74" },
-  },
-  {
-    option: "10 Coins",
-    image: {
-      uri: `${Images.spinToken10}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "SL", amount: 10 },
-    style: { backgroundColor: "#39A1E8" },
-  },
-  {
-    option: "1 Raffle Ticket",
-    image: {
-      uri: `${Images.spinRapple1}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "TICKET", amount: 1 },
-    style: { backgroundColor: "#CA3D77" },
-  },
-  // {
-  //   option: "Boom!",
-  //   image: {
-  //     uri: `${Images.Boom}`,
-  //     sizeMultiplier: 0.7,
-  //     offsetY: 150,
-  //   },
-  //   prize: { type: "BOOM", amount: 0 },
-  //   style: { backgroundColor: "#333333" },
-  // },
 ];
 
 // 커스텀 휠 컴포넌트
@@ -343,8 +299,17 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       const response = await api.get("/play-spin");
       console.log("Server response:", response.data);
       
-      if (response.data.code === "OK") {
-        const { spinType, amount, baseAmount, rank, diceCount, starCount, slCount } = response.data.data;
+      if (response.data.code === "OK" && response.data.data) {
+        // API 응답 구조 안전하게 처리
+        const responseData = response.data.data;
+        const spinType = responseData.spinType || "";
+        const amount = responseData.amount || 0;
+        const baseAmount = responseData.baseAmount || 0;
+        const rank = responseData.rank;
+        const diceCount = responseData.diceCount;
+        const starCount = responseData.starCount;
+        const slCount = responseData.slCount;
+        
         console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
         console.log("Available prize types in data array:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
 
@@ -375,18 +340,27 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
           console.error("No matching prize found for given spinType and baseAmount");
           console.error("API Response:", { spinType, baseAmount });
           console.error("Available prizes:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
-          // window.location.reload(); // 임시로 주석 처리
-          alert(`API 응답과 일치하는 상품을 찾을 수 없습니다. spinType: ${spinType}, baseAmount: ${baseAmount}`);
+          
+          // 에러 메시지 개선
+          const errorMessage = `API 응답과 일치하는 상품을 찾을 수 없습니다.\n\n요청된 상품: ${spinType} ${baseAmount}\n\n사용 가능한 상품:\n${data.map(item => `- ${item.prize.type} ${item.prize.amount}`).join('\n')}`;
+          alert(errorMessage);
         }
       } else {
-        console.error("Error in play-spin API:", response.data.message);
-        // window.location.reload(); // 임시로 주석 처리
-        alert(`API 오류: ${response.data.message}`);
+        console.error("Error in play-spin API:", response.data.message || "Unknown error");
+        alert(`API 오류: ${response.data.message || "알 수 없는 오류가 발생했습니다."}`);
       }
     } catch (error) {
       console.error("Error calling play-spin API:", error);
-      // window.location.reload(); // 임시로 주석 처리
-      alert(`API 호출 오류: ${error}`);
+      
+      // 에러 타입에 따른 처리
+      let errorMessage = "알 수 없는 오류가 발생했습니다.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      alert(`API 호출 오류: ${errorMessage}`);
     } finally {
       setIsSpinning(false);
     }
@@ -413,16 +387,14 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
 
       // API 문서에 따르면 amount는 배수가 적용된 최종 보상
       // baseAmount는 기본 보상
-      if (normalizedSpinType === "STAR") {
-        setStarPoints((prev: number) => prev + amount);
-      } else if (normalizedSpinType === "DICE") {
-        setDiceCount((prev: number) => prev + amount);
+      if (normalizedSpinType === "KEY") {
+        // KEY 타입은 열쇠로 처리
+        setLotteryCount((prev: number) => prev + amount);
       } else if (normalizedSpinType === "SL") {
         setSlToken((prev: number) => prev + amount);
-      } else if (normalizedSpinType === "TICKET") {
-        setLotteryCount((prev: number) => prev + amount);
       } else if (normalizedSpinType === "BOOM") {
-        // console.log("Boom! Better luck next time!");
+        // BOOM은 꽝이므로 보상 없음
+        console.log("Boom! Better luck next time!");
       }
 
       // 추가 정보 로깅 (디버깅용)
@@ -444,20 +416,12 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     const normalizedSpinType = spinType.trim().toUpperCase();
 
     switch (normalizedSpinType) {
-      case "STAR":
-        return "Stars";
-      case "DICE":
-        return "Dice";
+      case "KEY":
+        return "Keys";
       case "SL":
-        return "Coins";
-      case "TICKET":
-        return "Raffle Ticket";
+        return "SL Points";
       case "BOOM":
         return "Boom! Try Again";
-      case "KEY":
-        return "Key";
-      case "TOSS_POINT":
-        return "TOSS Points";
       default:
         return "Unknown";
     }
@@ -468,22 +432,14 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     if (!spinType) return Images.Dice;
     const normalizedSpinType = spinType.trim().toUpperCase();
     switch (normalizedSpinType) {
-      case "STAR":
-        return Images.Star; // 별 대표 이미지
-      case "DICE":
-        return Images.Dice; // 주사위 이미지
+      case "KEY":
+        return Images.KeyIcon; // 열쇠 이미지
       case "SL":
-        return Images.TokenReward; // 코인 이미지
-      case "TICKET":
-        return Images.LotteryTicket; // 래플 티켓 이미지
+        return Images.TokenReward; // SL 포인트 이미지
       case "BOOM":
         return Images.Boom; // 붐 이미지
-      case "KEY":
-        return Images.Dice; // 키 이미지 (임시로 주사위 사용)
-      case "TOSS_POINT":
-        return Images.TokenReward; // TOSS 포인트 이미지 (임시로 코인 사용)
       default:
-        return Images.Dice;
+        return Images.Dice; // 기본값으로 주사위 이미지
     }
   };
 
@@ -795,23 +751,12 @@ const SpinGame: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     Images.NewWheel, // 새로운 회전판 이미지 추가
     Images.NewPin, // 핀 이미지 추가
     Images.RewardNFT,
-    Images.Star,
-    Images.Dice,
-    Images.TokenReward,
-    Images.LotteryTicket,
-    Images.Boom,
-    // data 객체 안에 쓰인 이미지들도 모두 추가
-    Images.spinStar2000,
-    Images.SpinDice10,
-    Images.spinStar4000,
-    Images.SpinDice5,
-    Images.spinStar1000,
-    Images.SpinDice2,
-    Images.spinStar5000,
-    Images.SpinDice1,
-    Images.spinToken10,
-    Images.spinRapple1,
-    Images.SpinRapple1Black,
+    // 새로운 보상 타입에 필요한 이미지들
+    Images.KeyIcon, // 열쇠 이미지
+    Images.TokenReward, // SL 포인트 이미지
+    Images.Boom, // 붐 이미지
+    // 기본 이미지들
+    Images.Dice, // 기본값 이미지
 
     // 필요한 이미지가 더 있다면 모두 추가...
   ];

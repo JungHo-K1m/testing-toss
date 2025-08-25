@@ -11,6 +11,34 @@ html, body, #root {
   overflow-x: hidden;
 }
 
+/* 모바일에서 input focus 시 zoom 방지 */
+input, textarea, select {
+  font-size: 16px !important; /* iOS에서 zoom 방지 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* 모바일에서 input focus 시 zoom 방지 (추가 보장) */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+    transform: scale(1);
+    -webkit-transform: scale(1);
+  }
+  
+  /* iOS Safari에서 zoom 방지 */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

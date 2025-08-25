@@ -700,7 +700,7 @@ const DiceEventPage: React.FC = () => {
                     <img
                       src={charactorImageSrc}
                       alt="User Profile"
-                      className="w-8 h-8 rounded-full"
+                      className="w-[50px] h-[50px] rounded-full"
                     />
                   </div>
                   <div className="ml-2">
@@ -839,7 +839,7 @@ const DiceEventPage: React.FC = () => {
             {game.selectingTile && !isAuto && (
               <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
-                <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl">
+                <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl" style={{ marginTop: '80px' }}>
                   <img
                     src={Images.AirplaneIcon}
                     alt="airplane"
