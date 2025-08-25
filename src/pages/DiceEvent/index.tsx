@@ -82,14 +82,14 @@ const DiceEventPage: React.FC = () => {
     userLv,
     characterType,
     position,
+    nickName,
+    uid,
     // monthlyPrize,
     isAuto,
     pet,
     suspend,
     setSuspend,
     lotteryCount, // lotteryCount로 변경 (열쇠 개수)
-    nickName,
-    uid,
   } = useUserStore();
 
   const game = useDiceGame();
@@ -157,7 +157,17 @@ const DiceEventPage: React.FC = () => {
   // 현재 레벨 보상 찾기
   const currentReward = levelRewards.find((r) => r.level === userLv);
 
+  // UserLevel과 동일한 방식으로 캐릭터 이미지 선택
   const getCharacterImageSrc = () => {
+    if (characterType === "cat") {
+      return Images.CatSmile;
+    } else {
+      return Images.DogSmile;
+    }
+  };
+
+  // 레벨에 따른 캐릭터 이미지 (Board 컴포넌트용)
+  const getLevelBasedCharacterImageSrc = () => {
     const index = Math.floor((userLv - 1) / 4);
 
     const catImages = [
@@ -214,11 +224,11 @@ const DiceEventPage: React.FC = () => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setInitialX(250);
-        setInitialY(730);
+        setInitialY(730 + 80);
         setDelta(100);
       } else {
         setInitialX(140);
-        setInitialY(474);
+        setInitialY(474 + 80);
         setDelta(56);
       }
     };
@@ -648,20 +658,6 @@ const DiceEventPage: React.FC = () => {
     fetchUserData();
     game.handleRPSGameEnd(result, winnings);
   };
-  
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  // 클립보드 복사 함수
-  const copyToClipboard = async () => {
-    playSfx(Audios.button_click);
-
-    try {
-      await navigator.clipboard.writeText(String(uid));
-      setCopySuccess(true);
-    } catch (err) {
-      setCopySuccess(false);
-    }
-  };
 
   return (
     <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
@@ -685,50 +681,68 @@ const DiceEventPage: React.FC = () => {
           <SpinGame onSpinEnd={game.handleSpinGameEnd} />
         ) : (
           <>
-            <div className="w-full flex justify-center mb-4 mt-8 gap-[10px]">
-            {/* 상단 사용자 정보 */}
-            <div className="flex items-center justify-between w-full mt-6">
+            {/* 상단 캐릭터 정보 영역 */}
+            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4">
+              {/* 왼쪽: 캐릭터 정보 */}
               <div className="flex items-center">
-                <div
-                  className="flex flex-col items-center justify-center rounded-full w-9 h-9 md:w-10 md:h-10"
-                >
-                  <img
-                    src={charactorImageSrc}
-                    alt="User Profile"
-                    className="w-8 h-8 rounded-full"
-                  />
-                </div>
-                <div className="ml-2">
-                  <button
-                    className="flex items-center text-white text-xs"
-                    onClick={() => {
-                      navigate("/edit-nickname");
-                    }}
+                <div className="flex items-center">
+                  <div
+                    className={`flex flex-col items-center justify-center rounded-full w-[60px] h-[60px] md:w-10 md:h-10`}
                     style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      WebkitTextStroke: "1px #000000",
+                      background: "rgba(255,255,255,0.65)",
+                      borderRadius: "100%",
+                      boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
+                      backdropFilter: "blur(10px)",
+                      border: "none",
+                      WebkitBackdropFilter: "blur(10px)",
                     }}
                   >
-                    {nickName} <FaChevronRight className="ml-1 w-3 h-3" />
-                  </button>
-                  <button
-                    className="flex items-center"
-                    style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "12px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      WebkitTextStroke: "1px #000000",
-                    }}
-                    onClick={copyToClipboard}
-                  >
-                    UID: {uid} <BiCopy className="ml-1 w-3 h-3" />
-                  </button>
+                    <img
+                      src={charactorImageSrc}
+                      alt="User Profile"
+                      className="w-8 h-8 rounded-full"
+                    />
+                  </div>
+                  <div className="ml-2">
+                    <button
+                      className="flex items-center text-white text-xs"
+                      onClick={() => {
+                        playSfx(Audios.button_click);
+                        navigate("/edit-nickname");
+                      }}
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "14px",
+                        fontWeight: 400,
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                    >
+                      {nickName} <FaChevronRight className="ml-1 w-3 h-3" />
+                    </button>
+                    <button
+                      className="flex items-center"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "12px",
+                        fontWeight: 400,
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                      onClick={() => {
+                        playSfx(Audios.button_click);
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(String(uid));
+                        }
+                      }}
+                    >
+                      UID: {uid} <BiCopy className="ml-1 w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
+              
+              {/* 오른쪽: 설정 아이콘 */}
               <div className="flex items-center gap-2">
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -737,11 +751,12 @@ const DiceEventPage: React.FC = () => {
                     navigate("/settings");
                   }}
                 >
-                  <IoSettingsOutline className="w-6 h-6" />
+                  <IoSettingsOutline className="w-6 h-6 text-white" />
                 </button>
               </div>
             </div>
 
+            <div className="w-full flex justify-center mb-4 gap-[10px]">
               {/* 현재 캐릭터 레벨 및 AlertIcon 클릭 시 레벨 별 보상 다이얼로그 표시 */}
               <div
                 onClick={(e) => {
@@ -838,7 +853,7 @@ const DiceEventPage: React.FC = () => {
             {!game.isCardGameActive && (
               <Board
                 position={position}
-                charactorImageSrc={charactorImageSrc}
+                charactorImageSrc={getLevelBasedCharacterImageSrc()}
                 initialX={initialX}
                 initialY={initialY}
                 delta={delta}
@@ -1931,24 +1946,6 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
-
-            {/* UID 클립 복사 알림 모달창 */}
-            {copySuccess && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 w-full">
-                <div className="bg-white text-black p-6 rounded-lg text-center w-[70%] max-w-[550px]">
-                  <p>UID: {uid}</p>
-                  <button
-                    className="mt-4 px-4 py-2 bg-[#0147E5] text-white rounded-lg"
-                    onClick={() => {
-                      playSfx(Audios.button_click);
-                      setCopySuccess(false);
-                    }}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            )}
 
             <br />
             <br />
