@@ -13,7 +13,19 @@ import { formatNumber } from "@/shared/utils/formatNumber";
 import { motion, AnimatePresence } from "framer-motion";
 import moment from "moment";
 import { useSound } from "@/shared/provider/SoundProvider";
+import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { HiX } from "react-icons/hi";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from "@/shared/components/ui";
 import Audios from "@/shared/assets/audio";
+import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
+import NewMyRanking from "@/widgets/NewMyRanking";
 
 const Reward: React.FC = () => {
   const navigate = useNavigate();
@@ -33,22 +45,22 @@ const Reward: React.FC = () => {
   const [showMoreSL, setShowMoreSL] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    fetchLeaderHome();
-  }, [fetchLeaderHome]);
+  // useEffect(() => {
+  //   fetchLeaderHome();
+  // }, [fetchLeaderHome]);
 
   // 데이터 안전성 검증
-  if (!rankingAwards || !slDrawAwards || !usdtDrawAwards) {
-    return <LoadingSpinner className="h-screen" />;
-  }
+  // if (!rankingAwards || !slDrawAwards || !usdtDrawAwards) {
+  //   return <LoadingSpinner className="h-screen" />;
+  // }
 
-  if (isLoadingHome) {
-    return <LoadingSpinner className="h-screen" />;
-  }
+  // if (isLoadingHome) {
+  //   return <LoadingSpinner className="h-screen" />;
+  // }
 
-  if (errorHome) {
-    return <div className="text-center text-red-500">Error: {errorHome}</div>;
-  }
+  // if (errorHome) {
+  //   return <div className="text-center text-red-500">Error: {errorHome}</div>;
+  // }
 
   // 랭킹 보상
   const rankingProducts = (rankingAwards || []).slice(0, 3);
@@ -99,161 +111,72 @@ const Reward: React.FC = () => {
 
   return (
     <div className="flex flex-col text-white mb-44 w-full min-h-screen">
-      {/* 나의 현재 상태 영역 */}
-      <div className="flex flex-col justify-center items-center mb-14 px-6 md:px-0 mt-[76px]">
-        <div
-          className="w-full max-w-md rounded-3xl p-6"
+
+      
+
+      {/* my-rank 위젯 표시 */}
+      <Dialog>
+        <DialogTrigger
+          className="w-full flex justify-center mt-20 mb-8"
+          onClick={() => playSfx(Audios.button_click)}
           style={{
-            background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-            boxShadow:
-              "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-            borderRadius: "24px",
+            backgroundColor: "transparent",
+            outline: "none",
+            border: "none",
           }}
         >
-          {/* 제목 */}
-          <div className="text-center mb-6">
-            <h2
-              className="text-white text-lg font-semibold"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              나의 현재 상태
-            </h2>
-          </div>
-
-          {/* 2x2 그리드 레이아웃 */}
-          <div className="grid grid-cols-2 gap-6">
-            {/* 주간 포인트 */}
-            <div className="text-center">
-              <p
-                className="text-white text-sm mb-2"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                주간 포인트
-              </p>
-              <p
-                className="text-[#FDE047] text-xl font-bold"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#FDE047",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                15,420
-              </p>
-            </div>
-
-            {/* 주간 순위 */}
-            <div className="text-center">
-              <p
-                className="text-white text-sm mb-2"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                주간 순위
-              </p>
-              <p
-                className="text-[#FDE047] text-xl font-bold"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#FDE047",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                #47
-              </p>
-            </div>
-
-            {/* 누적 포인트 */}
-            <div className="text-center">
-              <p
-                className="text-white text-sm mb-2"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                누적 포인트
-              </p>
-              <p
-                className="text-[#FDE047] text-xl font-bold"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#FDE047",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                89,650
-              </p>
-            </div>
-
-            {/* 누적 순위 */}
-            <div className="text-center">
-              <p
-                className="text-white text-sm mb-2"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                누적 순위
-              </p>
-              <p
-                className="text-[#FDE047] text-xl font-bold"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#FDE047",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                #23
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 월간 보상 */}
-      <div className="flex flex-col gap-3 justify-center items-center mb-14 px-6 md:px-0">
-        {/* 제목 영역 */}
-        <div className="flex items-center justify-center mb-6 z-10">
-          <img
-            src={Images.TrophyIcon}
-            alt="gold-medal"
-            className="w-[60px] h-[60px] mr-1"
+          <InlineRanking />
+        </DialogTrigger>
+        <DialogContent
+          className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto"
+          style={{
+            background: `url(${Images.BackgroundLobby})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundColor: "#42617D",
+              opacity: 0.6,
+            }}
           />
-          <h1
-            className="z-30"
+          <div className="relative z-10 flex flex-col h-full">
+            <DialogHeader className="flex w-full items-end">
+              <DialogClose>
+                <HiX
+                  className="w-5 h-5"
+                  style={{
+                    backgroundColor: "transparent",
+                    outline: "none",
+                    border: "none",
+                  }}
+                />
+              </DialogClose>
+            </DialogHeader>
+            <ModalRanking />
+            <NewMyRanking />
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+
+      {/* 월간 보상 영역 */}
+      <div
+        className="w-full max-w-md rounded-3xl p-6 mb-6 mx-auto"
+      >
+        {/* 제목 영역 */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <img
+            src={Images.GoldMedalIcon} 
+            alt="monthly-reward"
+            className="w-[60px] h-[60px]"
+          />
+          <h2
+            className="text-xl font-bold"
             style={{
               fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: "30px",
@@ -263,220 +186,73 @@ const Reward: React.FC = () => {
             }}
           >
             월간 보상
-          </h1>
+          </h2>
         </div>
 
-        {/* 메인 콘텐츠 박스 */}
-        <div
-          className="w-full max-w-md rounded-3xl p-6 cursor-pointer"
+        {/* 보상 목록 */}
+        <div className="space-y-3">
+                     {/* 1-3위 보상 */}
+           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+             style={{
+               fontFamily: "'ONE Mobile POP', sans-serif",
+               fontSize: "18px",
+               fontWeight: 400,
+               color: "#FFFFFF",
+               WebkitTextStroke: "1px #000000",
+               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+               boxShadow:
+                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+             }}>
+             <span className="ml-3">1</span>
+             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
+           </div>
+           
+           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+             style={{
+               fontFamily: "'ONE Mobile POP', sans-serif",
+               fontSize: "18px",
+               fontWeight: 400,
+               color: "#FFFFFF",
+               WebkitTextStroke: "1px #000000",
+               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+               boxShadow:
+                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+             }}>
+             <span className="ml-3">2</span>
+             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
+           </div>
+           
+           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+             style={{
+               fontFamily: "'ONE Mobile POP', sans-serif",
+               fontSize: "18px",
+               fontWeight: 400,
+               color: "#FFFFFF",
+               WebkitTextStroke: "1px #000000",
+               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+               boxShadow:
+                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+             }}>
+             <span className="ml-3">3</span>
+             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
+           </div>
+          
+          
+          {/* 4-100위 보상 */}
+          <div className="flex justify-between items-center p-3"
           style={{
-            background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-            boxShadow:
-              "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-            borderRadius: "24px",
-          }}
-          onClick={handlePreviousRewardPage}
-        >
-          {/* 상단 영역 */}
-          <div className="flex justify-between items-center mb-4">
-            <p
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "14px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              매월 1등에게 특별 보상!
-            </p>
-            <p
-              className="text-white text-sm"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "14px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              지난달 랭킹 &gt;
-            </p>
-          </div>
-
-          {/* 하단 보상 금액 영역 */}
-          <div
-            className="w-full rounded-2xl p-4 text-center"
-            style={{
-              height: "74px",
-              background: "rgba(0, 94, 170, 0.5)",
-              backdropFilter: "blur(10px)",
-              boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
-              borderRadius: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#FDE047",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              ₩10,000,000 + α
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 주간 보상 */}
-      <div className="flex flex-col gap-3 justify-center items-center mb-14 px-6 md:px-0">
-        {/* 제목 영역 */}
-        <div className="flex items-center justify-center mb-6 z-10">
-          <img
-            src={Images.GoldMedalIcon}
-            alt="gold-medal"
-            className="w-[60px] h-[60px] mr-1"
-          />
-          <h1
-            className="z-30"
-            style={{
-              fontFamily: "'ONE Mobile POP', sans-serif",
-              fontSize: "30px",
-              fontWeight: 700,
-              color: "#FDE047",
-              WebkitTextStroke: "1px #000000",
-            }}
-          >
-            주간 보상
-          </h1>
-        </div>
-
-        {/* 보상 티어 리스트 */}
-        <div className="w-full max-w-md">
-          {/* 1등 보상 - 큰 박스 */}
-          <div
-            className="w-full rounded-[58px] p-4 mb-3 flex justify-between items-center"
-            style={{
-              background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-              boxShadow:
-                "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-              borderRadius: "16px",
-            }}
-          >
-            <span
-              className="text-white text-lg font-bold"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "18px",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              1
-            </span>
-            <div className="flex items-center gap-2">
-              <img
-                src={Images.TossPoint}
-                alt="toss-point"
-                className="w-7 h-7"
-                style={{ width: "28px", height: "28px" }}
-              />
-              <span
-                className="text-white text-lg font-bold"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                100,000
-              </span>
-            </div>
-          </div>
-
-          {/* 나머지 보상 티어들 */}
-          {[
-            { rank: "2-10", reward: "10,000" },
-            { rank: "11-100", reward: "1,000" },
-            { rank: "101-1,000", reward: "100" },
-            { rank: "1,001-100,000", reward: "1" },
-          ].map((tier, idx) => (
-            <div key={idx} className="w-full">
-              {/* 구분선 */}
-              {idx > 0 && (
-                <div className="w-full h-px bg-gray-400 opacity-30 my-2"></div>
-              )}
-
-              {/* 보상 티어 */}
-              <div className="w-full flex justify-between items-center py-2">
-                <span
-                  className="text-white text-base"
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "16px",
-                    fontWeight: 400,
-                    color: "#FFFFFF",
-                    WebkitTextStroke: "1px #000000",
-                  }}
-                >
-                  {tier.rank}
-                </span>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={Images.TossPoint}
-                    alt="toss-point"
-                    className="w-6 h-6"
-                    style={{ width: "24px", height: "24px" }}
-                  />
-                  <span
-                    className="text-white text-base"
-                    style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      WebkitTextStroke: "1px #000000",
-                    }}
-                  >
-                    {tier.reward}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* View More 버튼 */}
-        <button
-          onClick={handleShowMoreRanking}
-          className="mt-6 text-white text-sm font-semibold"
-          style={{
-            width: "89px",
-            height: "27px",
-            borderRadius: "20px",
-            background: "rgba(255, 255, 255, 0.5)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
             fontFamily: "'ONE Mobile POP', sans-serif",
-            fontSize: "14px",
-            fontWeight: 600,
+            fontWeight: 400,
             color: "#FFFFFF",
             WebkitTextStroke: "1px #000000",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          View More
-        </button>
+          }}>
+            <span className="text-lg">4-100</span>
+            <span className="text-sm">50,000</span>
+          </div>
+          
+          {/* 구분선 */}
+          <div className="border-t border-[#E5E5E5] border-opacity-30 my-3"></div>
+        </div>
       </div>
 
       {/* 명예의 전당 영역 */}

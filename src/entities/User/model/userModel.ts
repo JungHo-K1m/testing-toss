@@ -152,6 +152,9 @@ interface UserState {
 
   fetchLeaderTab: () => Promise<void>
 
+  // 리더보드 탭 데이터
+  leaderTabData: { myRank: number; neighbors: Array<{ userId: number; name: string; starCount: number; rank: number; me: boolean; key: number }> } | null;
+
   modalRank: number | null;
   modalPreviousRank: number | null;
   modalStarPoints: number | null;
@@ -185,26 +188,26 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchLeaderTab: async () => {
     try {
       const data = await fetchLeaderTabAPI()
-      // data: { leaderBoard: [...], myRank: { rank, star, key, slToken, diceRefilledAt } }
+      // data: { myRank: number, neighbors: [...] }
       set(state => ({
         // 이전 랭크를 보존해 두었다가 애니메이션에 사용
         previousRank: state.rank,
 
-        // myRank 필드로부터 각 값 갱신
-        rank: data.myRank.rank,
-        starPoints: data.myRank.star,
-        lotteryCount: data.myRank.key,
-        slToken: data.myRank.slToken,
+        // myRank 필드로부터 각 값 갱신 (API 응답이 단순 숫자이므로 기존 로직 유지)
+        rank: data.myRank,
+        starPoints: data.neighbors.find(n => n.me)?.starCount || state.starPoints, // neighbors에서 me: true인 항목의 starCount 사용
+        lotteryCount: data.neighbors.find(n => n.me)?.key || state.lotteryCount, // neighbors에서 me: true인 항목의 key 사용
+        slToken: state.slToken, // 기존 값 유지
 
         // 모달 데이터도 함께 업데이트
-        modalRank: data.myRank.rank,
+        modalRank: data.myRank,
         modalPreviousRank: state.rank,
-        modalStarPoints: data.myRank.star,
-        modalLotteryCount: data.myRank.key,
-        modalSlToken: data.myRank.slToken,
+        modalStarPoints: data.neighbors.find(n => n.me)?.starCount || state.starPoints, // neighbors에서 me: true인 항목의 starCount 사용
+        modalLotteryCount: data.neighbors.find(n => n.me)?.key || state.lotteryCount, // neighbors에서 me: true인 항목의 key 사용
+        modalSlToken: state.slToken, // 기존 값 유지
 
-        // 상위 10명 리스트
-        leaderTabData: data.leaderBoard,
+        // neighbors 리스트 저장
+        leaderTabData: data,
       }))
     } catch (err) {
       console.error('fetchLeaderTab error', err)
@@ -247,6 +250,9 @@ export const useUserStore = create<UserState>((set, get) => ({
    uid: null, // string으로 변경
    setUid: (uid) => set({ uid }),
    walletAddress: null,
+   
+   // 리더보드 탭 데이터 초기값
+   leaderTabData: null,
    // 기존의 setWalletAddress는 walletStore와 혼동되므로, 사용자용 walletAddress도 분리해서 관리합니다.
    setWalletAddress: (walletAddress) => set({ walletAddress }),
 

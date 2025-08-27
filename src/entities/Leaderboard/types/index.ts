@@ -5,6 +5,16 @@ export interface LeaderBoardEntry {
   starCount: number;
   rank: number;
 }
+
+export interface NeighborEntry {
+  userId: number;
+  name: string;
+  starCount: number;
+  rank: number;
+  me: boolean;
+  key: number; // lottery count (key)
+}
+
 export interface MyRankData {
   rank: number;
   star: number;
@@ -14,8 +24,8 @@ export interface MyRankData {
 }
   
 export interface LeaderTabData {
-  leaderBoard: LeaderBoardEntry[];
-  myRank: MyRankData;
+  myRank: number;
+  neighbors: NeighborEntry[];
 }
   
 export interface Pageable {

@@ -1,107 +1,58 @@
 import React, { useState, useEffect } from "react";
+import { useUserStore } from '@/entities/User/model/userModel';
 import LoadingSpinner from "@/shared/components/ui/loadingSpinner";
+import { NeighborEntry } from '@/entities/Leaderboard/types';
 
 interface RankingEntry {
   rank: number;
   username: string;
   score: number;
+  key: number; // lottery count 추가
 }
 
 const NewMyRanking: React.FC = () => {
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
   const [myRank, setMyRank] = useState<RankingEntry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { fetchLeaderTab, leaderTabData } = useUserStore();
 
-  // 테스트용 설정 - 이 값을 변경하여 다른 순위 테스트 가능
-  const TEST_MY_RANK = 2; // 1로 변경하면 1위 테스트, 23으로 하면 23위 테스트
-
-  // 더미 데이터 생성
+  // 모달 오픈 시마다 최신 랭크 가져오기
   useEffect(() => {
-    const generateDummyData = () => {
-      // 내 랭킹 설정
-      const myRankData: RankingEntry = {
-        rank: TEST_MY_RANK,
-        username: "User-23456",
-        score: 10000000,
-      };
-      setMyRank(myRankData);
+    fetchLeaderTab();
+  }, [fetchLeaderTab]);
 
-      // 전체 랭킹 데이터 생성 (내 랭킹 주변 7개)
-      const allRankings: RankingEntry[] = [];
+  // API 응답 데이터를 기반으로 랭킹 데이터 처리
+  useEffect(() => {
+    if (leaderTabData && leaderTabData.neighbors) {
+      const neighbors = leaderTabData.neighbors;
+      
+      // 내 랭킹 찾기
+      const myNeighbor = neighbors.find(neighbor => neighbor.me);
+      if (myNeighbor) {
+        const myRankData: RankingEntry = {
+          rank: myNeighbor.rank,
+          username: myNeighbor.name,
+          score: myNeighbor.starCount, // neighbors에서 가져온 starCount 사용
+          key: myNeighbor.key, // neighbors에서 가져온 key 사용
+        };
+        setMyRank(myRankData);
 
-      if (myRankData.rank === 1) {
-        // 1위인 경우: 1위부터 7위까지 표시
-        for (let i = 1; i <= 7; i++) {
-          if (i === 1) {
-            allRankings.push(myRankData);
-          } else {
-            allRankings.push({
-              rank: i,
-              username: `User-${String(
-                Math.floor(Math.random() * 99999)
-              ).padStart(5, "0")}`,
-              score: 10000000 - Math.floor(Math.random() * 2000000),
-            });
-          }
-        }
-      } else if (myRankData.rank <= 3) {
-        // 2-3위인 경우: 1위부터 7위까지 표시
-        for (let i = 1; i <= 7; i++) {
-          if (i === myRankData.rank) {
-            allRankings.push(myRankData);
-          } else if (i === 1) {
-            allRankings.push({
-              rank: 1,
-              username: `User-${String(
-                Math.floor(Math.random() * 99999)
-              ).padStart(5, "0")}`,
-              score: 10000000 + Math.floor(Math.random() * 3000000),
-            });
-          } else {
-            allRankings.push({
-              rank: i,
-              username: `User-${String(
-                Math.floor(Math.random() * 99999)
-              ).padStart(5, "0")}`,
-              score: 10000000 - Math.floor(Math.random() * 2000000),
-            });
-          }
-        }
-      } else {
-        // 4위 이상인 경우: 내 랭킹 위 3개, 내 랭킹, 내 랭킹 아래 3개
-        // 내 랭킹 위 3개
-        for (let i = myRankData.rank - 3; i < myRankData.rank; i++) {
-          allRankings.push({
-            rank: i,
-            username: `User-${String(
-              Math.floor(Math.random() * 99999)
-            ).padStart(5, "0")}`,
-            score: 10000000 + Math.floor(Math.random() * 3000000),
-          });
-        }
+        // neighbors 리스트를 RankingEntry 형태로 변환
+        const rankingEntries: RankingEntry[] = neighbors.map((neighbor: NeighborEntry) => ({
+          rank: neighbor.rank,
+          username: neighbor.name,
+          score: neighbor.starCount,
+          key: neighbor.key,
+        }));
 
-        // 내 랭킹
-        allRankings.push(myRankData);
-
-        // 내 랭킹 아래 3개
-        for (let i = myRankData.rank + 1; i <= myRankData.rank + 3; i++) {
-          allRankings.push({
-            rank: i,
-            username: `User-${String(
-              Math.floor(Math.random() * 99999)
-            ).padStart(5, "0")}`,
-            score: 10000000 - Math.floor(Math.random() * 2000000),
-          });
-        }
+        // 순위별로 정렬
+        rankingEntries.sort((a, b) => a.rank - b.rank);
+        setRankings(rankingEntries);
       }
-
-      setRankings(allRankings);
+      
       setIsLoading(false);
-    };
-
-    // 로딩 시뮬레이션
-    setTimeout(generateDummyData, 1000);
-  }, []);
+    }
+  }, [leaderTabData]);
 
   const formatScore = (score: number): string => {
     return score.toLocaleString();
@@ -109,6 +60,30 @@ const NewMyRanking: React.FC = () => {
 
   if (isLoading) {
     return <LoadingSpinner className="h-screen" />;
+  }
+
+  // 데이터가 없는 경우 처리
+  if (!rankings.length || !myRank) {
+    return (
+      <div className="flex flex-col md:px-0 mb-44 w-full mt-7 rounded-[25px] text-white text-center py-8"
+        style={{
+          background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+          boxShadow:
+            "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+        }}>
+        <h1 className="mb-6 text-center mt-5"
+          style={{
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "24px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+          }}>
+          내 랭킹
+        </h1>
+        <p>랭킹 데이터를 불러올 수 없습니다.</p>
+      </div>
+    );
   }
 
   return (
