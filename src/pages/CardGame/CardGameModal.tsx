@@ -11,7 +11,8 @@ import {
   CardFlipRequest,
   CardFlipResponseData,
 } from "@/features/DiceEvent/api/cardFlipApi";
-
+import { useAdMob } from "@/hooks/useAdMob";
+import { getPlatform } from "@/types/adMob";
 
 const COLORS: ("RED" | "BLACK")[] = ["RED", "BLACK"];
 const SUITS = [
@@ -110,7 +111,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
     console.log("✅ 베팅 가능 금액 검증 통과:", amount, "<=", allowedBetting);
 
     // 모든 검증을 통과한 경우 에러와 알림 초기화
-    console.log("🎉 모든 검증 통과! 게임 시작:", amount);
+    console.log("�� 모든 검증 통과! 게임 시작:", amount);
     setError("");
     setIsAlertOpen(false);
     onStart(amount);
@@ -124,7 +125,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
         style={{
           fontFamily: "'ONE Mobile POP', sans-serif",
           fontSize: "30px",
-          fontWeight: 400,
+          fontWeight: "400",
           color: "#FDE047",
           WebkitTextStroke: "1px #000000",
           lineHeight: "36px",
@@ -146,7 +147,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
             style={{
               fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: "14px",
-              fontWeight: 400,
+              fontWeight: "400",
               color: "#FFFFFF",
               WebkitTextStroke: "1px #000000",
               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
@@ -171,7 +172,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
               style={{
                 fontFamily: "'ONE Mobile POP', sans-serif",
                 fontSize: "14px",
-                fontWeight: 400,
+                fontWeight: "400",
                 color: "#FFFFFF",
                 WebkitTextStroke: "1px #000000",
               }}
@@ -184,17 +185,17 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 alt="Star"
                 className="w-[30px] h-[30px]"
               />
-                             <span
-                 style={{
-                   fontFamily: "'ONE Mobile POP', sans-serif",
-                   fontSize: "18px",
-                   fontWeight: 400,
-                   color: "#FFFFFF",
-                   WebkitTextStroke: "1px #000000",
-                 }}
-               >
-                 {(allowedBetting || 0).toLocaleString()}
-               </span>
+              <span
+                style={{
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "18px",
+                  fontWeight: "400",
+                  color: "#FFFFFF",
+                  WebkitTextStroke: "1px #000000",
+                }}
+              >
+                {(allowedBetting || 0).toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -220,7 +221,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
             style={{
               fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: "12px",
-              fontWeight: 400,
+              fontWeight: "400",
               color: "#FFFFFF",
               WebkitTextStroke: "1px #000000",
               borderRadius: "44px",
@@ -328,7 +329,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                   style={{
                     fontFamily: "'ONE Mobile POP', sans-serif",
                     fontSize: "12px",
-                    fontWeight: 400,
+                    fontWeight: "400",
                     color: "#FDE047",
                     WebkitTextStroke: "1px #000000",
                   }}
@@ -347,7 +348,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 style={{
                   fontFamily: "'ONE Mobile POP', sans-serif",
                   fontSize: "12px",
-                  fontWeight: 400,
+                  fontWeight: "400",
                   color: "#FFFFFF",
                   WebkitTextStroke: "1px #000000",
                 }}
@@ -402,7 +403,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                 style={{
                   fontFamily: "'ONE Mobile POP', sans-serif",
                   fontSize: "24px",
-                  fontWeight: 400,
+                  fontWeight: "400",
                   color: "#FDE047",
                   WebkitTextStroke: "1px #000000",
                 }}
@@ -421,7 +422,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
               style={{
                 fontFamily: "'ONE Mobile POP', sans-serif",
                 fontSize: "18px",
-                fontWeight: 400,
+                fontWeight: "400",
                 color: "#FFFFFF",
                 WebkitTextStroke: "1px #000000",
               }}
@@ -498,6 +499,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
       setIsAnimating(false);
     }, 500);
   };
+
   const handleSubmit = async () => {
     if (!mode || isLoading) return;
 
@@ -607,7 +609,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                     style={{
                       fontFamily: "'ONE Mobile POP', sans-serif",
                       fontSize: "18px",
-                      fontWeight: 400,
+                      fontWeight: "400",
                       color: "#FFFFFF",
                       WebkitTextStroke: "1px #000000",
                     }}
@@ -623,7 +625,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                     boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     fontFamily: "'ONE Mobile POP', sans-serif",
                     fontSize: "18px",
-                    fontWeight: 400,
+                    fontWeight: "400",
                     color: "#FDE047",
                     WebkitTextStroke: "1px #000000",
                     padding: "20px",
@@ -655,7 +657,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                         : "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     fontFamily: "'ONE Mobile POP', sans-serif",
                     fontSize: "24px",
-                    fontWeight: 400,
+                    fontWeight: "400",
                     color: "#FFFFFF",
                     WebkitTextStroke: "1px #000000",
                   }}
@@ -682,7 +684,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                         : "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     fontFamily: "'ONE Mobile POP', sans-serif",
                     fontSize: "24px",
-                    fontWeight: 400,
+                    fontWeight: "400",
                     color: "#FFFFFF",
                     WebkitTextStroke: "1px #000000",
                   }}
@@ -782,7 +784,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                     style={{
                       fontFamily: "'ONE Mobile POP', sans-serif",
                       fontSize: "18px",
-                      fontWeight: 400,
+                      fontWeight: "400",
                       color: "#FFFFFF",
                       WebkitTextStroke: "1px #000000",
                     }}
@@ -798,7 +800,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
                     boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     fontFamily: "'ONE Mobile POP', sans-serif",
                     fontSize: "18px",
-                    fontWeight: 400,
+                    fontWeight: "400",
                     color: "#FDE047",
                     WebkitTextStroke: "1px #000000",
                     padding: "20px",
@@ -865,8 +867,150 @@ const CardGameResultDialog = ({
   reward,
   answer,
   onClose,
+  onRetry,
+  cardFlipId,
+  hasUsedAdForGame,
+  setHasUsedAdForGame,
 }: any) => {
+  // resetAdInstance 추가
+  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
+  const [platform] = useState(getPlatform());
+  const [isAdLoading, setIsAdLoading] = useState(false);
+
+  // 이미 광고를 사용한 게임인지 확인
+  useEffect(() => {
+    if (cardFlipId) {
+      const usedGames = localStorage.getItem('cardFlipAdUsedGames') || '[]';
+      const usedGameIds = JSON.parse(usedGames);
+      if (usedGameIds.includes(cardFlipId)) {
+        setHasUsedAdForGame(true);
+      }
+    }
+  }, [cardFlipId, setHasUsedAdForGame]);
+
+  // 광고 상태 변경 시 로깅 추가
+  useEffect(() => {
+    console.log('광고 상태 변경:', { adLoadStatus, isAdLoading, hasUsedAdForGame });
+  }, [adLoadStatus, isAdLoading, hasUsedAdForGame]);
+
+  // 광고 시청 핸들러 수정
+  const handleAdWatch = async () => {
+    if (!isSupported) {
+      console.log('광고가 지원되지 않는 환경입니다');
+      return;
+    }
+
+    if (hasUsedAdForGame) {
+      alert('이미 광고를 시청한 게임입니다.');
+      return;
+    }
+
+    if (!cardFlipId) {
+      alert('게임 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    try {
+      setIsAdLoading(true);
+      console.log('카드게임 재시도 광고 시작 - 게임 ID:', cardFlipId);
+
+
+      // 광고가 로드되지 않은 경우 먼저 로드
+      if (adLoadStatus !== 'loaded') {
+        console.log('광고 로드 시작...');
+        loadAd('CARD_FLIP_RETRY'); // Remove await since loadAd is not async
+        
+        // Wait for state change instead of checking immediately
+        // The useEffect will handle state updates
+        return; // Exit early and let the user try again after loading
+      }
+
+      console.log('광고 표시 시작...');
+      
+      // 광고 표시 및 보상 결과 대기
+      const rewardData = await showAd('CARD_FLIP_RETRY');
+      console.log('카드게임 재시도 광고 완료 - 보상 결과:', rewardData);
+      
+      if (rewardData) {
+        // 광고 사용 기록
+        const usedGames = localStorage.getItem('cardFlipAdUsedGames') || '[]';
+        const usedGameIds = JSON.parse(usedGames);
+        usedGameIds.push(cardFlipId);
+        localStorage.setItem('cardFlipAdUsedGames', JSON.stringify(usedGameIds));
+        
+        // 로컬 상태 업데이트
+        setHasUsedAdForGame(true);
+        
+        // 게임 재시도 콜백 호출
+        if (onRetry) {
+          onRetry();
+        }
+        
+        // 광고 시청 완료 후 인스턴스 리셋
+        setTimeout(() => {
+          resetAdInstance();
+        }, 1000);
+      }
+      
+    } catch (error: any) {
+      console.error('카드게임 재시도 광고 중 오류:', error);
+      
+      let errorMessage = '광고 시청에 실패했습니다. 다시 시도해주세요.';
+      
+      if (error.message) {
+        if (error.message.includes('시간 초과')) {
+          errorMessage = '광고 로딩 시간이 초과되었습니다. 다시 시도해주세요.';
+        } else if (error.message.includes('로드에 실패')) {
+          errorMessage = '광고를 불러올 수 없습니다. 네트워크 상태를 확인해주세요.';
+        }
+      }
+      
+      alert(errorMessage);
+      
+      // 오류 발생 시 광고 재로드
+      setTimeout(() => {
+        resetAdInstance();
+      }, 1000);
+    } finally {
+      setIsAdLoading(false);
+    }
+  };
+
+  // 광고 상태에 따른 버튼 텍스트 개선
+  const getAdButtonText = () => {
+    if (hasUsedAdForGame) {
+      return '이미 사용된 게임';
+    }
+    
+    if (isAdLoading) {
+      return '광고 시청 중...';
+    }
+    
+    switch (adLoadStatus) {
+      case 'not_loaded':
+        return '광고 준비 중...';
+      case 'loading':
+        return '광고 로딩 중...';
+      case 'loaded':
+        return '광고 시청 후 재시도';
+      case 'failed':
+        return '광고 로드 실패 - 다시 시도';
+      default:
+        return '광고 시청 후 재시도';
+    }
+  };
+
+  // 광고 버튼 비활성화 여부 수정
+  const isAdButtonDisabled = () => {
+    if (hasUsedAdForGame) return true;
+    if (isAdLoading) return true;
+    if (adLoadStatus === 'loading') return true;
+    if (adLoadStatus === 'failed') return false; // 실패 시에는 재시도 가능
+    return adLoadStatus !== 'loaded';
+  };
+
   if (!isOpen) return null;
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
       <div
@@ -930,20 +1074,68 @@ const CardGameResultDialog = ({
             </p>
           </div>
 
-          {/* 종료 버튼 */}
-          <button
-            className="w-full py-3 rounded-xl font-bold text-white"
-            style={{
-              background: win
-                ? "linear-gradient(180deg, #50B0FF 0%, #008DFF 100%)"
-                : "linear-gradient(180deg, #FF6D70 0%, #FF2F32 100%)",
-              fontFamily: "'ONE Mobile POP', sans-serif",
-              WebkitTextStroke: "1px #000000",
-            }}
-            onClick={onClose}
-          >
-            종료
-          </button>
+          {/* 버튼 영역 */}
+          <div className="flex flex-col gap-3">
+            {/* 패배 시에만 광고보기 버튼 표시 - 이미 광고를 사용한 게임이 아닌 경우에만 */}
+            {!win && !hasUsedAdForGame && (
+              <button
+                className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+                  isAdButtonDisabled() ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                }`}
+                style={{
+                  background:
+                    "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                  border: "2px solid #76C1FF",
+                  outline: "2px solid #000000",
+                  boxShadow:
+                    "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                  color: "#FFFFFF",
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "18px",
+                  fontWeight: "400",
+                  WebkitTextStroke: "1px #000000",
+                  opacity: isAdButtonDisabled() ? 0.5 : 1,
+                }}
+                onClick={handleAdWatch}
+                disabled={isAdButtonDisabled()}
+              >
+                {/* ... existing button content ... */}
+                <span>{getAdButtonText()}</span>
+              </button>
+            )}
+
+            {/* 이미 광고를 사용한 게임인 경우 안내 메시지 표시 */}
+            {!win && hasUsedAdForGame && (
+              <div className="px-6 py-4 rounded-[10px] bg-gray-600 bg-opacity-50 text-center">
+                <p
+                  style={{
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "16px",
+                    fontWeight: "400",
+                    color: "#B4CADA",
+                    WebkitTextStroke: "0.5px #000000",
+                  }}
+                >
+                  이미 광고를 시청한 게임입니다
+                </p>
+              </div>
+            )}
+
+                        {/* 종료 버튼 */}
+                        <button
+              className="w-full py-3 rounded-xl font-bold text-white"
+              style={{
+                background: win
+                  ? "linear-gradient(180deg, #50B0FF 0%, #008DFF 100%)"
+                  : "linear-gradient(180deg, #FF6D70 0%, #FF2F32 100%)",
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                WebkitTextStroke: "1px #000000",
+              }}
+              onClick={onClose}
+            >
+              종료
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -957,17 +1149,52 @@ const CardGameModal = ({ onClose }: any) => {
   const [result, setResult] = useState({ win: false, reward: 0, answer: null });
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [mode, setMode] = useState<"color" | "suit" | null>(null);
-  const [selectedColor, setSelectedColor] = useState<"RED" | "BLACK" | null>(
-    null
-  );
+  const [selectedColor, setSelectedColor] = useState<"RED" | "BLACK" | null>(null);
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
+  
+  // 게임 ID 및 광고 사용 상태 추가
+  const [currentCardFlipId, setCurrentCardFlipId] = useState<number | null>(null);
+  const [hasUsedAdForGame, setHasUsedAdForGame] = useState(false);
 
   // 사용자의 보유 포인트 가져오기
   const starPoints = useUserStore((state) => state.starPoints);
   
   // 새로운 베팅 규칙에 따른 베팅 가능 금액 계산
   const allowedBetting = starPoints >= 2000 ? 1000 : Math.floor(starPoints / 2);
+
+  // 게임 시작 시 고유 ID 생성
+  const generateGameId = () => {
+    return Date.now() + Math.random();
+  };
+
+  // 게임 시작 핸들러 수정
+  const handleGameStart = (amount: number) => {
+    const gameId = generateGameId();
+    setCurrentCardFlipId(gameId);
+    setHasUsedAdForGame(false); // 새 게임 시작 시 광고 사용 상태 리셋
+    setBetAmount(amount);
+    setIsGameStarted(true);
+    console.log('새로운 카드게임 시작 - ID:', gameId);
+  };
+
+  // 게임 재시도 핸들러 수정
+  const handleGameRetry = () => {
+    console.log('카드게임 재시도 시작');
+    
+    // 게임 상태 리셋 (베팅 금액은 유지)
+    setIsGameStarted(true); // 게임 플레이 화면으로 바로 전환
+    setResult({ win: false, reward: 0, answer: null });
+    setIsResultOpen(false);
+    
+    // 게임 관련 상태 리셋
+    setMode(null);
+    setSelectedColor(null);
+    setSelectedSuit(null);
+    setCardRevealed(false);
+    
+    console.log('카드게임 재시도 완료 - 게임 플레이 화면으로 이동');
+  };
 
   return (
     <div
@@ -999,10 +1226,7 @@ const CardGameModal = ({ onClose }: any) => {
           <CardBettingModal
             myPoint={starPoints}
             allowedBetting={allowedBetting}
-            onStart={(amount: React.SetStateAction<number>) => {
-              setBetAmount(amount);
-              setIsGameStarted(true);
-            }}
+            onStart={handleGameStart} // 수정된 핸들러 사용
             onCancel={onClose}
           />
         ) : (
@@ -1011,7 +1235,6 @@ const CardGameModal = ({ onClose }: any) => {
             onResult={async (win: boolean, reward: number, answer: any) => {
               setResult({ win, reward, answer });
               setIsResultOpen(true);
-              // 카드게임은 한 번만 진행되므로 게임 상태는 리셋하지 않음
             }}
             onCancel={onClose}
           />
@@ -1023,9 +1246,12 @@ const CardGameModal = ({ onClose }: any) => {
           answer={result.answer || { color: "", suit: { label: "" } }}
           onClose={() => {
             setIsResultOpen(false);
-            // 카드게임은 한 번만 진행되므로 모달 완전 종료
             onClose();
           }}
+          onRetry={handleGameRetry}
+          cardFlipId={currentCardFlipId} // 게임 ID 전달
+          hasUsedAdForGame={hasUsedAdForGame} // 광고 사용 상태 전달
+          setHasUsedAdForGame={setHasUsedAdForGame} // 광고 사용 상태 설정 함수 전달
         />
       </div>
     </div>

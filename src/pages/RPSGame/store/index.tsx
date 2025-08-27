@@ -9,11 +9,12 @@ interface SlotResult {
   computerChoice: string;
 }
 
-interface PlayRoundResponse {
-  computerChoice: string;
-  result: "win" | "lose";
-  reward: number;
-}
+  interface PlayRoundResponse {
+    computerChoice: string;
+    result: "win" | "lose";
+    reward: number;
+    rpsId: number;  // ✅ rpsId 추가
+  }
 
 interface RPSGameState {
   betAmount: number;
@@ -23,6 +24,7 @@ interface RPSGameState {
   isDialogOpen: boolean;
   gameResult: "win" | "lose" | null;
   lastReward: number;
+  rpsId: number;  // ✅ rpsId 추가
   setBetAmount: (amount: number) => void;
   startGame: () => void;
   spin: () => void;
@@ -42,7 +44,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
   isDialogOpen: false,
   gameResult: null,
   lastReward: 0,
-
+  rpsId: 0,
   setBetAmount: (amount: number) => {
     set({ betAmount: amount });
   },
@@ -95,7 +97,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
       const response = await api.post("/play-rps", requestData);
 
       if (response.data.code === "OK") {
-        const { reward, result, pcValue, rank, starCount } = response.data.data;
+        const { reward, result, pcValue, rank, starCount, rpsId } = response.data.data;
         const computerChoice =
           pcValue === 1 ? "rock" : pcValue === 2 ? "paper" : "scissors";
 
@@ -153,6 +155,7 @@ export const useRPSGameStore = create<RPSGameState>((set, get) => ({
           computerChoice,
           result: result === "WIN" ? "win" : "lose",
           reward: winnings,
+          rpsId: rpsId,
         };
       } else {
         return null;

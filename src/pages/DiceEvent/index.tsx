@@ -516,7 +516,7 @@ const DiceEventPage: React.FC = () => {
     }
   };
 
-  // 주사위 리필 광고 핸들러 추가
+  // 주사위 리필 광고 핸들러 수정
   const handleAdRefillDice = async () => {
     if (!isSupported) {
       console.log('광고가 지원되지 않는 환경입니다');
@@ -529,45 +529,25 @@ const DiceEventPage: React.FC = () => {
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
         console.log('광고 로드 시작...');
-        await loadAd();
+        await loadAd('DICE_REFILL'); // 광고 타입 지정
         console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
       console.log('광고 표시 시작...');
       
-      // 광고 표시 및 보상 결과 대기
-      const rewardData = await showAd();
+      // 광고 표시 및 보상 결과 대기 (광고 타입 지정)
+      const rewardData = await showAd('DICE_REFILL');
       console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
       
       if (rewardData) {
-        // 주사위 리필 API 호출
-        try {
-          const response = await fetch('/api/home/refill-dice/ad', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log('주사위 리필 API 응답:', result);
-            console.log('주사위 리필 보상 처리 완료');
-            
-            // 성공 메시지 표시
-            alert('주사위가 성공적으로 리필되었습니다!');
-          } else {
-            console.error('주사위 리필 API 실패:', response.status);
-            alert('주사위 리필에 실패했습니다. 다시 시도해주세요.');
-          }
-        } catch (apiError) {
-          console.error('주사위 리필 API 호출 오류:', apiError);
-          alert('주사위 리필 중 오류가 발생했습니다. 다시 시도해주세요.');
-        }
+        console.log('주사위 리필 보상 처리 완료');
         
         // 사용자 데이터 새로고침
         await fetchUserData();
+        
+        // 성공 메시지 표시
+        alert('주사위가 성공적으로 리필되었습니다!');
         
         // 모달 닫기
         setShowAdModal(false);
@@ -589,6 +569,17 @@ const DiceEventPage: React.FC = () => {
       }, 1000);
     }
   };
+
+  // 광고 모달이 열릴 때 자동으로 광고 로드 (주사위 리필 타입)
+  useEffect(() => {
+    if (showAdModal) {
+      autoLoadAd();
+      // 주사위 리필 모달이 열릴 때는 DICE_REFILL 타입으로 광고 로드
+      if (refillTimeInfo) {
+        loadAd('DICE_REFILL');
+      }
+    }
+  }, [showAdModal, autoLoadAd, refillTimeInfo]);
 
   // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
   useEffect(() => {
@@ -773,11 +764,12 @@ const DiceEventPage: React.FC = () => {
     }
   };
 
-  const handleRPSGameEnd = (result: "win" | "lose", winnings: number) => {
+  const handleRPSGameEnd = (result: "win" | "lose", winnings: number, rpsId?: number, lastPlayerChoice?: number) => {
     // console.log(`RPS Game Ended: ${result}, Winnings: ${winnings}`);
     fetchUserData();
-    game.handleRPSGameEnd(result, winnings);
+    game.handleRPSGameEnd(result, winnings, rpsId, lastPlayerChoice);
   };
+
 
   return (
     <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">

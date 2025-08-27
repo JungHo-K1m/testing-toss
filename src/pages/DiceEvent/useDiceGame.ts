@@ -356,8 +356,12 @@ export const useDiceGame = () => {
   );
 
   // RPS 게임 종료 처리 함수
-  const handleRPSGameEnd = useCallback(
-    (result: "win" | "lose", winnings: number) => {
+  const handleRPSGameEnd = (
+    result: "win" | "lose", 
+    winnings: number, 
+    rpsId?: number, 
+    lastPlayerChoice?: number
+  ) => {
       // console.log(`useDiceGame - RPS Game Ended: ${result}, Winnings: ${winnings}`);
       setIsRPSGameActive(false);
       setSelectingTile(false);
@@ -370,9 +374,7 @@ export const useDiceGame = () => {
       }
 
       // 필요시 추가적인 주사위 게임 복귀 로직
-    },
-    []
-  );
+  };
 
   // 스핀 게임 종료 처리 함수
   const handleSpinGameEnd = useCallback(() => {

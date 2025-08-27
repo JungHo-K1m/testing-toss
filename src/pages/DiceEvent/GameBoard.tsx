@@ -179,19 +179,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
-    // 리필 영역 클릭 핸들러 수정
-    const handleRefillAreaClick = () => {
-      if (timeUntilRefill === "Refill dice") {
-        // 리필 가능한 경우 기존 로직 실행
-        handleRefillDice();
-      } else {
-        // 시간이 남아있는 경우 모달 열기 (시간 정보와 함께)
-        onRefillTimeClick({
-          canRefill: false,
-          timeUntilRefill: timeUntilRefill
-        });
-      }
-    };
+  // 리필 영역 클릭 핸들러 수정
+  const handleRefillAreaClick = () => {
+    if (timeUntilRefill === "Refill dice") {
+      // 리필 가능한 경우 기존 로직 실행
+      handleRefillDice();
+    } else {
+      // 시간이 남아있는 경우 모달 열기 (시간 정보와 함께)
+      onRefillTimeClick({
+        canRefill: false,
+        timeUntilRefill: timeUntilRefill
+      });
+    }
+  };
 
   // Refill Dice API 호출 함수
   const handleRefillDice = async () => {

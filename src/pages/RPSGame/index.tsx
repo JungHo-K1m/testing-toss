@@ -93,12 +93,20 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   // -----------------------
+  // RPS 게임 재시도 관련 상태 추가
+  // -----------------------
+  const [rpsId, setRpsId] = useState<number | null>(null);
+  const [lastPlayerChoice, setLastPlayerChoice] = useState<number | null>(null);
+  const [canStartGame, setCanStartGame] = useState<boolean>(true);
+
+  // -----------------------
   // 게임 흐름
   // -----------------------
   const handleGameStart = () => {
     startGame();
     setSlotState("spinning");
     setIsAnimating(true);
+    setCanStartGame(false);
     // console.log("Game started with betAmount:", betAmount);
   };
 
@@ -108,6 +116,14 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     if (isSpinning || slotState !== "spinning") return;
     spin();
 
+    // 사용자 선택을 숫자로 변환하여 저장
+    const choiceMap: { [key: string]: number } = {
+      rock: 0,
+      paper: 1,
+      scissors: 2
+    };
+    setLastPlayerChoice(choiceMap[userChoice]);
+
     playSfx(Audios.rps_slot);
 
     setTimeout(async () => {
@@ -116,6 +132,11 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
 
         // console.log("Server response =>", response);
         if (response) {
+          // RPS 게임 ID 저장
+          if (response.rpsId) {
+            setRpsId(response.rpsId);
+          }
+          
           stopSpin(userChoice, response.computerChoice);
           setSlotState("stopped");
           setIsAnimating(false);
@@ -132,15 +153,36 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     }, 2000);
   };
 
-
-
+  // -----------------------
+  // 게임 종료 핸들러
+  // -----------------------
   const handleQuit = () => {
     endGame();
     onGameEnd(gameResult!, lastReward);
     // console.log(`Game ended with ${gameResult}:`, lastReward);
   };
 
-
+  // -----------------------
+  // 게임 재시도 핸들러 추가
+  // -----------------------
+  const handleGameRetry = () => {
+    console.log('RPS 게임 재시도 시작');
+    
+    // 게임 상태 리셋 (베팅은 유지) - store 액션 사용
+    startGame(); // 게임 시작 상태로 리셋
+    closeDialog(); // 결과 모달 닫기
+    
+    // 로컬 상태 리셋
+    setRpsId(null);
+    setLastPlayerChoice(null);
+    setCanStartGame(true); // true로 변경하여 게임 시작 가능하게
+    
+    // 슬롯 애니메이션 상태를 게임 시작 상태로 설정
+    setSlotState("spinning"); // "stopped"에서 "spinning"으로 변경
+    setIsAnimating(true); // true로 변경하여 애니메이션 활성화
+    
+    console.log('RPS 게임 재시도 완료 - 게임 시작 화면으로 이동');
+  };
 
   // -----------------------
   // 가로 스크롤 막기
@@ -358,13 +400,16 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
         </div>
       )}
 
-      {/* 결과 다이얼로그 */}
+      {/* 결과 다이얼로그 - 재시도 기능 추가 */}
       <RPSResultDialog
         isOpen={isDialogOpen}
         onClose={closeDialog}
         result={gameResult}
         winnings={lastReward}
         onQuit={handleQuit}
+        rpsId={rpsId || undefined}
+        lastPlayerChoice={lastPlayerChoice || undefined}
+        onRetry={handleGameRetry}  // 재시도 핸들러 연결
       />
     </div>
   );

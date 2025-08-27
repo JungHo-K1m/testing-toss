@@ -2,18 +2,25 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { getAdUnitId } from '@/types/adMob';
 import { AdMobRewardedAdEvent, ShowAdMobRewardedAdEvent } from '@/types/adMob';
 import { getRandomBoxAdReward } from '@/entities/User/api/randomBoxAdReward';
+import { getDiceRefillAdReward } from '@/entities/User/api/AdRefilDice';
+import { getRPSRetryAdReward } from '@/entities/User/api/RetryRPS';
+import { getCardFlipRetryAdReward } from '@/entities/User/api/RetryCardFlip';
 
 // 광고 상태 타입
 export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed';
 
+// 광고 타입 정의
+export type AdType = 'RANDOM_BOX' | 'DICE_REFILL' | 'CARD_FLIP_RETRY' | 'RPS_RETRY';
+
 // 광고 훅 반환 타입
 export interface UseAdMobReturn {
   adLoadStatus: AdLoadStatus;
-  loadAd: () => void;
-  showAd: () => Promise<any>; // 광고 보상 결과를 반환하도록 수정
+  loadAd: (adType?: AdType) => void;
+  showAd: (adType?: AdType) => Promise<any>; // 광고 보상 결과를 반환하도록 수정
   isSupported: boolean;
   autoLoadAd: () => void;
   reloadAd: () => void; // reloadAd 함수 추가
+  resetAdInstance: () => void; // 광고 인스턴스 리셋 함수 추가
 }
 
 // 광고 지원 여부 확인
@@ -68,6 +75,7 @@ export const useAdMob = (): UseAdMobReturn => {
   const adInstanceRef = useRef<any>(null); // 광고 인스턴스 참조 추가
   const pendingAdPromiseRef = useRef<{ resolve: (value: any) => void; reject: (reason: any) => void } | null>(null); // 보류 중인 광고 Promise 참조 추가
   const isAdReadyRef = useRef<boolean>(false); // 광고가 실제로 사용 가능한지 추적
+  const currentAdTypeRef = useRef<AdType | null>(null); // 현재 광고 타입 추적
 
   // 광고 지원 여부 확인
   useEffect(() => {
@@ -92,17 +100,40 @@ export const useAdMob = (): UseAdMobReturn => {
     };
   }, []);
 
+  // 광고 타입별 API 호출 함수
+  const callAdRewardAPI = async (adType: AdType): Promise<any> => {
+    try {
+      console.log(`${adType} 광고 보상 API 호출 시작`);
+      
+      switch (adType) {
+        case 'RANDOM_BOX':
+          return await getRandomBoxAdReward();
+        case 'DICE_REFILL':
+          return await getDiceRefillAdReward();
+        case 'CARD_FLIP_RETRY':
+          // 카드게임 재시도 API 호출 - 매개변수 없이 호출
+          return await getCardFlipRetryAdReward();
+        case 'RPS_RETRY':
+          return await getRPSRetryAdReward();
+        default:
+          throw new Error(`지원하지 않는 광고 타입: ${adType}`);
+      }
+    } catch (error) {
+      console.error(`${adType} 광고 보상 API 호출 실패:`, error);
+      throw error;
+    }
+  };
+
   // 광고 로딩 함수
-  const loadAd = useCallback(async () => {
+  const loadAd = useCallback(async (adType?: AdType) => {
     if (!isSupported) {
       console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
-    // 이미 로드되고 사용 가능한 상태면 다시 로드하지 않음
-    if (adLoadStatus === 'loaded' && isAdReadyRef.current) {
-      console.log('이미 로드된 광고가 있습니다');
-      return;
+    // 광고 타입 저장
+    if (adType) {
+      currentAdTypeRef.current = adType;
     }
 
     try {
@@ -110,6 +141,14 @@ export const useAdMob = (): UseAdMobReturn => {
       
       const adUnitId = getAdUnitId();
       console.log('광고 ID:', adUnitId);
+      
+      // 기존 광고 인스턴스 정리
+      if (cleanupRef.current && typeof cleanupRef.current === 'function') {
+        cleanupRef.current();
+      }
+      if (adInstanceRef.current) {
+        adInstanceRef.current = null;
+      }
       
       // Bedrock 광고 API를 사용하여 광고 로드
       const cleanup = await loadAdMobRewardedAd({
@@ -123,196 +162,138 @@ export const useAdMob = (): UseAdMobReturn => {
               setAdLoadStatus('loaded');
               isAdReadyRef.current = true;
               break;
-            case 'clicked':
-              console.log('광고 클릭');
-              break;
-            case 'dismissed':
-              console.log('광고 닫힘');
-              // 광고가 닫혀도 재사용 가능하도록 상태 유지
-              setAdLoadStatus('loaded');
-              isAdReadyRef.current = true;
-              break;
-            case 'failedToShow':
-              console.log('광고 보여주기 실패');
-              setAdLoadStatus('failed');
-              isAdReadyRef.current = false;
-              adInstanceRef.current = null;
-              break;
-            case 'impression':
-              console.log('광고 노출');
-              break;
-            case 'show':
-              console.log('광고 컨텐츠 보여졌음');
-              break;
-            case 'userEarnedReward':
-              console.log('loadAd: userEarnedReward 이벤트 발생 - 보상 처리 시작');
-              
-              if (pendingAdPromiseRef.current) {
-                console.log('loadAd: 보류 중인 광고 Promise 발견 - 보상 API 호출 시작');
-                
-                (async () => {
-                  try {
-                    // 광고 보상 API 호출
-                    const rewardData = await getRandomBoxAdReward();
-                    console.log('loadAd: 광고 보상 API 응답:', rewardData);
-                    console.log('loadAd: rewardData 타입:', typeof rewardData);
-                    console.log('loadAd: rewardData.type:', rewardData?.type);
-                    console.log('loadAd: rewardData.equipment:', rewardData?.equipment);
-                    
-                    // 데이터 유효성 검사
-                    if (!rewardData || !rewardData.type) {
-                      console.error('loadAd: 유효하지 않은 보상 데이터:', rewardData);
-                      throw new Error('유효하지 않은 보상 데이터');
-                    }
-                    
-                    console.log('loadAd: 보상 데이터 유효성 검사 통과:', rewardData);
-                    
-                    // Promise resolve
-                    pendingAdPromiseRef.current!.resolve(rewardData);
-                    pendingAdPromiseRef.current = null;
-                    console.log('loadAd: 광고 Promise resolve 완료');
-                    
-                    // 보상 결과에 따른 처리
-                    if (rewardData.type === 'EQUIPMENT') {
-                      console.log('loadAd: 장비 보상 획득!', rewardData.equipment);
-                    } else if (rewardData.type === 'DICE') {
-                      console.log('loadAd: 주사위 보상 획득!');
-                    } else if (rewardData.type === 'SL') {
-                      console.log('loadAd: 슬롯 보상 획득!');
-                    } else if (rewardData.type === 'NONE') {
-                      console.log('loadAd: 보상 없음');
-                    } else {
-                      console.log('loadAd: 알 수 없는 보상 타입:', rewardData.type);
-                    }
-                    
-                    // 광고 인스턴스는 유지하고 재사용 가능하도록 설정
-                    isAdReadyRef.current = true;
-                    setAdLoadStatus('loaded');
-                  } catch (error: any) {
-                    console.error('loadAd: 광고 보상 API 호출 실패:', error);
-                    // Promise reject
-                    pendingAdPromiseRef.current!.reject(error);
-                    pendingAdPromiseRef.current = null;
-                    // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
-                    isAdReadyRef.current = true;
-                    setAdLoadStatus('loaded');
-                  }
-                })();
-              } else {
-                console.log('loadAd: 보류 중인 광고 Promise 없음 - 이벤트 무시');
-                // Promise가 없어도 광고를 재사용할 수 있도록 설정
-                isAdReadyRef.current = true;
-                setAdLoadStatus('loaded');
-              }
-              break;
+            // ... existing code ...
           }
         },
         onError: (error: unknown) => {
           console.error('광고 불러오기 실패:', error);
           setAdLoadStatus('failed');
           isAdReadyRef.current = false;
-          adInstanceRef.current = null; // 광고 인스턴스 정리
+          adInstanceRef.current = null;
         }
       });
       
-      // 정리 함수 저장 (cleanup은 함수여야 함)
+      // 정리 함수 저장
       cleanupRef.current = cleanup;
-      // 광고 인스턴스는 별도로 관리
       adInstanceRef.current = { cleanup, adUnitId };
     } catch (error) {
       console.error('광고 로딩 중 오류:', error);
       setAdLoadStatus('failed');
       isAdReadyRef.current = false;
-      adInstanceRef.current = null; // 광고 인스턴스 정리
+      adInstanceRef.current = null;
     }
-  }, [isSupported, adLoadStatus]);
-
-  // 광고 표시 함수
-  const showAd = useCallback(async () => {
+  }, [isSupported]);
+  // 광고 표시 함수 수정
+  const showAd = useCallback(async (adType: AdType = 'RANDOM_BOX'): Promise<any> => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
-      return null;
+      throw new Error('광고가 지원되지 않는 환경입니다');
     }
 
-    // 광고가 로드되고 사용 가능한 상태인지 확인
+    // 광고 상태 재확인 및 재로드 시도
     if (adLoadStatus !== 'loaded' || !isAdReadyRef.current) {
-      console.log('광고가 로드되지 않았거나 사용할 수 없습니다');
-      return null;
+      console.log('광고 상태 확인 중...', { adLoadStatus, isAdReady: isAdReadyRef.current });
+      
+      // 광고가 로드 중이거나 실패한 경우 재로드 시도
+      if (adLoadStatus === 'failed' || adLoadStatus === 'not_loaded') {
+        console.log('광고 재로드 시도...');
+        await loadAd(adType);
+        
+        // 재로드 후 상태 확인
+        if ((adLoadStatus as AdLoadStatus) !== 'loaded' || !isAdReadyRef.current) {
+          throw new Error('광고 로드에 실패했습니다');
+        }
+      } else if (adLoadStatus === 'loading') {
+        // 로딩 중인 경우 잠시 대기
+        console.log('광고 로딩 대기 중...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // 대기 후 상태 확인
+        if ((adLoadStatus as AdLoadStatus) !== 'loaded' || !isAdReadyRef.current) {
+          throw new Error('광고 로딩 시간 초과');
+        }
+      } else {
+        throw new Error('광고가 로드되지 않았습니다');
+      }
     }
 
-    if (!adInstanceRef.current) {
-      console.log('광고 인스턴스가 없습니다. 다시 로드해주세요.');
-      setAdLoadStatus('not_loaded');
-      isAdReadyRef.current = false;
-      return null;
-    }
-
-    try {
-      const adUnitId = adInstanceRef.current.adUnitId || getAdUnitId();
-      console.log('광고 표시 시작, adUnitId:', adUnitId);
-      
-      // 광고 표시 시작 시 상태를 'loading'으로 변경하여 중복 사용 방지
-      setAdLoadStatus('loading');
-      isAdReadyRef.current = false;
-      
-      return new Promise((resolve, reject) => {
-        let isResolved = false;
+    return new Promise((resolve, reject) => {
+      try {
+        console.log(`${adType} 광고 표시 시작`);
         
-        // 타임아웃 시간을 2분으로 늘림 (광고 시청 시간 고려)
-        const timeoutId = setTimeout(() => {
-          if (!isResolved) {
-            console.log('showAd: 광고 응답 시간 초과 - 타임아웃');
-            isResolved = true;
-            pendingAdPromiseRef.current = null;
-            // 타임아웃 시에도 광고를 재사용할 수 있도록 설정
-            isAdReadyRef.current = true;
-            setAdLoadStatus('loaded');
-            reject(new Error('광고 응답 시간 초과'));
-          }
-        }, 120000); // 2분 타임아웃
-        
-        // Promise를 pendingAdPromiseRef에 저장하여 loadAd에서 resolve할 수 있도록 함
+        // 보류 중인 광고 Promise 참조 저장
         pendingAdPromiseRef.current = { resolve, reject };
-        console.log('showAd: 광고 Promise를 pendingAdPromiseRef에 저장');
         
-        // 기존 광고 인스턴스를 사용하여 광고 표시
-        // loadAd에서 이미 이벤트 핸들러가 연결되어 있으므로
-        // 여기서는 Promise만 관리하고 이벤트는 loadAd의 핸들러에서 처리
-        
-        // 광고 표시 시작
+        // 광고 표시
         showAdMobRewardedAd({
-          options: { adUnitId },
-          onEvent: async (event: ShowAdMobRewardedAdEvent) => {
-            console.log('showAd: 광고 표시 이벤트:', event.type);
+          options: { adUnitId: getAdUnitId() },
+          onEvent: (event: ShowAdMobRewardedAdEvent) => {
+            console.log('showAd: 광고 이벤트:', event.type);
             
-            if (event.type === 'requested') {
-              console.log('showAd: 광고 보여주기 요청 완료');
+            // 광고 표시 실패 시 즉시 에러 처리
+            if ((event.type as any) === 'failedToShow') {
+              console.error('showAd: 광고 표시 실패');
+              if (pendingAdPromiseRef.current) {
+                pendingAdPromiseRef.current.reject(new Error('광고 표시에 실패했습니다'));
+                pendingAdPromiseRef.current = null;
+              }
             }
-            // userEarnedReward는 loadAd의 이벤트 핸들러에서 처리됨
           },
           onError: (error: unknown) => {
             console.error('showAd: 광고 표시 중 오류:', error);
-            if (!isResolved) {
-              console.log('showAd: Promise reject - 광고 표시 오류');
-              isResolved = true;
+            if (pendingAdPromiseRef.current) {
+              pendingAdPromiseRef.current.reject(error);
               pendingAdPromiseRef.current = null;
-              clearTimeout(timeoutId);
-              // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
-              isAdReadyRef.current = true;
-              setAdLoadStatus('loaded');
-              reject(error);
             }
           }
         });
-      });
-    } catch (error) {
-      console.error('광고 표시 중 오류:', error);
-      // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
-      isAdReadyRef.current = true;
-      setAdLoadStatus('loaded');
-      throw error;
+        
+        // 타임아웃 설정 (30초)
+        const timeoutId = setTimeout(() => {
+          if (pendingAdPromiseRef.current) {
+            console.error('showAd: 광고 표시 타임아웃');
+            pendingAdPromiseRef.current.reject(new Error('광고 표시 시간 초과'));
+            pendingAdPromiseRef.current = null;
+          }
+        }, 30000);
+
+        // 타임아웃 정리 함수 저장
+        if (cleanupRef.current) {
+          const originalCleanup = cleanupRef.current;
+          cleanupRef.current = () => {
+            clearTimeout(timeoutId);
+            if (typeof originalCleanup === 'function') {
+              originalCleanup();
+            }
+          };
+        }
+      } catch (error) {
+        console.error('showAd: 광고 표시 중 오류:', error);
+        reject(error);
+      }
+    });
+  }, [adLoadStatus, isSupported, loadAd]);
+
+  // 광고 시청 완료 후 인스턴스 리셋 함수 추가
+  const resetAdInstance = useCallback(() => {
+    console.log('광고 인스턴스 리셋 시작');
+    
+    // 기존 인스턴스 정리
+    if (cleanupRef.current && typeof cleanupRef.current === 'function') {
+      cleanupRef.current();
     }
-  }, [isSupported, adLoadStatus]);
+    
+    // 모든 상태 초기화
+    adInstanceRef.current = null;
+    isAdReadyRef.current = false;
+    setAdLoadStatus('not_loaded');
+    
+    // 보류 중인 Promise 정리
+    if (pendingAdPromiseRef.current) {
+      pendingAdPromiseRef.current = null;
+    }
+    
+    console.log('광고 인스턴스 리셋 완료');
+  }, []);
 
   // 광고 재로드 함수 추가
   const reloadAd = useCallback(async () => {
@@ -351,6 +332,7 @@ export const useAdMob = (): UseAdMobReturn => {
     showAd,
     isSupported,
     autoLoadAd,
-    reloadAd // 새로 추가된 함수
+    reloadAd, // 새로 추가된 함수
+    resetAdInstance // 새로 추가된 함수
   };
 };
