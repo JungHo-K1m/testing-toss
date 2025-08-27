@@ -55,7 +55,7 @@ interface GameBoardProps {
   rollDice: () => void;
   isCardGameActive: boolean;
   handleCardGameEnd: () => void;
-  onRefillTimeClick: (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => void; // 수정된 prop
+  onRefillTimeClick: (timeInfo: { canRefill: boolean; timeUntilRefill: string; hasRemainingDice?: boolean;  }) => void; // 수정된 prop
 }
 
 
@@ -181,14 +181,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   // 리필 영역 클릭 핸들러 수정
   const handleRefillAreaClick = () => {
-    if (timeUntilRefill === "Refill dice") {
-      // 리필 가능한 경우 기존 로직 실행
-      handleRefillDice();
+    // 주사위 개수가 0개일 때만 광고 시청 가능
+    if (diceCount === 0) {
+      if (timeUntilRefill === "Refill dice") {
+        // 리필 가능한 경우 기존 로직 실행
+        handleRefillDice();
+      } else {
+        // 시간이 남아있는 경우 모달 열기 (시간 정보와 함께)
+        onRefillTimeClick({
+          canRefill: false,
+          timeUntilRefill: timeUntilRefill
+        });
+      }
     } else {
-      // 시간이 남아있는 경우 모달 열기 (시간 정보와 함께)
+      // 주사위가 남아있는 경우 모달을 통해 안내
       onRefillTimeClick({
         canRefill: false,
-        timeUntilRefill: timeUntilRefill
+        timeUntilRefill: `주사위 ${diceCount}개 남음`,
+        hasRemainingDice: true
       });
     }
   };

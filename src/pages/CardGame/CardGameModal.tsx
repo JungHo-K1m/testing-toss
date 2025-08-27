@@ -872,8 +872,9 @@ const CardGameResultDialog = ({
   hasUsedAdForGame,
   setHasUsedAdForGame,
 }: any) => {
-  // resetAdInstance 추가
-  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
+  // CardGameResultDialog에서 광고 로드
+const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
+
   const [platform] = useState(getPlatform());
   const [isAdLoading, setIsAdLoading] = useState(false);
 
@@ -888,11 +889,16 @@ const CardGameResultDialog = ({
     }
   }, [cardFlipId, setHasUsedAdForGame]);
 
-  // 광고 상태 변경 시 로깅 추가
+  // 게임 패배 시 자동으로 광고 로드 시작
   useEffect(() => {
-    console.log('광고 상태 변경:', { adLoadStatus, isAdLoading, hasUsedAdForGame });
-  }, [adLoadStatus, isAdLoading, hasUsedAdForGame]);
+    if (isOpen && !win && !hasUsedAdForGame && isSupported) {
+      console.log('게임 패배 시 자동 광고 로드 시작');
+      loadAd('CARD_FLIP_RETRY');
+    }
+  }, [isOpen, win, hasUsedAdForGame, isSupported, loadAd]);
 
+
+  
   // 광고 시청 핸들러 수정
   const handleAdWatch = async () => {
     if (!isSupported) {
@@ -913,17 +919,28 @@ const CardGameResultDialog = ({
     try {
       setIsAdLoading(true);
       console.log('카드게임 재시도 광고 시작 - 게임 ID:', cardFlipId);
-
-
+      
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
         console.log('광고 로드 시작...');
-        loadAd('CARD_FLIP_RETRY'); // Remove await since loadAd is not async
+        await loadAd('CARD_FLIP_RETRY');
         
-        // Wait for state change instead of checking immediately
-        // The useEffect will handle state updates
-        return; // Exit early and let the user try again after loading
+        // 로드 후 상태 확인 - 최대 3초 대기
+        let waitCount = 0;
+        while (waitCount < 30) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitCount++;
+          // 현재 상태 확인 - 타입 단언 사용
+          if ((adLoadStatus as any) === 'loaded') {
+            break;
+          }
+        }
+        
+        if ((adLoadStatus as any) !== 'loaded') {
+          throw new Error('광고 로드에 실패했습니다');
+        }
       }
+
 
       console.log('광고 표시 시작...');
       
@@ -946,10 +963,10 @@ const CardGameResultDialog = ({
           onRetry();
         }
         
-        // 광고 시청 완료 후 인스턴스 리셋
-        setTimeout(() => {
-          resetAdInstance();
-        }, 1000);
+        // 광고 시청 완료 후 인스턴스 리셋 (자동으로 처리되므로 제거)
+        // setTimeout(() => {
+        //   resetAdInstance();
+        // }, 1000);
       }
       
     } catch (error: any) {
@@ -976,6 +993,7 @@ const CardGameResultDialog = ({
     }
   };
 
+
   // 광고 상태에 따른 버튼 텍스트 개선
   const getAdButtonText = () => {
     if (hasUsedAdForGame) {
@@ -988,9 +1006,9 @@ const CardGameResultDialog = ({
     
     switch (adLoadStatus) {
       case 'not_loaded':
-        return '광고 준비 중...';
+        return '광고 로드 중...';
       case 'loading':
-        return '광고 로딩 중...';
+        return '광고 로드 중...';
       case 'loaded':
         return '광고 시청 후 재시도';
       case 'failed':

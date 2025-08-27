@@ -185,6 +185,8 @@ const ResultLose: React.FC<ResultLoseProps> = ({
         if (onRetry) {
           onRetry();
         }
+        
+        // 광고 시청 완료 후 인스턴스는 자동으로 정리됨
       }
     } catch (error) {
       console.error('RPS 재시도 광고 중 오류:', error);

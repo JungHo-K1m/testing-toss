@@ -384,18 +384,19 @@ const DiceEventPage: React.FC = () => {
   const [boxResult, setBoxResult] = useState<RandomBoxResult | null>(null);
   const [isLoadingBox, setIsLoadingBox] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
-  const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
+  const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string; hasRemainingDice?: boolean; } | null>(null);
   
   // 광고 관련 상태 및 훅
   const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
   const [platform] = useState(getPlatform());
 
-  // 리필 시간 클릭 핸들러
-  const handleRefillTimeClick = (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => {
-    // if (!timeInfo.canRefill) {
-    //   alert(`다이스 리필까지 ${timeInfo.timeUntilRefill} 남았습니다.`);
-    // }
-    setRefillTimeInfo(timeInfo); // 시간 정보를 상태에 저장
+  // 리필 시간 클릭 핸들러 수정
+  const handleRefillTimeClick = (timeInfo: { 
+    canRefill: boolean; 
+    timeUntilRefill: string;
+    hasRemainingDice?: boolean; // 추가된 필드
+  }) => {
+    setRefillTimeInfo(timeInfo);
     setShowAdModal(true);
   };
 
@@ -494,9 +495,10 @@ const DiceEventPage: React.FC = () => {
         console.log('광고보고 랜덤박스 완료!');
         
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
-        setTimeout(() => {
-          reloadAd();
-        }, 1000);
+        // 자동으로 처리되므로 제거
+        // setTimeout(() => {
+        //   reloadAd();
+        // }, 1000);
       } else {
         console.log('보상 결과가 없습니다.');
       }
@@ -2065,20 +2067,20 @@ const DiceEventPage: React.FC = () => {
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
                         fontSize: "30px",
-                        fontWeight: 400,
+                        fontWeight: "400",
                         color: "#FDE047",
                         WebkitTextStroke: "2px #000000",
                       }}
                     >
-                      주사위 리필
+                      {refillTimeInfo?.hasRemainingDice ? "주사위 확인" : "주사위 리필"}
                     </h1>
                     <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
-                      {/* 리필 시간 표시 */}
-                      {refillTimeInfo ? (
+                      {refillTimeInfo?.hasRemainingDice ? (
+                        // 주사위가 남아있는 경우 안내 메시지
                         <div className="flex flex-col items-center gap-3">
                           <img
-                            src={Images.RefillDice}
-                            alt="Refill Dice"
+                            src={Images.Dice}
+                            alt="Dice"
                             className="w-16 h-16"
                           />
                           <div className="text-center">
@@ -2086,27 +2088,28 @@ const DiceEventPage: React.FC = () => {
                               style={{
                                 fontFamily: "'ONE Mobile POP', sans-serif",
                                 fontSize: "18px",
-                                fontWeight: 400,
+                                fontWeight: "400",
                                 color: "#FFFFFF",
-                                WebkitTextStroke: "1px #000000",
-                              }}
-                            >
-                              다음 리필까지
-                            </p>
-                            <p
-                              style={{
-                                fontFamily: "'ONE Mobile POP', sans-serif",
-                                fontSize: "24px",
-                                fontWeight: 400,
-                                color: "#FDE047",
                                 WebkitTextStroke: "1px #000000",
                               }}
                             >
                               {refillTimeInfo.timeUntilRefill}
                             </p>
+                            <p
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "14px",
+                                fontWeight: "400",
+                                color: "#B4CADA",
+                                WebkitTextStroke: "0.5px #000000",
+                              }}
+                            >
+                              모든 주사위를 사용한 후 리필이 가능합니다
+                            </p>
                           </div>
                         </div>
                       ) : (
+                        // 기존 리필 시간 표시 로직
                         <div className="flex flex-col items-center gap-3">
                           <img
                             src={Images.RefillDice}
@@ -2123,7 +2126,18 @@ const DiceEventPage: React.FC = () => {
                                 WebkitTextStroke: "1px #000000",
                               }}
                             >
-                              대기 중...
+                              다음 리필까지
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "24px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "1px #000000",
+                              }}
+                            >
+                              {refillTimeInfo?.timeUntilRefill}
                             </p>
                           </div>
                         </div>
@@ -2161,56 +2175,59 @@ const DiceEventPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col gap-6">
-                    <button
-                      className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                        isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                      }`}
-                      style={{
-                        background:
-                          "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                        border: "2px solid #76C1FF",
-                        outline: "2px solid #000000",
-                        boxShadow:
-                          "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                        color: "#FFFFFF",
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "18px",
-                        fontWeight: "400",
-                        WebkitTextStroke: "1px #000000",
-                        opacity: isAdButtonDisabled ? 0.5 : 1,
-                      }}
-                      onClick={handleAdRefillDice}
-                      disabled={isAdButtonDisabled}
-                    >
-                      <img
-                        src={Images.ButtonPointBlue}
-                        alt="button-point-blue"
+                  {/* 광고 버튼은 주사위가 0개일 때만 표시 */}
+                  {!refillTimeInfo?.hasRemainingDice && (
+                    <div className="flex flex-col gap-6">
+                      <button
+                        className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+                          isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                        }`}
                         style={{
-                          position: "absolute",
-                          top: "3px",
-                          left: "3px",
-                          width: "8.47px",
-                          height: "6.3px",
-                          pointerEvents: "none",
+                          background:
+                            "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                          border: "2px solid #76C1FF",
+                          outline: "2px solid #000000",
+                          boxShadow:
+                            "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                          color: "#FFFFFF",
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "18px",
+                          fontWeight: "400",
+                          WebkitTextStroke: "1px #000000",
+                          opacity: isAdButtonDisabled ? 0.5 : 1,
                         }}
-                      />
-                      <img
-                        src={Images.AdButton}
-                        alt="광고 버튼"
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                        }}
-                      />
-                                              <span>
+                        onClick={handleAdRefillDice}
+                        disabled={isAdButtonDisabled}
+                      >
+                        <img
+                          src={Images.ButtonPointBlue}
+                          alt="button-point-blue"
+                          style={{
+                            position: "absolute",
+                            top: "3px",
+                            left: "3px",
+                            width: "8.47px",
+                            height: "6.3px",
+                            pointerEvents: "none",
+                          }}
+                        />
+                        <img
+                          src={Images.AdButton}
+                          alt="광고 버튼"
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                          }}
+                        />
+                        <span>
                           {adLoadStatus === 'loading' && '로딩 중...'}
                           {adLoadStatus === 'loaded' && '광고 시청 후 주사위 리필'}
                           {adLoadStatus === 'failed' && '로드 실패 - 다시 시도'}
                           {adLoadStatus === 'not_loaded' && '준비 중...'}
                         </span>
-                    </button>
-                  </div>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
