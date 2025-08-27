@@ -88,7 +88,7 @@ const UserLevel: React.FC<{
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center rounded-3xl w-[150px] h-[160px]`}
+      className={`relative flex flex-col items-center justify-center rounded-3xl w-[150px] h-[160px] pt-4`}
       style={{
         position: "relative",
         background: "rgba(255,255,255,0.65)",

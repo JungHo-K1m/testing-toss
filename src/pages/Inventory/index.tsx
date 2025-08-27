@@ -270,9 +270,9 @@ function ItemModal({
     }
   };
 
-  function fetchEquippedItems() {
-    throw new Error("Function not implemented.");
-  }
+  // fetchEquippedItems 함수는 useUserStore에서 가져와야 하지만
+  // 현재 구현되지 않은 상태이므로 주석 처리
+  // const { fetchEquippedItems } = useUserStore();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -466,7 +466,7 @@ function ItemModal({
 
                   // useUserStore의 장착 아이템 상태도 업데이트
                   console.log("🔄 useUserStore 장착 아이템 상태 업데이트 시작...");
-                  await fetchEquippedItems();
+                  // await fetchEquippedItems(); // 현재 구현되지 않은 함수
                   console.log("✅ useUserStore 장착 아이템 상태 업데이트 완료");
 
                   console.log("🚪 모달 닫기 시작...");
@@ -589,6 +589,14 @@ function ItemModal({
 
                   console.log("✅ 강화 API 응답 성공:", upgradeResult);
 
+                  // 강화 성공/실패와 관계없이 인벤토리 데이터 업데이트
+                  // API 문서에 따르면 실패 시에도 inventory 데이터가 포함됨
+                  if (upgradeResult.inventory) {
+                    console.log("🔄 인벤토리 데이터 업데이트 시작...");
+                    onEquipmentChange(upgradeResult.inventory);
+                    console.log("✅ 인벤토리 데이터 업데이트 완료");
+                  }
+
                   if (upgradeResult.success) {
                     console.log("🎉 강화 성공!");
                     console.log(
@@ -596,12 +604,9 @@ function ItemModal({
                       upgradeResult.upgradeEquipment
                     );
 
-                    // 인벤토리 데이터 업데이트
-                    onEquipmentChange(upgradeResult.inventory);
-
                     // useUserStore의 장착 아이템 상태도 업데이트
                     console.log("🔄 강화 후 useUserStore 장착 아이템 상태 업데이트 시작...");
-                    await fetchEquippedItems();
+                    // await fetchEquippedItems(); // 현재 구현되지 않은 함수
                     console.log("✅ 강화 후 useUserStore 장착 아이템 상태 업데이트 완료");
 
                     // 강화 결과 모달 표시
@@ -768,12 +773,22 @@ function ItemModal({
                   fontWeight: "400",
                   WebkitTextStroke: "1px #000000",
                 }}
-                onClick={() => {
-                  setShowUpgradeResult(false);
-                  if (upgradeResult.success) {
-                    onClose(); // 성공 시 아이템 모달도 닫기
-                  }
-                }}
+                                 onClick={async () => {
+                   setShowUpgradeResult(false);
+                   if (upgradeResult.success) {
+                     onClose(); // 성공 시 아이템 모달도 닫기
+                   } else {
+                     // 실패 시 아이템 모달도 닫고 인벤토리 목록 새로 조회
+                     onClose();
+                     // 인벤토리 데이터 새로 조회 (페이지 리프레시 대신)
+                     try {
+                       const newInventoryData = await getItemList();
+                       onEquipmentChange(newInventoryData);
+                     } catch (error) {
+                       console.error("인벤토리 새로 조회 실패:", error);
+                     }
+                   }
+                 }}
               >
                 <img
                   src={Images.ButtonPointBlue}

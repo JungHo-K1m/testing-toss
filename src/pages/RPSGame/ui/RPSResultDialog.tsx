@@ -71,7 +71,7 @@ const ResultWin: React.FC<ResultWinProps> = ({
             className="text-center"
             style={{
               fontFamily: "'ONE Mobile POP', sans-serif",
-              fontSize: "24px",
+              fontSize: "14px",
               fontWeight: 400,
               color: "#FFFFFF",
               WebkitTextStroke: "1px #000000",
