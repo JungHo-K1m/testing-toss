@@ -389,6 +389,11 @@ const DiceEventPage: React.FC = () => {
   // 광고 관련 상태 및 훅
   const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
   const [platform] = useState(getPlatform());
+  
+  // 연속 광고 시청 방지를 위한 상태 추가
+  const [isAdWatching, setIsAdWatching] = useState(false);
+  const [lastAdWatchTime, setLastAdWatchTime] = useState<number>(0);
+  const AD_COOLDOWN = 5000; // 광고 시청 간 최소 대기 시간 (5초)
 
   // 리필 시간 클릭 핸들러 수정
   const handleRefillTimeClick = (timeInfo: { 
@@ -437,7 +442,21 @@ const DiceEventPage: React.FC = () => {
       return;
     }
 
+    // 연속 광고 시청 방지 체크
+    const now = Date.now();
+    if (isAdWatching) {
+      alert('광고 시청 중입니다. 잠시 기다려주세요.');
+      return;
+    }
+
+    if (now - lastAdWatchTime < AD_COOLDOWN) {
+      const remainingTime = Math.ceil((AD_COOLDOWN - (now - lastAdWatchTime)) / 1000);
+      alert(`광고 시청 간격이 너무 짧습니다. ${remainingTime}초 후에 다시 시도해주세요.`);
+      return;
+    }
+
     try {
+      setIsAdWatching(true); // 광고 시청 시작
       console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
       
       // 광고가 로드되지 않은 경우 먼저 로드
@@ -494,11 +513,13 @@ const DiceEventPage: React.FC = () => {
         
         console.log('광고보고 랜덤박스 완료!');
         
+        // 마지막 광고 시청 시간 업데이트
+        setLastAdWatchTime(now);
+        
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
-        // 자동으로 처리되므로 제거
-        // setTimeout(() => {
-        //   reloadAd();
-        // }, 1000);
+        setTimeout(() => {
+          reloadAd();
+        }, 1000);
       } else {
         console.log('보상 결과가 없습니다.');
       }
@@ -515,6 +536,8 @@ const DiceEventPage: React.FC = () => {
       setTimeout(() => {
         reloadAd();
       }, 1000);
+    } finally {
+      setIsAdWatching(false); // 광고 시청 완료
     }
   };
 
@@ -569,6 +592,8 @@ const DiceEventPage: React.FC = () => {
       setTimeout(() => {
         reloadAd();
       }, 1000);
+    } finally {
+      setIsAdWatching(false); // 광고 시청 완료
     }
   };
 
