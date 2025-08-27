@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { TopTitle } from "@/shared/components/ui";
 import "./InviteFriends.css";
@@ -11,17 +11,27 @@ import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import { contactsViral } from '@apps-in-toss/web-framework';
 
-// contactsViral 이벤트 타입 정의
-interface ContactsViralEvent {
-  type: 'sendViral' | 'close' | string;
+// contactsViral 이벤트 타입 정의 - 공식 문서 기반으로 수정
+interface RewardFromContactsViralEvent {
+  type: 'sendViral';
   data: {
-    rewardAmount?: number;
-    rewardUnit?: string;
-    closeReason?: string;
-    sentRewardsCount?: number;
-    [key: string]: any;
+    rewardAmount: number;
+    rewardUnit: string;
   };
 }
+
+interface ContactsViralSuccessEvent {
+  type: 'close';
+  data: {
+    closeReason: 'clickBackButton' | 'noReward';
+    sentRewardAmount?: number;
+    sendableRewardsCount?: number;
+    sentRewardsCount: number;
+    rewardUnit?: string;
+  };
+}
+
+type ContactsViralEvent = RewardFromContactsViralEvent | ContactsViralSuccessEvent;
 
 interface TruncateMiddleProps {
   text: string;
@@ -63,7 +73,7 @@ const InviteFriends: React.FC = () => {
   const [referralLink, setReferralLink] = useState<string>(""); // 레퍼럴 코드 상태
   const [friends, setFriends] = useState<Friend[]>([]); // 친구 목록 상태
   const [loading, setLoading] = useState<boolean>(true); // 로딩 상태
-  const [cleanup, setCleanup] = useState<(() => void) | null>(null); // contactsViral cleanup 함수
+  const cleanupRef = useRef<(() => void) | null>(null); // contactsViral cleanup 함수를 useRef로 변경
 
   // 클립보드 복사 함수
   const copyToClipboard = async () => {
@@ -88,58 +98,6 @@ const InviteFriends: React.FC = () => {
     } catch (error) {
       // console.error('Error fetching friends data:', error);
       setLoading(false); // 에러 시 로딩 종료
-    }
-  };
-
-  // 서버에 리워드 데이터 전송하는 함수
-  const sendRewardDataToServer = async (rewardData: any) => {
-    try {
-      console.log('📤 서버에 리워드 데이터 전송 시작:', rewardData);
-      
-      // 실제 API 엔드포인트로 변경 필요
-      const response = await fetch('/api/rewards/friend-invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(rewardData),
-      });
-      
-      if (response.ok) {
-        console.log('✅ 서버 전송 성공');
-        const result = await response.json();
-        console.log('서버 응답:', result);
-      } else {
-        console.error('❌ 서버 전송 실패:', response.status);
-      }
-    } catch (error) {
-      console.error('❌ 서버 전송 중 에러:', error);
-    }
-  };
-
-  // 서버에 모듈 종료 데이터 전송하는 함수
-  const sendCloseDataToServer = async (closeData: any) => {
-    try {
-      console.log('📤 서버에 모듈 종료 데이터 전송 시작:', closeData);
-      
-      // 실제 API 엔드포인트로 변경 필요
-      const response = await fetch('/api/rewards/friend-invite-close', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(closeData),
-      });
-      
-      if (response.ok) {
-        console.log('✅ 서버 전송 성공');
-        const result = await response.json();
-        console.log('서버 응답:', result);
-      } else {
-        console.error('❌ 서버 전송 실패:', response.status);
-      }
-    } catch (error) {
-      console.error('❌ 서버 전송 중 에러:', error);
     }
   };
 
@@ -221,9 +179,9 @@ const InviteFriends: React.FC = () => {
 
     try {
       // 기존 cleanup 함수가 있다면 호출
-      if (cleanup) {
+      if (cleanupRef.current) {
         console.log('🧹 기존 cleanup 함수 실행');
-        cleanup();
+        cleanupRef.current();
       }
 
       console.log('📱 contactsViral API 호출 시작');
@@ -235,107 +193,15 @@ const InviteFriends: React.FC = () => {
           moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b' // 앱인토스 콘솔에서 설정한 moduleId로 변경 필요
         },
         onEvent: (event: ContactsViralEvent) => {
-          // 즉시 로깅 - 이벤트 발생 확인
-          console.log('🚨🚨🚨 이벤트 발생 감지! 🚨🚨🚨');
-          console.log('이벤트 발생 시간:', new Date().toISOString());
-          console.log('이벤트 타입:', event.type);
-          
-          console.log('=== 친구초대 이벤트 발생 ===');
-          console.log('이벤트 타입:', event.type);
-          console.log('이벤트 데이터:', event.data);
-          console.log('이벤트 전체 객체:', event);
-          console.log('이벤트 발생 시간:', new Date().toISOString());
-          console.log('현재 URL:', window.location.href);
-          
           if (event.type === 'sendViral') {
-            console.log('🎉 리워드 지급 성공!');
-            console.log('보상 금액:', event.data.rewardAmount);
-            console.log('보상 단위:', event.data.rewardUnit);
-            console.log('전체 이벤트 데이터:', event.data);
-            
-            // 서버에 리워드 데이터 전송
-            const rewardData = {
-              rewardAmount: event.data.rewardAmount,
-              rewardUnit: event.data.rewardUnit,
-              timestamp: new Date().toISOString(),
-              moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b',
-              eventType: 'sendViral',
-              // 추가 사용자 정보 (필요시)
-              // userId: getCurrentUserId(),
-              // deviceInfo: navigator.userAgent,
-            };
-            
-            sendRewardDataToServer(rewardData);
-            
-            // 리워드 지급 성공 시 처리 로직 추가 가능
-            // 예: 토스트 메시지, 상태 업데이트 등
+            console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
           } else if (event.type === 'close') {
-            console.log('🔒 모듈 종료');
             console.log('종료 사유:', event.data.closeReason);
-            console.log('받은 전체 리워드:', event.data.sentRewardAmount);
-            console.log('아직 공유 가능한 친구 수:', event.data.sendableRewardsCount);
             console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
-            console.log('리워드 단위:', event.data.rewardUnit);
-            console.log('전체 이벤트 데이터:', event.data);
-            
-            // 서버에 모듈 종료 데이터 전송
-            const closeData = {
-              closeReason: event.data.closeReason,
-              sentRewardAmount: event.data.sentRewardAmount,
-              sendableRewardsCount: event.data.sendableRewardsCount,
-              sentRewardsCount: event.data.sentRewardsCount,
-              rewardUnit: event.data.rewardUnit,
-              timestamp: new Date().toISOString(),
-              moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b',
-              eventType: 'close',
-              // 추가 사용자 정보 (필요시)
-              // userId: getCurrentUserId(),
-              // deviceInfo: navigator.userAgent,
-            };
-            
-            sendCloseDataToServer(closeData);
-            
-            // 모듈이 닫힌 후 친구 목록 새로고침
-            if (event.data.sentRewardsCount && event.data.sentRewardsCount > 0) {
-              console.log('✅ 친구 초대 성공 - 친구 목록 새로고침 시작');
-              fetchFriendsData();
-            } else {
-              console.log('ℹ️ 친구 초대 없음 - 친구 목록 새로고침 건너뜀');
-            }
           }
-          console.log('=== 이벤트 처리 완료 ===');
         },
         onError: (error) => {
-          console.error('❌ 친구초대 에러 발생');
-          console.error('에러 타입:', typeof error);
-          console.error('에러 내용:', error);
-          console.error('에러 발생 시간:', new Date().toISOString());
-          console.error('현재 URL:', window.location.href);
-          
-          // 공식 문서: 미승인 상태에서는 Internal Server Error 발생
-          if (error && typeof error === 'object') {
-            if ('message' in error && (error as any).message?.includes('Internal Server Error')) {
-              console.error('🚨 미니앱 승인이 필요합니다. 앱인토스 콘솔에서 승인 상태를 확인하세요.');
-            }
-          }
-          
-          // 에러 객체의 상세 정보 출력
-          if (error && typeof error === 'object') {
-            console.error('에러 키들:', Object.keys(error));
-            if ('message' in error) {
-              console.error('에러 메시지:', (error as any).message);
-            }
-            if ('code' in error) {
-              console.error('에러 코드:', (error as any).code);
-            }
-            if ('stack' in error) {
-              console.error('에러 스택:', (error as any).stack);
-            }
-          }
-          
-          console.error('에러 발생 시 기존 공유 방식으로 fallback');
-          // 에러 발생 시 기존 공유 방식으로 fallback
-          fallbackToWebShare();
+          console.error('에러 발생:', error);
         }
       });
 
@@ -344,20 +210,39 @@ const InviteFriends: React.FC = () => {
       console.log('cleanup 함수 내용:', cleanupFn);
       console.log('이벤트 핸들러 등록 완료');
       console.log('이제 친구 초대 모듈이 열릴 때까지 대기 중...');
-      setCleanup(cleanupFn);
+      
+      // cleanup 함수가 실제로 함수인지 확인
+      if (typeof cleanupFn === 'function') {
+        console.log('✅ cleanup 함수가 올바르게 반환됨');
+        cleanupRef.current = cleanupFn;
+      } else {
+        console.error('❌ cleanup 함수가 올바르지 않음:', cleanupFn);
+        console.error('cleanup 함수 타입:', typeof cleanupFn);
+      }
       
       // API 호출 후 상태 확인
       setTimeout(() => {
         console.log('⏰ 3초 후 상태 확인:');
-        console.log('cleanup 상태:', cleanup);
+        console.log('cleanup 상태:', cleanupRef.current);
         console.log('현재 페이지:', window.location.href);
         console.log('이벤트 발생 여부 확인 중...');
+        
+        // contactsViral 모듈 상태 확인
+        console.log('🔍 contactsViral 모듈 상태 확인:');
+        console.log('cleanup 함수 존재 여부:', !!cleanupRef.current);
+        console.log('cleanup 함수 타입:', typeof cleanupRef.current);
+        
+        // 전역 객체에서 contactsViral 상태 확인
+        console.log('🌐 전역 객체 상태 확인:');
+        console.log('window.contactsViral:', (window as any).contactsViral);
+        console.log('window.TossBridge:', (window as any).TossBridge);
+        console.log('window.ReactNativeWebView:', (window as any).ReactNativeWebView);
       }, 3000);
       
       // 추가 상태 모니터링
       setTimeout(() => {
         console.log('⏰ 10초 후 상태 확인:');
-        console.log('cleanup 상태:', cleanup);
+        console.log('cleanup 상태:', cleanupRef.current);
         console.log('현재 페이지:', window.location.href);
         console.log('이벤트 발생 여부 확인 중...');
         
@@ -379,11 +264,11 @@ const InviteFriends: React.FC = () => {
   // 컴포넌트 언마운트 시 cleanup 실행
   useEffect(() => {
     return () => {
-      if (cleanup) {
-        cleanup();
+      if (cleanupRef.current) {
+        cleanupRef.current();
       }
     };
-  }, [cleanup]);
+  }, []);
 
   // 로딩 상태 처리
   if (loading) {

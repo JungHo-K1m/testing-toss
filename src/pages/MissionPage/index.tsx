@@ -1,5 +1,5 @@
 // src/pages/MissionPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { TopTitle } from "@/shared/components/ui";
 import "./MissionPage.css";
 import Images from "@/shared/assets/images";
@@ -16,204 +16,155 @@ import { preloadImages } from "@/shared/utils/preloadImages";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import Attendance from "@/widgets/Attendance/Attendance";
-
-interface OneTimeMissionCardProps {
-  mission: Mission;
-  onClear: (id: number) => void;
-  onMissionCleared: (mission: Mission) => void;
+import { contactsViral } from '@apps-in-toss/web-framework';
+interface RewardFromContactsViralEvent {
+  type: 'sendViral';
+  data: {
+    rewardAmount: number;
+    rewardUnit: string;
+  };
 }
 
-const OneTimeMissionCard: React.FC<OneTimeMissionCardProps> = ({
-  mission,
-  onClear,
-  onMissionCleared,
-}) => {
-  const mapping = missionImageMap[mission.name];
-  const imageSrc = mapping ? Images[mapping.imageKey] : Images.TokenReward;
-  const className = mapping ? mapping.className : "";
-  const { playSfx } = useSound();
-
-  const translatedName = missionNamesMap[mission.name] || mission.name;
-
-  // PENDING 상태 체크 (오버레이 없이 클릭 기능 유지)
-  const isPending = mission.status === "PENDING";
-
-  const handleClick = () => {
-    playSfx(Audios.button_click);
-    if (!mission.isCleared) {
-      if (mission.redirectUrl) {
-        window.open(mission.redirectUrl, "_blank");
-      }
-      onClear(mission.id);
-      onMissionCleared(mission);
-    }
+interface ContactsViralSuccessEvent {
+  type: 'close';
+  data: {
+    closeReason: 'clickBackButton' | 'noReward';
+    sentRewardAmount?: number;
+    sendableRewardsCount?: number;
+    sentRewardsCount: number;
+    rewardUnit?: string;
   };
-
-  return (
-    <div
-      className={`relative flex flex-col rounded-3xl h-36 items-center justify-center gap-3 cursor-pointer ${className} ${
-        mission.isCleared ? "pointer-events-none" : ""
-      }`}
-      onClick={handleClick}
-      role="button"
-      aria-label={`Mission: ${mission.name}`}
-      tabIndex={0}
-      onKeyPress={(e) => {
-        if (e.key === "Enter") handleClick();
-      }}
-    >
-      {/* 미션 완료된 경우에만 어둡게 처리 */}
-      {mission.isCleared && (
-        <div className="absolute inset-0 bg-gray-950 bg-opacity-60 rounded-3xl z-10" />
-      )}
-
-      <div className="relative flex flex-col items-center justify-center z-0">
-        <img src={imageSrc} alt={mission.name} className="w-9 h-9" />
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm font-medium">{translatedName}</p>
-          <p className="font-semibold text-sm flex flex-row items-center gap-1">
-            +{mission.diceReward}{" "}
-            <img src={Images.Dice} alt="dice" className="w-4 h-4" /> +
-            {formatNumber(mission.starReward)}{" "}
-            <img src={Images.Star} alt="star" className="w-4 h-4" />
-          </p>
-        </div>
-      </div>
-
-      {mission.isCleared && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-white text-sm font-semibold rounded-full px-4 py-2 z-20 flex items-center justify-center gap-2">
-          <img
-            src={Images.IconCheck}
-            alt="Mission Completed"
-            className="w-5 h-5"
-          />
-          <p>완료</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface DailyMissionProps {
-  title: string;
-  image: string;
-  alt: string;
 }
 
-const DailyMissionCard: React.FC<DailyMissionProps> = ({
-  title,
-  image,
-  alt,
-}) => {
 
-  // 공통 텍스트 스타일 정의
-  const commonTextStyle = {
-    fontFamily: "'ONE Mobile POP', sans-serif",
-    fontWeight: 400,
-    WebkitTextStroke: "1px #000000",
-  };
+type ContactsViralEvent = RewardFromContactsViralEvent | ContactsViralSuccessEvent;
 
-  const whiteTextStyle = {
-    ...commonTextStyle,
-    color: "#FFFFFF",
-  };
-
-  const yellowTextStyle = {
-    ...commonTextStyle,
-    color: "#FDE047",
-  };
-
-  return (
-    <div
-      className="basic-mission-card rounded-3xl p-5 flex flex-col items-center gap-4"
-      style={{
-        background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-        borderRadius: "24px",
-        boxShadow: "none",
-      }}
-    >
-      {/* 상단 이미지 */}
-      <img src={image} alt={alt} className="w-[100px] h-[100px] object-cover" />
-
-      {/* 제목(Invite Friends) + 화살표(>) */}
-      <div className="flex items-center text-xl font-semibold space-x-2">
-        <p>{title}</p>
-        <p>{">"}</p>
-      </div>
-
-      {/* 상세 텍스트 영역 */}
-      <div className="flex flex-col text-center item-center gap-2">
-        {/* 1) +10,000 Star Points 메시지 */}
-        <div>
-          <span
-            className="mr-1"
-            style={{
-              ...whiteTextStyle,
-              fontSize: "14px",
-            }}
-          >
-            친구를 초대하면 랜덤박스
-          </span>
-          <span
-            style={{
-              ...yellowTextStyle,
-              fontSize: "14px",
-            }}
-          >
-            열쇠 10개
-          </span>
-          <span
-            className="mr-1"
-            style={{
-              ...whiteTextStyle,
-              fontSize: "14px",
-            }}
-          >
-            지급!
-          </span>
-        </div>
-
-        {/* 2) 10% Payback 메시지 */}
-        <div>
-          <p
-            className="mr-1"
-            style={{
-              ...whiteTextStyle,
-              fontSize: "14px",
-            }}
-          >
-            열쇠로 랜덤박스를 열어 특별보상을 만나보세요!
-          </p>
-        </div>
-
-        {/* NOTE 영역 */}
-        <div className="flex items-center justify-center gap-1 mt-2">
-          <img src={Images.Note} alt="Note" className="w-5 h-5 object-cover" />
-          <p
-            style={{
-              ...yellowTextStyle,
-              fontSize: "18px",
-            }}
-          >
-            NOTE
-          </p>
-        </div>
-        <p
-          className="text-center"
-          style={{
-            ...whiteTextStyle,
-            fontSize: "12px",
-          }}
-        >
-          1회 이상 주사위 굴린 유저만 유효 참여자로 인정되며, 보상을 받을 수
-          있습니다.
-        </p>
-      </div>
-    </div>
-  );
-};
 
 const MissionPage: React.FC = () => {
+  const cleanupRef = useRef<(() => void) | null>(null); // contactsViral cleanup 함수를 useRef로 변경
+
+  
+  const handleInviteClick = async () => {
+    playSfx(Audios.button_click);
+    console.log('🚀 친구초대 시작');
+    console.log('📍 현재 페이지:', window.location.href);
+    console.log('📍 User Agent:', navigator.userAgent);
+
+    // 환경 체크 - 공식 문서 기반
+    console.log('🔍 환경 체크 시작');
+    
+    // 1. Toss 앱 환경 체크
+    const isTossApp = navigator.userAgent.includes('Toss') || 
+                      (window as any).TossBridge || 
+                      (window as any).ReactNativeWebView;
+    console.log('📱 Toss 앱 환경 여부:', isTossApp);
+    
+    // 2. 모바일 환경 체크
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 모바일 환경 여부:', isMobile);
+    
+    // 3. contactsViral 함수 존재 여부 체크
+    if (typeof contactsViral !== 'function') {
+      console.error('❌ contactsViral 함수를 찾을 수 없습니다');
+      console.error('contactsViral 타입:', typeof contactsViral);
+      console.error('전역 객체에서 확인:', (window as any).contactsViral);
+      
+      // 공식 문서: 하위 버전에서는 undefined 반환
+      if (!isTossApp) {
+        console.error('⚠️ Toss 앱 환경이 아닙니다. contactsViral은 Toss 앱 5.223.0+ 버전에서만 지원됩니다.');
+      }
+      return;
+    }
+
+    console.log('✅ contactsViral 함수 확인됨');
+    
+    // 4. 미니앱 승인 상태 체크 (간접적)
+    if (!isTossApp) {
+      console.warn('⚠️ Toss 앱 환경이 아닙니다. 미니앱 승인이 필요한 기능입니다.');
+      console.warn('⚠️ 테스트 환경에서는 빈 화면으로 표시되고 실제 동작하지 않을 수 있습니다.');
+    }
+
+    try {
+      // 기존 cleanup 함수가 있다면 호출
+      if (cleanupRef.current) {
+        console.log('🧹 기존 cleanup 함수 실행');
+        cleanupRef.current();
+      }
+
+      console.log('📱 contactsViral API 호출 시작');
+      console.log('모듈 ID:', '5682bc17-9e30-4491-aed0-1cd0f1f36f4b');
+      
+      // contactsViral API 호출
+      const cleanupFn = contactsViral({
+        options: {
+          moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b' // 앱인토스 콘솔에서 설정한 moduleId로 변경 필요
+        },
+        onEvent: (event: ContactsViralEvent) => {
+          if (event.type === 'sendViral') {
+            console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
+          } else if (event.type === 'close') {
+            console.log('종료 사유:', event.data.closeReason);
+            console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+          }
+        },
+        onError: (error) => {
+          console.error('에러 발생:', error);
+        }
+      });
+
+      console.log('✅ contactsViral API 호출 성공');
+      console.log('cleanup 함수 설정:', typeof cleanupFn);
+      console.log('cleanup 함수 내용:', cleanupFn);
+      console.log('이벤트 핸들러 등록 완료');
+      console.log('이제 친구 초대 모듈이 열릴 때까지 대기 중...');
+      
+      // cleanup 함수가 실제로 함수인지 확인
+      if (typeof cleanupFn === 'function') {
+        console.log('✅ cleanup 함수가 올바르게 반환됨');
+        cleanupRef.current = cleanupFn;
+      } else {
+        console.error('❌ cleanup 함수가 올바르지 않음:', cleanupFn);
+        console.error('cleanup 함수 타입:', typeof cleanupFn);
+      }
+      
+      // API 호출 후 상태 확인
+      setTimeout(() => {
+        console.log('⏰ 3초 후 상태 확인:');
+        console.log('cleanup 상태:', cleanupRef.current);
+        console.log('현재 페이지:', window.location.href);
+        console.log('이벤트 발생 여부 확인 중...');
+        
+        // contactsViral 모듈 상태 확인
+        console.log('🔍 contactsViral 모듈 상태 확인:');
+        console.log('cleanup 함수 존재 여부:', !!cleanupRef.current);
+        console.log('cleanup 함수 타입:', typeof cleanupRef.current);
+        
+        // 전역 객체에서 contactsViral 상태 확인
+        console.log('🌐 전역 객체 상태 확인:');
+        console.log('window.contactsViral:', (window as any).contactsViral);
+        console.log('window.TossBridge:', (window as any).TossBridge);
+        console.log('window.ReactNativeWebView:', (window as any).ReactNativeWebView);
+      }, 3000);
+      
+      // 추가 상태 모니터링
+      setTimeout(() => {
+        console.log('⏰ 10초 후 상태 확인:');
+        console.log('cleanup 상태:', cleanupRef.current);
+        console.log('현재 페이지:', window.location.href);
+        console.log('이벤트 발생 여부 확인 중...');
+        
+        // 전역 이벤트 리스너 확인
+        console.log('전역 이벤트 리스너 확인:');
+        console.log('window.addEventListener 리스너 수:', (window as any).__eventListeners?.length || '알 수 없음');
+        console.log('document.addEventListener 리스너 수:', (document as any).__eventListeners?.length || '알 수 없음');
+      }, 10000);
+      
+    } catch (error) {
+      console.error('💥 친구초대 실행 중 에러 발생');
+      console.error('에러 상세:', error);
+      console.error('에러 스택:', (error as Error).stack);
+    }
+  };
   const [isLoading, setIsLoading] = useState(true);
   const { playSfx } = useSound();
   const { missions, fetchMissions, clearMission } = useMissionStore();
@@ -320,15 +271,8 @@ const MissionPage: React.FC = () => {
     return <LoadingSpinner className="h-screen" />;
   }
 
-  const incompleteMissions = missions.filter(
-    (m: { isCleared: boolean; type: string; }) => !m.isCleared && m.type !== "KAIA"
-  );
-  const completedMissions = missions.filter(
-    (m: { isCleared: boolean; type: string; }) => m.isCleared && m.type !== "KAIA"
-  );
-
   return (
-    <div className="flex flex-col text-white mb-20 md:mb-96 min-h-screen">
+    <div className="flex flex-col text-white mb-20 md:mb-96 min-h-screen mx-6">
       <TopTitle title="미션" />
 
       {/* 출석 위젯 */}
@@ -341,276 +285,118 @@ const MissionPage: React.FC = () => {
       >
         일일 출석
       </h1>
-      <div className="mx-6 mb-6">
+      <div className="mb-6">
         <Attendance />
       </div>
 
-      {/* 미완료 미션 */}
-      {incompleteMissions.length > 0 && (
-        <>
-          <h1
-            className="text-center mb-4 mt-5"
-            style={{
-              ...whiteTextStyle,
-              fontSize: "18px",
-            }}
-          >
-            원타임 미션
-          </h1>
-          <div className="grid grid-cols-2 gap-3 mx-6">
-            {incompleteMissions.map((mission: Mission) => {
-              if (mission.name !== "Leave a Supportive Comment on SL X") {
-                return (
-                  <OneTimeMissionCard
-                    key={mission.id}
-                    mission={mission}
-                    onClear={handleClearMission}
-                    onMissionCleared={handleMissionCleared}
-                  />
-                );
-              } else {
-                const translatedName = missionNamesMap[mission.name] || mission.name;
-                return (
-                  <div className="col-span-2" key={mission.id}>
-                    <div
-                      className={`basic-mission-card h-36 rounded-3xl flex flex-row items-center pl-8 pr-5 justify-between relative cursor-pointer ${
-                        mission.isCleared ? "pointer-events-none" : ""
-                      }`}
-                      onClick={() => {
-                        playSfx(Audios.button_click);
-                        if (!mission.isCleared) {
-                          if (mission.redirectUrl) {
-                            window.open(mission.redirectUrl, "_blank");
-                          }
-                          handleClearMission(mission.id);
-                        }
-                      }}
-                      role="button"
-                      aria-label={`Mission: ${mission.name}`}
-                      tabIndex={0}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !mission.isCleared) {
-                          if (mission.redirectUrl) {
-                            window.open(mission.redirectUrl, "_blank");
-                          }
-                          handleClearMission(mission.id);
-                        }
-                      }}
-                    >
-                      {mission.isCleared && (
-                        <div className="absolute inset-0 bg-gray-950 bg-opacity-60 rounded-3xl z-10" />
-                      )}
-                      <div className="relative flex flex-row items-center justify-between z-0 w-full">
-                        <div className="md:space-y-3">
-                          <p
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "12px",
-                            }}
-                          >
-                            {translatedName}
-                          </p>
-                          <p
-                            className="flex flex-row items-center gap-1 mt-2"
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "14px",
-                            }}
-                          >
-                            +{mission.diceReward}{" "}
-                            <img
-                              src={Images.Dice}
-                              alt="dice"
-                              className="w-5 h-5"
-                            />
-                            &nbsp; +{formatNumber(mission.starReward)}{" "}
-                            <img
-                              src={Images.Star}
-                              alt="star"
-                              className="w-5 h-5"
-                            />
-                          </p>
-                        </div>
-                        <img
-                          src={Images.LargeTwitter}
-                          alt="Large Twitter"
-                          className="w-20 h-20"
-                        />
-                      </div>
-                      {mission.isCleared && (
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-sm font-semibold rounded-full px-4 py-2 z-20 flex items-center justify-center gap-2">
-                          <img
-                            src={Images.IconCheck}
-                            alt="Mission Completed"
-                            className="w-5 h-5"
-                          />
-
-                          <p
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "18px",
-                            }}
-                          >
-                            완료
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <p
-                      className="text-xs mb-8 mt-2 whitespace-nowrap"
-                      style={{
-                        ...whiteTextStyle,
-                        fontSize: "12px",
-                      }}
-                    >
-                      * 미션을 정상적으로 수행하지 않을 경우 최종 보상에서
-                      제외될 수 있습니다.
-                    </p>
-                  </div>
-                );
-              }
-            })}
-          </div>
-        </>
-      )}
-
-      {/* 일일 미션 */}
       <h1
-        className="text-center my-4"
+        className="text-center mt-10"
         style={{
           ...whiteTextStyle,
           fontSize: "18px",
         }}
       >
-        일일 미션
+        친구 초대
       </h1>
-      <div className="mx-6 mb-8">
-        <Link to="/invite-friends" onClick={() => playSfx(Audios.button_click)}>
-          <DailyMissionCard
-            title="친구 초대"
-            alt="Invite Friend"
-            image={Images.InviteFriends}
-          />
-        </Link>
-      </div>
+      <div className="invite-reward-box w-full h-[340px] rounded-3xl flex flex-col items-center justify-center mt-2 gap-4">
+        <div className="flex flex-row items-center">
+          <div className="flex flex-col items-center gap-2 justify-center">
+            <img src={Images.KeyIcon} alt="star" className="h-16 w-16 mt-4" />
+            <p
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "14px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                WebkitTextStroke: "1px #000000",
+              }}
+            >
+              +10
+            </p>
+          </div>
+        </div>
 
-      {/* 완료된 미션 */}
-      {completedMissions.length > 0 && (
-        <>
-          <h1
-            className="text-center mb-4"
+        <p
+          className="text-center"
+          style={{
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "18px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+          }}
+        >
+          친구를 초대하면,
+          <br />
+          <span
             style={{
-              ...whiteTextStyle,
+              fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: "18px",
+              fontWeight: 400,
+              color: "#FEE900",
+              WebkitTextStroke: "1px #000000",
             }}
           >
-            미션 완료
-          </h1>
-          <div className="grid grid-cols-2 gap-3 mx-6">
-            {completedMissions.map((mission: Mission) => {
-              if (mission.name !== "Leave a Supportive Comment on SL X") {
-                return (
-                  <OneTimeMissionCard
-                    key={mission.id}
-                    mission={mission}
-                    onClear={handleClearMission}
-                    onMissionCleared={handleMissionCleared}
-                  />
-                );
-              } else {
-                const translatedName = missionNamesMap[mission.name] || mission.name;
-                return (
-                  <div className="col-span-2" key={mission.id}>
-                    <div
-                      className={`basic-mission-card h-36 rounded-3xl flex flex-row items-center pl-8 pr-5 justify-between relative cursor-pointer ${
-                        mission.isCleared ? "pointer-events-none" : ""
-                      }`}
-                      onClick={() => {
-                        playSfx(Audios.button_click);
-                        if (!mission.isCleared) {
-                          if (mission.redirectUrl) {
-                            window.open(mission.redirectUrl, "_blank");
-                          }
-                          handleClearMission(mission.id);
-                        }
-                      }}
-                      role="button"
-                      aria-label={`Mission: ${mission.name}`}
-                      tabIndex={0}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !mission.isCleared) {
-                          if (mission.redirectUrl) {
-                            window.open(mission.redirectUrl, "_blank");
-                          }
-                          handleClearMission(mission.id);
-                        }
-                      }}
-                    >
-                      {mission.isCleared && (
-                        <div className="absolute inset-0 bg-gray-950 bg-opacity-60 rounded-3xl z-10" />
-                      )}
-                      <div className="relative flex flex-row items-center justify-between z-0 w-full">
-                        <div className="md:space-y-3">
-                          <p
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "12px",
-                            }}
-                          >
-                            {translatedName}
-                          </p>
-                          <p
-                            className="flex flex-row items-center gap-1 mt-2"
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "14px",
-                            }}
-                          >
-                            +{mission.diceReward}{" "}
-                            <img
-                              src={Images.Dice}
-                              alt="dice"
-                              className="w-5 h-5"
-                            />
-                            &nbsp; +{formatNumber(mission.starReward)}{" "}
-                            <img
-                              src={Images.Star}
-                              alt="star"
-                              className="w-5 h-5"
-                            />
-                          </p>
-                        </div>
-                        <img
-                          src={Images.LargeTwitter}
-                          alt="Large Twitter"
-                          className="w-20 h-20"
-                        />
-                      </div>
-                      {mission.isCleared && (
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-sm font-semibold rounded-full px-4 py-2 z-20 flex items-center justify-center gap-2">
-                          <img
-                            src={Images.IconCheck}
-                            alt="Mission Completed"
-                            className="w-5 h-5"
-                          />
-                          <p
-                            style={{
-                              ...whiteTextStyle,
-                              fontSize: "18px",
-                            }}
-                          >
-                            완료
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              }
-            })}
-          </div>
-        </>
-      )}
+            열쇠 10개
+          </span>
+          <span
+            style={{
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontSize: "18px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              WebkitTextStroke: "1px #000000",
+            }}
+          >
+            를 즉시 지급!
+          </span>
+        </p>
+
+        <p
+          className="mt-2 text-center"
+          style={{
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "12px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+          }}
+        >
+          지금 바로 친구를 초대하고,
+          <br />
+          열쇠로 랜덤박스를 열어 다양한 보상을 받아보세요!
+        </p>
+        
+        <button
+          className="flex relative items-center justify-center rounded-[10px] font-medium h-14 w-[300px]"
+          onClick={handleInviteClick}
+          style={{
+            background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+            border: "2px solid #76C1FF",
+            outline: "2px solid #000000",
+            boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "18px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+          }}
+        >
+          <img
+            src={Images.ButtonPointBlue}
+            alt="button-point-blue"
+            style={{
+              position: "absolute",
+              top: "3px",
+              left: "3px",
+              width: "8.47px",
+              height: "6.3px",
+              pointerEvents: "none",
+            }}/>
+          친구를 초대하면 보상이 팡팡!
+        </button>
+      </div>
+
 
       <div className="my-10"></div>
     </div>
