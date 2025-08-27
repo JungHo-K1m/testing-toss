@@ -91,6 +91,58 @@ const InviteFriends: React.FC = () => {
     }
   };
 
+  // 서버에 리워드 데이터 전송하는 함수
+  const sendRewardDataToServer = async (rewardData: any) => {
+    try {
+      console.log('📤 서버에 리워드 데이터 전송 시작:', rewardData);
+      
+      // 실제 API 엔드포인트로 변경 필요
+      const response = await fetch('/api/rewards/friend-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rewardData),
+      });
+      
+      if (response.ok) {
+        console.log('✅ 서버 전송 성공');
+        const result = await response.json();
+        console.log('서버 응답:', result);
+      } else {
+        console.error('❌ 서버 전송 실패:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ 서버 전송 중 에러:', error);
+    }
+  };
+
+  // 서버에 모듈 종료 데이터 전송하는 함수
+  const sendCloseDataToServer = async (closeData: any) => {
+    try {
+      console.log('📤 서버에 모듈 종료 데이터 전송 시작:', closeData);
+      
+      // 실제 API 엔드포인트로 변경 필요
+      const response = await fetch('/api/rewards/friend-invite-close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(closeData),
+      });
+      
+      if (response.ok) {
+        console.log('✅ 서버 전송 성공');
+        const result = await response.json();
+        console.log('서버 응답:', result);
+      } else {
+        console.error('❌ 서버 전송 실패:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ 서버 전송 중 에러:', error);
+    }
+  };
+
   // 페이지 로드 시 API 호출
   useEffect(() => {
     fetchFriendsData();
@@ -128,6 +180,44 @@ const InviteFriends: React.FC = () => {
   const handleInviteClick = async () => {
     playSfx(Audios.button_click);
     console.log('🚀 친구초대 시작');
+    console.log('📍 현재 페이지:', window.location.href);
+    console.log('📍 User Agent:', navigator.userAgent);
+
+    // 환경 체크 - 공식 문서 기반
+    console.log('🔍 환경 체크 시작');
+    
+    // 1. Toss 앱 환경 체크
+    const isTossApp = navigator.userAgent.includes('Toss') || 
+                      (window as any).TossBridge || 
+                      (window as any).ReactNativeWebView;
+    console.log('📱 Toss 앱 환경 여부:', isTossApp);
+    
+    // 2. 모바일 환경 체크
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 모바일 환경 여부:', isMobile);
+    
+    // 3. contactsViral 함수 존재 여부 체크
+    if (typeof contactsViral !== 'function') {
+      console.error('❌ contactsViral 함수를 찾을 수 없습니다');
+      console.error('contactsViral 타입:', typeof contactsViral);
+      console.error('전역 객체에서 확인:', (window as any).contactsViral);
+      
+      // 공식 문서: 하위 버전에서는 undefined 반환
+      if (!isTossApp) {
+        console.error('⚠️ Toss 앱 환경이 아닙니다. contactsViral은 Toss 앱 5.223.0+ 버전에서만 지원됩니다.');
+      }
+      
+      fallbackToWebShare();
+      return;
+    }
+
+    console.log('✅ contactsViral 함수 확인됨');
+    
+    // 4. 미니앱 승인 상태 체크 (간접적)
+    if (!isTossApp) {
+      console.warn('⚠️ Toss 앱 환경이 아닙니다. 미니앱 승인이 필요한 기능입니다.');
+      console.warn('⚠️ 테스트 환경에서는 빈 화면으로 표시되고 실제 동작하지 않을 수 있습니다.');
+    }
 
     try {
       // 기존 cleanup 함수가 있다면 호출
@@ -145,9 +235,17 @@ const InviteFriends: React.FC = () => {
           moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b' // 앱인토스 콘솔에서 설정한 moduleId로 변경 필요
         },
         onEvent: (event: ContactsViralEvent) => {
+          // 즉시 로깅 - 이벤트 발생 확인
+          console.log('🚨🚨🚨 이벤트 발생 감지! 🚨🚨🚨');
+          console.log('이벤트 발생 시간:', new Date().toISOString());
+          console.log('이벤트 타입:', event.type);
+          
           console.log('=== 친구초대 이벤트 발생 ===');
           console.log('이벤트 타입:', event.type);
           console.log('이벤트 데이터:', event.data);
+          console.log('이벤트 전체 객체:', event);
+          console.log('이벤트 발생 시간:', new Date().toISOString());
+          console.log('현재 URL:', window.location.href);
           
           if (event.type === 'sendViral') {
             console.log('🎉 리워드 지급 성공!');
@@ -155,13 +253,47 @@ const InviteFriends: React.FC = () => {
             console.log('보상 단위:', event.data.rewardUnit);
             console.log('전체 이벤트 데이터:', event.data);
             
+            // 서버에 리워드 데이터 전송
+            const rewardData = {
+              rewardAmount: event.data.rewardAmount,
+              rewardUnit: event.data.rewardUnit,
+              timestamp: new Date().toISOString(),
+              moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b',
+              eventType: 'sendViral',
+              // 추가 사용자 정보 (필요시)
+              // userId: getCurrentUserId(),
+              // deviceInfo: navigator.userAgent,
+            };
+            
+            sendRewardDataToServer(rewardData);
+            
             // 리워드 지급 성공 시 처리 로직 추가 가능
             // 예: 토스트 메시지, 상태 업데이트 등
           } else if (event.type === 'close') {
             console.log('🔒 모듈 종료');
             console.log('종료 사유:', event.data.closeReason);
+            console.log('받은 전체 리워드:', event.data.sentRewardAmount);
+            console.log('아직 공유 가능한 친구 수:', event.data.sendableRewardsCount);
             console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+            console.log('리워드 단위:', event.data.rewardUnit);
             console.log('전체 이벤트 데이터:', event.data);
+            
+            // 서버에 모듈 종료 데이터 전송
+            const closeData = {
+              closeReason: event.data.closeReason,
+              sentRewardAmount: event.data.sentRewardAmount,
+              sendableRewardsCount: event.data.sendableRewardsCount,
+              sentRewardsCount: event.data.sentRewardsCount,
+              rewardUnit: event.data.rewardUnit,
+              timestamp: new Date().toISOString(),
+              moduleId: '5682bc17-9e30-4491-aed0-1cd0f1f36f4b',
+              eventType: 'close',
+              // 추가 사용자 정보 (필요시)
+              // userId: getCurrentUserId(),
+              // deviceInfo: navigator.userAgent,
+            };
+            
+            sendCloseDataToServer(closeData);
             
             // 모듈이 닫힌 후 친구 목록 새로고침
             if (event.data.sentRewardsCount && event.data.sentRewardsCount > 0) {
@@ -170,9 +302,6 @@ const InviteFriends: React.FC = () => {
             } else {
               console.log('ℹ️ 친구 초대 없음 - 친구 목록 새로고침 건너뜀');
             }
-          } else {
-            console.log('📝 기타 이벤트:', event.type);
-            console.log('이벤트 상세:', event.data);
           }
           console.log('=== 이벤트 처리 완료 ===');
         },
@@ -180,6 +309,15 @@ const InviteFriends: React.FC = () => {
           console.error('❌ 친구초대 에러 발생');
           console.error('에러 타입:', typeof error);
           console.error('에러 내용:', error);
+          console.error('에러 발생 시간:', new Date().toISOString());
+          console.error('현재 URL:', window.location.href);
+          
+          // 공식 문서: 미승인 상태에서는 Internal Server Error 발생
+          if (error && typeof error === 'object') {
+            if ('message' in error && (error as any).message?.includes('Internal Server Error')) {
+              console.error('🚨 미니앱 승인이 필요합니다. 앱인토스 콘솔에서 승인 상태를 확인하세요.');
+            }
+          }
           
           // 에러 객체의 상세 정보 출력
           if (error && typeof error === 'object') {
@@ -203,11 +341,36 @@ const InviteFriends: React.FC = () => {
 
       console.log('✅ contactsViral API 호출 성공');
       console.log('cleanup 함수 설정:', typeof cleanupFn);
+      console.log('cleanup 함수 내용:', cleanupFn);
+      console.log('이벤트 핸들러 등록 완료');
+      console.log('이제 친구 초대 모듈이 열릴 때까지 대기 중...');
       setCleanup(cleanupFn);
+      
+      // API 호출 후 상태 확인
+      setTimeout(() => {
+        console.log('⏰ 3초 후 상태 확인:');
+        console.log('cleanup 상태:', cleanup);
+        console.log('현재 페이지:', window.location.href);
+        console.log('이벤트 발생 여부 확인 중...');
+      }, 3000);
+      
+      // 추가 상태 모니터링
+      setTimeout(() => {
+        console.log('⏰ 10초 후 상태 확인:');
+        console.log('cleanup 상태:', cleanup);
+        console.log('현재 페이지:', window.location.href);
+        console.log('이벤트 발생 여부 확인 중...');
+        
+        // 전역 이벤트 리스너 확인
+        console.log('전역 이벤트 리스너 확인:');
+        console.log('window.addEventListener 리스너 수:', (window as any).__eventListeners?.length || '알 수 없음');
+        console.log('document.addEventListener 리스너 수:', (document as any).__eventListeners?.length || '알 수 없음');
+      }, 10000);
       
     } catch (error) {
       console.error('💥 친구초대 실행 중 에러 발생');
       console.error('에러 상세:', error);
+      console.error('에러 스택:', (error as Error).stack);
       // 에러 발생 시 기존 공유 방식으로 fallback
       fallbackToWebShare();
     }
