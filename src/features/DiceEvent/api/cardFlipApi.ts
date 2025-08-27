@@ -9,9 +9,11 @@ export interface CardFlipRequest {
 export interface CardFlipResponseData {
   bettingAmount: number;
   reward: number;
-  result: 'WIN' | 'DEFEAT';
+  result: string; // "WIN" 또는 "DEFEAT"
   rank: number;
   starCount: number;
+  cardFlipId?: number; // 재시도를 위한 id (선택적)
+  message?: string; // 응답 메시지
 }
 
 export const flipCard = async (requestData: CardFlipRequest): Promise<CardFlipResponseData> => {

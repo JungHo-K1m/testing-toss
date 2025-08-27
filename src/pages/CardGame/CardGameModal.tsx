@@ -523,22 +523,19 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
 
       console.log("카드 플립 API 응답:", response);
 
-      // 결과 처리
+      // API 응답 구조에 맞게 결과 처리 수정
+      // result가 문자열 타입이므로 "WIN"이면 승리, "DEFEAT"이면 패배로 처리
       const win = response.result === "WIN";
-      const reward = response.reward;
+      const reward = response.reward || 0;
 
-      // API 응답에서 정답 정보 추출 (실제로는 서버에서 제공해야 함)
+      // API 응답에서 정답 정보 추출
+      // 서버에서 실제 카드 정보를 제공한다면 그것을 사용하고, 
+      // 그렇지 않다면 사용자의 선택을 기반으로 결과 표시
       const answer = {
-        color:
-          mode === "color"
-            ? selectedColor === "RED"
-              ? "RED"
-              : "BLACK"
-            : "UNKNOWN",
-        suit:
-          mode === "suit"
-            ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
-            : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
+        color: mode === "color" ? selectedColor : "UNKNOWN",
+        suit: mode === "suit" 
+          ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
+          : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
       };
 
       onResult(win, reward, answer);
@@ -556,16 +553,10 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
       const win = false;
       const reward = 0;
       const answer = {
-        color:
-          mode === "color"
-            ? selectedColor === "RED"
-              ? "RED"
-              : "BLACK"
-            : "UNKNOWN",
-        suit:
-          mode === "suit"
-            ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
-            : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
+        color: mode === "color" ? selectedColor : "UNKNOWN",
+        suit: mode === "suit" 
+          ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
+          : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
       };
 
       onResult(win, reward, answer);
