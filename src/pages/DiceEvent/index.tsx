@@ -387,7 +387,7 @@ const DiceEventPage: React.FC = () => {
   const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
   
   // 광고 관련 상태 및 훅
-  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd } = useAdMob();
+  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
   const [platform] = useState(getPlatform());
 
   // 리필 시간 클릭 핸들러
@@ -407,6 +407,9 @@ const DiceEventPage: React.FC = () => {
     } else if (adLoadStatus === 'loaded') {
       // 광고가 로드된 경우 표시
       await showAd();
+    } else if (adLoadStatus === 'failed') {
+      // 광고 로드 실패 시 재로드
+      await reloadAd();
     }
   };
 
@@ -489,6 +492,11 @@ const DiceEventPage: React.FC = () => {
         await fetchUserData();
         
         console.log('광고보고 랜덤박스 완료!');
+        
+        // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
+        setTimeout(() => {
+          reloadAd();
+        }, 1000);
       } else {
         console.log('보상 결과가 없습니다.');
       }
@@ -500,9 +508,87 @@ const DiceEventPage: React.FC = () => {
         stack: error.stack
       });
       alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+      
+      // 오류 발생 시 광고 재로드
+      setTimeout(() => {
+        reloadAd();
+      }, 1000);
     }
   };
 
+  // 주사위 리필 광고 핸들러 추가
+  const handleAdRefillDice = async () => {
+    if (!isSupported) {
+      console.log('광고가 지원되지 않는 환경입니다');
+      return;
+    }
+
+    try {
+      console.log('주사위 리필 광고 시작 - 광고 상태:', adLoadStatus);
+      
+      // 광고가 로드되지 않은 경우 먼저 로드
+      if (adLoadStatus !== 'loaded') {
+        console.log('광고 로드 시작...');
+        await loadAd();
+        console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        return;
+      }
+
+      console.log('광고 표시 시작...');
+      
+      // 광고 표시 및 보상 결과 대기
+      const rewardData = await showAd();
+      console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
+      
+      if (rewardData) {
+        // 주사위 리필 API 호출
+        try {
+          const response = await fetch('/api/home/refill-dice/ad', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('주사위 리필 API 응답:', result);
+            console.log('주사위 리필 보상 처리 완료');
+            
+            // 성공 메시지 표시
+            alert('주사위가 성공적으로 리필되었습니다!');
+          } else {
+            console.error('주사위 리필 API 실패:', response.status);
+            alert('주사위 리필에 실패했습니다. 다시 시도해주세요.');
+          }
+        } catch (apiError) {
+          console.error('주사위 리필 API 호출 오류:', apiError);
+          alert('주사위 리필 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+        
+        // 사용자 데이터 새로고침
+        await fetchUserData();
+        
+        // 모달 닫기
+        setShowAdModal(false);
+        setRefillTimeInfo(null);
+        
+        // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
+        setTimeout(() => {
+          reloadAd();
+        }, 1000);
+      }
+      
+    } catch (error: any) {
+      console.error('주사위 리필 광고 중 오류:', error);
+      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+      
+      // 오류 발생 시 광고 재로드
+      setTimeout(() => {
+        reloadAd();
+      }, 1000);
+    }
+  };
 
   // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
   useEffect(() => {
@@ -511,7 +597,7 @@ const DiceEventPage: React.FC = () => {
     }
   }, [showRaffleBoxModal, autoLoadAd]);
 
-  const isAdButtonDisabled = adLoadStatus === 'loading' || adLoadStatus === 'failed';
+  const isAdButtonDisabled = adLoadStatus === 'loading';
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
@@ -2102,7 +2188,7 @@ const DiceEventPage: React.FC = () => {
                         WebkitTextStroke: "1px #000000",
                         opacity: isAdButtonDisabled ? 0.5 : 1,
                       }}
-                      onClick={handleAdButtonClick}
+                      onClick={handleAdRefillDice}
                       disabled={isAdButtonDisabled}
                     >
                       <img
@@ -2125,7 +2211,12 @@ const DiceEventPage: React.FC = () => {
                           height: "32px",
                         }}
                       />
-                      <span>{getAdButtonText()}</span>
+                                              <span>
+                          {adLoadStatus === 'loading' && '로딩 중...'}
+                          {adLoadStatus === 'loaded' && '광고 시청 후 주사위 리필'}
+                          {adLoadStatus === 'failed' && '로드 실패 - 다시 시도'}
+                          {adLoadStatus === 'not_loaded' && '준비 중...'}
+                        </span>
                     </button>
                   </div>
                 </div>

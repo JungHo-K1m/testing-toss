@@ -13,6 +13,7 @@ export interface UseAdMobReturn {
   showAd: () => Promise<any>; // 광고 보상 결과를 반환하도록 수정
   isSupported: boolean;
   autoLoadAd: () => void;
+  reloadAd: () => void; // reloadAd 함수 추가
 }
 
 // 광고 지원 여부 확인
@@ -66,6 +67,7 @@ export const useAdMob = (): UseAdMobReturn => {
   const cleanupRef = useRef<(() => void) | null>(null);
   const adInstanceRef = useRef<any>(null); // 광고 인스턴스 참조 추가
   const pendingAdPromiseRef = useRef<{ resolve: (value: any) => void; reject: (reason: any) => void } | null>(null); // 보류 중인 광고 Promise 참조 추가
+  const isAdReadyRef = useRef<boolean>(false); // 광고가 실제로 사용 가능한지 추적
 
   // 광고 지원 여부 확인
   useEffect(() => {
@@ -75,7 +77,7 @@ export const useAdMob = (): UseAdMobReturn => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      if (cleanupRef.current) {
+      if (cleanupRef.current && typeof cleanupRef.current === 'function') {
         cleanupRef.current();
       }
       // 광고 인스턴스 정리
@@ -86,6 +88,7 @@ export const useAdMob = (): UseAdMobReturn => {
       if (pendingAdPromiseRef.current) {
         pendingAdPromiseRef.current = null;
       }
+      isAdReadyRef.current = false;
     };
   }, []);
 
@@ -96,12 +99,19 @@ export const useAdMob = (): UseAdMobReturn => {
       return;
     }
 
+    // 이미 로드되고 사용 가능한 상태면 다시 로드하지 않음
+    if (adLoadStatus === 'loaded' && isAdReadyRef.current) {
+      console.log('이미 로드된 광고가 있습니다');
+      return;
+    }
+
     try {
       setAdLoadStatus('loading');
       
       const adUnitId = getAdUnitId();
       console.log('광고 ID:', adUnitId);
       
+      // Bedrock 광고 API를 사용하여 광고 로드
       const cleanup = await loadAdMobRewardedAd({
         options: { adUnitId },
         onEvent: async (event: AdMobRewardedAdEvent) => {
@@ -109,20 +119,24 @@ export const useAdMob = (): UseAdMobReturn => {
           
           switch (event.type) {
             case 'loaded':
+              console.log('광고 로드 완료');
               setAdLoadStatus('loaded');
+              isAdReadyRef.current = true;
               break;
             case 'clicked':
               console.log('광고 클릭');
               break;
             case 'dismissed':
               console.log('광고 닫힘');
-              setAdLoadStatus('not_loaded');
-              adInstanceRef.current = null; // 광고 인스턴스 정리
+              // 광고가 닫혀도 재사용 가능하도록 상태 유지
+              setAdLoadStatus('loaded');
+              isAdReadyRef.current = true;
               break;
             case 'failedToShow':
               console.log('광고 보여주기 실패');
               setAdLoadStatus('failed');
-              adInstanceRef.current = null; // 광고 인스턴스 정리
+              isAdReadyRef.current = false;
+              adInstanceRef.current = null;
               break;
             case 'impression':
               console.log('광고 노출');
@@ -131,10 +145,8 @@ export const useAdMob = (): UseAdMobReturn => {
               console.log('광고 컨텐츠 보여졌음');
               break;
             case 'userEarnedReward':
-              // loadAd에서 userEarnedReward 이벤트를 처리하여 showAd의 Promise를 resolve
               console.log('loadAd: userEarnedReward 이벤트 발생 - 보상 처리 시작');
               
-              // 보류 중인 광고 Promise가 있으면 resolve
               if (pendingAdPromiseRef.current) {
                 console.log('loadAd: 보류 중인 광고 Promise 발견 - 보상 API 호출 시작');
                 
@@ -172,37 +184,48 @@ export const useAdMob = (): UseAdMobReturn => {
                     } else {
                       console.log('loadAd: 알 수 없는 보상 타입:', rewardData.type);
                     }
+                    
+                    // 광고 인스턴스는 유지하고 재사용 가능하도록 설정
+                    isAdReadyRef.current = true;
+                    setAdLoadStatus('loaded');
                   } catch (error: any) {
                     console.error('loadAd: 광고 보상 API 호출 실패:', error);
                     // Promise reject
                     pendingAdPromiseRef.current!.reject(error);
                     pendingAdPromiseRef.current = null;
+                    // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
+                    isAdReadyRef.current = true;
+                    setAdLoadStatus('loaded');
                   }
                 })();
               } else {
                 console.log('loadAd: 보류 중인 광고 Promise 없음 - 이벤트 무시');
+                // Promise가 없어도 광고를 재사용할 수 있도록 설정
+                isAdReadyRef.current = true;
+                setAdLoadStatus('loaded');
               }
-              
-              // 광고 인스턴스 정리
-              adInstanceRef.current = null;
               break;
           }
         },
         onError: (error: unknown) => {
           console.error('광고 불러오기 실패:', error);
           setAdLoadStatus('failed');
+          isAdReadyRef.current = false;
           adInstanceRef.current = null; // 광고 인스턴스 정리
         }
       });
       
+      // 정리 함수 저장 (cleanup은 함수여야 함)
       cleanupRef.current = cleanup;
-      adInstanceRef.current = cleanup; // 광고 인스턴스 저장
+      // 광고 인스턴스는 별도로 관리
+      adInstanceRef.current = { cleanup, adUnitId };
     } catch (error) {
       console.error('광고 로딩 중 오류:', error);
       setAdLoadStatus('failed');
+      isAdReadyRef.current = false;
       adInstanceRef.current = null; // 광고 인스턴스 정리
     }
-  }, [isSupported]);
+  }, [isSupported, adLoadStatus]);
 
   // 광고 표시 함수
   const showAd = useCallback(async () => {
@@ -211,24 +234,26 @@ export const useAdMob = (): UseAdMobReturn => {
       return null;
     }
 
-    if (adLoadStatus !== 'loaded') {
-      console.log('광고가 로드되지 않았습니다');
+    // 광고가 로드되고 사용 가능한 상태인지 확인
+    if (adLoadStatus !== 'loaded' || !isAdReadyRef.current) {
+      console.log('광고가 로드되지 않았거나 사용할 수 없습니다');
       return null;
     }
 
-    // 이미 사용된 광고인지 확인
     if (!adInstanceRef.current) {
       console.log('광고 인스턴스가 없습니다. 다시 로드해주세요.');
       setAdLoadStatus('not_loaded');
+      isAdReadyRef.current = false;
       return null;
     }
 
     try {
-      const adUnitId = getAdUnitId();
+      const adUnitId = adInstanceRef.current.adUnitId || getAdUnitId();
       console.log('광고 표시 시작, adUnitId:', adUnitId);
       
-      // 광고 표시 즉시 상태를 'not_loaded'로 변경하여 중복 사용 방지
-      setAdLoadStatus('not_loaded');
+      // 광고 표시 시작 시 상태를 'loading'으로 변경하여 중복 사용 방지
+      setAdLoadStatus('loading');
+      isAdReadyRef.current = false;
       
       return new Promise((resolve, reject) => {
         let isResolved = false;
@@ -239,6 +264,9 @@ export const useAdMob = (): UseAdMobReturn => {
             console.log('showAd: 광고 응답 시간 초과 - 타임아웃');
             isResolved = true;
             pendingAdPromiseRef.current = null;
+            // 타임아웃 시에도 광고를 재사용할 수 있도록 설정
+            isAdReadyRef.current = true;
+            setAdLoadStatus('loaded');
             reject(new Error('광고 응답 시간 초과'));
           }
         }, 120000); // 2분 타임아웃
@@ -269,6 +297,9 @@ export const useAdMob = (): UseAdMobReturn => {
               isResolved = true;
               pendingAdPromiseRef.current = null;
               clearTimeout(timeoutId);
+              // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
+              isAdReadyRef.current = true;
+              setAdLoadStatus('loaded');
               reject(error);
             }
           }
@@ -276,9 +307,27 @@ export const useAdMob = (): UseAdMobReturn => {
       });
     } catch (error) {
       console.error('광고 표시 중 오류:', error);
+      // 오류 발생 시에도 광고를 재사용할 수 있도록 설정
+      isAdReadyRef.current = true;
+      setAdLoadStatus('loaded');
       throw error;
     }
   }, [isSupported, adLoadStatus]);
+
+  // 광고 재로드 함수 추가
+  const reloadAd = useCallback(async () => {
+    console.log('광고 재로드 시작');
+    // 기존 인스턴스 정리
+    if (cleanupRef.current && typeof cleanupRef.current === 'function') {
+      cleanupRef.current();
+    }
+    adInstanceRef.current = null;
+    isAdReadyRef.current = false;
+    setAdLoadStatus('not_loaded');
+    
+    // 새로 로드
+    await loadAd();
+  }, [loadAd]);
 
   // 자동 광고 로드 함수 (모달 열릴 때 호출)
   const autoLoadAd = useCallback(async () => {
@@ -287,8 +336,8 @@ export const useAdMob = (): UseAdMobReturn => {
       return;
     }
 
-    // 이미 로드된 상태면 다시 로드하지 않음
-    if (adLoadStatus === 'loaded' || adLoadStatus === 'loading') {
+    // 이미 로드되고 사용 가능한 상태면 다시 로드하지 않음
+    if ((adLoadStatus === 'loaded' && isAdReadyRef.current) || adLoadStatus === 'loading') {
       return;
     }
 
@@ -301,6 +350,7 @@ export const useAdMob = (): UseAdMobReturn => {
     loadAd,
     showAd,
     isSupported,
-    autoLoadAd
+    autoLoadAd,
+    reloadAd // 새로 추가된 함수
   };
 };
