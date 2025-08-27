@@ -225,7 +225,6 @@ export const useDiceGame = () => {
               setIsRPSGameActive(true);
               setIsCardGameActive(false);
               setIsSpinGameActive(false);
-              rpsGameStore.fetchAllowedBetting();
               break;
             case 8:
               // anywhere 타일 - 플레이어가 이동할 위치 선택
@@ -313,7 +312,7 @@ export const useDiceGame = () => {
           setIsRPSGameActive(true); // RPSGame 활성화
           setIsSpinGameActive(false); // SpinGame 비활성화
           setIsCardGameActive(false); // 카드게임 비활성화
-          rpsGameStore.fetchAllowedBetting(); // RPSGame의 베팅 가능 금액 가져오기
+                        // RPSGame의 베팅 가능 금액은 클라이언트에서 계산됨
           // console.log("RPSGame 활성화됨 (타일 5 클릭).");
         } else if (tileId === 10) {
           setIsCardGameActive(true); // 카드게임 활성화

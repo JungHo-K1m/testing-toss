@@ -155,18 +155,17 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
         >
           Toss Point
         </p>
-        {/* <p
+        <p
           className="text-center"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
             fontSize: "12px",
             fontWeight: 400,
-            color: "#FFFFFF",
-            WebkitTextStroke: "1px #000000",
+            color: "#2A294E",
           }}
         >
           (총 100만원 상당)
-        </p> */}
+        </p>
       </div>
     </div>
   );

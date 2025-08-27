@@ -222,8 +222,7 @@ const UserLevel: React.FC<{
             fontFamily: "'ONE Mobile POP', sans-serif",
             fontSize: "12px",
             fontWeight: 400,
-            color: "#FFFFFF",
-            WebkitTextStroke: "1px #000000",
+            color: "#2A294E",
           }}
         >
           Lv.{userLv}

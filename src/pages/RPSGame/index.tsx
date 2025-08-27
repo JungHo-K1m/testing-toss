@@ -69,25 +69,18 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   // -----------------------
   const {
     betAmount,
-    winMultiplier,
     isSpinning,
     isDialogOpen,
     gameResult,
-    consecutiveWins,
     lastReward,
     isGameStarted,
     startGame,
     spin,
     stopSpin,
-    continueGame,
     endGame,
     closeDialog,
     playRound,
-    allowedBetting,
-    currentRound,
     handleRPSGameEnd,
-    totalRounds,
-    fetchAllowedBetting,
   } = useRPSGameStore();
 
   const { starPoints } = useUserStore();
@@ -96,12 +89,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   // -----------------------
   // 슬롯 애니메이션 상태
   // -----------------------
-  const [slotStates, setSlotStates] = useState<("spinning" | "stopped")[]>([
-    "stopped",
-    "stopped",
-    "stopped",
-  ]);
-  const isAnySlotSpinning = slotStates.some((state) => state === "spinning");
+  const [slotState, setSlotState] = useState<"spinning" | "stopped">("stopped");
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   // -----------------------
@@ -109,7 +97,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   // -----------------------
   const handleGameStart = () => {
     startGame();
-    setSlotStates(["spinning", "spinning", "spinning"]);
+    setSlotState("spinning");
     setIsAnimating(true);
     // console.log("Game started with betAmount:", betAmount);
   };
@@ -117,7 +105,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   const handleSpin = async (userChoice: string) => {
     playSfx(Audios.button_click);
 
-    if (isSpinning || !isAnySlotSpinning) return;
+    if (isSpinning || slotState !== "spinning") return;
     spin();
 
     playSfx(Audios.rps_slot);
@@ -129,18 +117,8 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
         // console.log("Server response =>", response);
         if (response) {
           stopSpin(userChoice, response.computerChoice);
-
-          // 현재 라운드 슬롯만 정지
-          setSlotStates((prev) => {
-            const newStates = [...prev];
-            newStates[currentRound - 1] = "stopped";
-            return newStates;
-          });
-
-          // 모든 라운드 다 돌았다면 애니메이션 종료
-          if (currentRound >= totalRounds) {
-            setIsAnimating(false);
-          }
+          setSlotState("stopped");
+          setIsAnimating(false);
         } else {
           throw new Error("Failed to play round.");
         }
@@ -154,14 +132,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     }, 2000);
   };
 
-  const handleContinue = () => {
-    if (consecutiveWins >= totalRounds) {
-      handleQuit();
-    } else {
-      continueGame();
-      // console.log("Continuing game with betAmount:", betAmount);
-    }
-  };
+
 
   const handleQuit = () => {
     endGame();
@@ -169,13 +140,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     // console.log(`Game ended with ${gameResult}:`, lastReward);
   };
 
-  // -----------------------
-  // allowedBetting 불러오기
-  // -----------------------
-  useEffect(() => {
-    fetchAllowedBetting();
-    // console.log("Component mounted");
-  }, [fetchAllowedBetting]);
+
 
   // -----------------------
   // 가로 스크롤 막기
@@ -218,7 +183,6 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
         >
           <RPSGameStart
             onStart={handleGameStart}
-            allowedBetting={allowedBetting}
             onCancel={() => {
               onCancel();
               handleRPSGameEnd("lose", 0);
@@ -269,7 +233,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
                 gap: "25px",
               }}
             >
-              x{winMultiplier * 3 > 27 ? 27 : winMultiplier * 3}
+              x3
             </div>
           </div>
 
@@ -289,31 +253,31 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
               className="w-[373px] mx-auto"
             />
 
-            {/* 슬롯(라운드) 3개 표시 */}
-            {[...Array(3)].map((_, index) => (
-              <div
-                key={index}
-                style={{
-                  left: `${54 + index * 82}px`,
-                  position: "absolute",
-                  bottom: "192px",
-                }}
-                className="gap-2 flex flex-row items-center justify-center pl-1 w-[87px] overflow-y-hidden h-[80px]"
-              >
+            {/* 슬롯 표시 */}
+            <div
+              style={{
+                left: "54px",
+                position: "absolute",
+                bottom: "192px",
+              }}
+              className="gap-0 flex flex-row items-center justify-center pl-0 w-[261px] overflow-y-hidden h-[80px]"
+            >
+              {[0, 1, 2].map((index) => (
                 <motion.div
-                  className="flex flex-col items-center justify-center h-full"
+                  key={index}
+                  className="flex flex-col items-center justify-center h-full w-[80px]"
                   initial={{ y: 0 }}
                   animate={{
-                    y:
-                      slotStates[index] === "spinning" ? ["-100%", "0%"] : "0%",
+                    y: slotState === "spinning" ? ["-100%", "0%"] : "0%",
                   }}
                   transition={{
-                    duration: slotStates[index] === "spinning" ? 0.1 : 0.5,
+                    duration: slotState === "spinning" ? 0.1 : 0.5,
                     ease: "linear",
-                    repeat: slotStates[index] === "spinning" ? Infinity : 0,
+                    repeat: slotState === "spinning" ? Infinity : 0,
+                    delay: index * 0.1, // 각 슬롯마다 약간의 지연 효과
                   }}
                 >
-                  {slotStates[index] === "spinning" ? (
+                  {slotState === "spinning" ? (
                     <div className="slot-item text-5xl flex items-center justify-center">
                       <img
                         src={rpsImages.scissors}
@@ -326,29 +290,29 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
                       className="slot-item text-5xl flex items-center justify-center"
                       style={{ height: "100%", width: "100%" }}
                     >
-                      {useRPSGameStore.getState().slotResults[index] ? (
+                      {useRPSGameStore.getState().slotResults[0] ? (
                         <img
                           src={
                             rpsImages[
-                              useRPSGameStore.getState().slotResults[index]
+                              useRPSGameStore.getState().slotResults[0]
                                 .computerChoice as keyof typeof rpsImages
                             ]
                           }
-                          alt={`slot-${index}`}
+                          alt="slot"
                           className="h-[70px] min-w-[50px] self-center"
                         />
                       ) : (
                         <img
                           src={Images.Scissors}
-                          alt={`slot-${index}`}
+                          alt="slot"
                           className="h-[70px] min-w-[50px] self-center"
                         />
                       )}
                     </div>
                   )}
                 </motion.div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             {/* 가위바위보 선택 버튼 */}
             <div
@@ -363,7 +327,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
                 src={Images.IconRock}
                 alt="Rock"
                 className={`w-[68px] h-[68px] cursor-pointer ${
-                  isSpinning || !isAnySlotSpinning
+                  isSpinning || slotState !== "spinning"
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -373,7 +337,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
                 src={Images.IconPaper}
                 alt="Paper"
                 className={`w-[68px] h-[68px] cursor-pointer ${
-                  isSpinning || !isAnySlotSpinning
+                  isSpinning || slotState !== "spinning"
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -383,7 +347,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
                 src={Images.IconScissors}
                 alt="Scissors"
                 className={`w-[68px] h-[68px] cursor-pointer ${
-                  isSpinning || !isAnySlotSpinning
+                  isSpinning || slotState !== "spinning"
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -400,10 +364,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
         onClose={closeDialog}
         result={gameResult}
         winnings={lastReward}
-        onContinue={handleContinue}
         onQuit={handleQuit}
-        consecutiveWins={consecutiveWins}
-        winMultiplier={winMultiplier}
       />
     </div>
   );

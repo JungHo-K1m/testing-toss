@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useUserStore } from "@/entities/User/model/userModel";
 import { FaRegQuestionCircle } from "react-icons/fa";
 import { FaStar } from "react-icons/fa6";
 import Images from "@/shared/assets/images";
@@ -10,7 +11,7 @@ import {
   CardFlipRequest,
   CardFlipResponseData,
 } from "@/features/DiceEvent/api/cardFlipApi";
-import { getBettingAmount } from "@/features/DiceEvent/api/getBettingAmount";
+
 
 const COLORS: ("RED" | "BLACK")[] = ["RED", "BLACK"];
 const SUITS = [
@@ -197,6 +198,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
             </div>
           </div>
         </div>
+        
         {/* 4. 배팅 입력 */}
         <form
           className="w-full"
@@ -207,7 +209,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
           }}
         >
           <input
-            placeholder="베팅할 별 개수를 입력하세요!(100단위로 입력)"
+            placeholder={`베팅할 포인트를 입력하세요! (100단위)`}
             type="number"
             step="100"
             min="100"
@@ -960,9 +962,7 @@ const CardGameResultDialog = ({
 const CardGameModal = ({ onClose }: any) => {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
-  const [myPoint, setMyPoint] = useState(0);
-  const [allowedBetting, setAllowedBetting] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState({ win: false, reward: 0, answer: null });
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [mode, setMode] = useState<"color" | "suit" | null>(null);
@@ -972,40 +972,11 @@ const CardGameModal = ({ onClose }: any) => {
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
 
-  // 베팅 가능 금액을 가져오는 함수
-  const fetchBettingInfo = async () => {
-    try {
-      setIsLoading(true);
-      console.log("베팅 정보 API 호출 시작...");
-      const bettingInfo = await getBettingAmount();
-      console.log("베팅 정보 API 응답:", bettingInfo);
-      console.log("응답 타입:", typeof bettingInfo);
-      console.log("응답 구조:", JSON.stringify(bettingInfo, null, 2));
-      
-      // API 응답에서 값이 undefined인 경우 기본값 설정
-      const starCount = bettingInfo?.starCount || 0;
-      const allowedBetting = bettingInfo?.allowedBetting || 0;
-      
-      console.log("설정할 값들:", { starCount, allowedBetting });
-      
-      setMyPoint(starCount);
-      setAllowedBetting(allowedBetting);
-      
-      console.log("상태 업데이트 완료");
-    } catch (error) {
-      console.error("Error fetching betting info:", error);
-      // 에러 발생 시 기본값 설정
-      setMyPoint(0);
-      setAllowedBetting(0);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 컴포넌트 마운트 시 베팅 정보 가져오기
-  useEffect(() => {
-    fetchBettingInfo();
-  }, []);
+  // 사용자의 보유 포인트 가져오기
+  const starPoints = useUserStore((state) => state.starPoints);
+  
+  // 새로운 베팅 규칙에 따른 베팅 가능 금액 계산
+  const allowedBetting = starPoints >= 2000 ? 1000 : Math.floor(starPoints / 2);
 
   return (
     <div
@@ -1033,13 +1004,9 @@ const CardGameModal = ({ onClose }: any) => {
         }}
         className="shadow-2xl overflow-hidden"
       >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-white text-xl">로딩 중...</div>
-          </div>
-        ) : !isGameStarted ? (
+        {!isGameStarted ? (
           <CardBettingModal
-            myPoint={myPoint}
+            myPoint={starPoints}
             allowedBetting={allowedBetting}
             onStart={(amount: React.SetStateAction<number>) => {
               setBetAmount(amount);
@@ -1053,8 +1020,6 @@ const CardGameModal = ({ onClose }: any) => {
             onResult={async (win: boolean, reward: number, answer: any) => {
               setResult({ win, reward, answer });
               setIsResultOpen(true);
-              // 게임 결과 후 베팅 정보 새로고침
-              await fetchBettingInfo();
               // 카드게임은 한 번만 진행되므로 게임 상태는 리셋하지 않음
             }}
             onCancel={onClose}

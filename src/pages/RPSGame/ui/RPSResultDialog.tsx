@@ -9,10 +9,7 @@ import Audios from "@/shared/assets/audio";
 
 interface ResultWinProps {
   winnings: number;
-  onContinue: () => void;
   onQuit: () => void;
-  consecutiveWins: number;
-  winMultiplier: number;
 }
 
 interface ResultLoseProps {
@@ -22,12 +19,8 @@ interface ResultLoseProps {
 
 const ResultWin: React.FC<ResultWinProps> = ({
   winnings,
-  onContinue,
   onQuit,
-  consecutiveWins,
-  winMultiplier,
 }) => {
-  const isFinalWin = consecutiveWins >= 3;
   const { playSfx } = useSound();
 
   // 승리 효과음 재생
@@ -36,7 +29,7 @@ const ResultWin: React.FC<ResultWinProps> = ({
   }, []);
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center">
+    <div className="relative w-full h-full flex flex-col items-center ">
       {/* 파란색 배경 영역 */}
       <div
         className="relative rounded-[10px] w-[234px] h-[228px] mb-8"
@@ -45,6 +38,7 @@ const ResultWin: React.FC<ResultWinProps> = ({
           boxShadow:
             "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
           marginTop: "180px",
+          marginLeft: "-2px",
           opacity: 0.9,
         }}
       >
@@ -73,166 +67,52 @@ const ResultWin: React.FC<ResultWinProps> = ({
             </p>
             <img src={Images.StarIcon} className="w-9 h-9" />
           </div>
-          {isFinalWin ? (
-            <div
-              className="text-center"
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "24px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              축하합니다!
-              <br />
-              베팅 금액의 27배를 획득하셨습니다!
-            </div>
-          ) : (
-            <div className="text-center">
-              <div
-                className="flex flex-col justify-center items-center"
-                style={{
-                  fontFamily: "'ONE Mobile POP', sans-serif",
-                  fontSize: "18px",
-                  fontWeight: 400,
-                  color: "#FFFFFF",
-                  WebkitTextStroke: "1px #000000",
-                }}
-              >
-                계속하기 <br />
-                <div className="flex flex-row items-center justify-center gap-[25px]">
-                  <div
-                    className="flex flex-row items-center justify-center w-[66px] h-[35px] px-[20px]"
-                    style={{
-                      background: "rgba(0, 94, 170, 0.5)",
-                      borderRadius: "53px",
-                      backdropFilter: "blur(10px)",
-                      boxShadow:
-                        "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "18px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "1px #000000",
-                      }}
-                    >
-                      ×{winMultiplier}
-                    </p>
-                  </div>
-                  <div className="flex flex-row items-center justify-centers">
-                    <p
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "24px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "1px #000000",
-                      }}
-                    >
-                      ?
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* 버튼들을 바깥 영역으로 이동 */}
-      <div className="flex flex-row gap-[27px]">
-        {isFinalWin ? (
-          <button
-            className="flex relative items-center justify-center rounded-[10px] font-medium h-14 w-[160px] mt-20"
-            onClick={onQuit}
+          <div
+            className="text-center"
             style={{
-              background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-              border: "2px solid #76C1FF",
-              outline: "2px solid #000000",
-              boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
               fontFamily: "'ONE Mobile POP', sans-serif",
-              fontSize: "18px",
+              fontSize: "24px",
               fontWeight: 400,
               color: "#FFFFFF",
               WebkitTextStroke: "1px #000000",
-            }}>
-              <img
-                src={Images.ButtonPointBlue}
-                alt="button-point-blue"
-                style={{
-                  position: "absolute",
-                  top: "3px",
-                  left: "3px",
-                  width: "8.47px",
-                  height: "6.3px",
-                  pointerEvents: "none",
-                }}/>
-            완료
-          </button>
-        ) : (
-          <>
-            <button
-              className="flex relative items-center justify-center rounded-[10px] font-medium h-14 w-[160px] mt-20"
-              onClick={onQuit}
-              style={{
-                background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                border: "2px solid #76C1FF",
-                outline: "2px solid #000000",
-                boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "18px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              <img
-                src={Images.ButtonPointBlue}
-                alt="button-point-blue"
-                style={{
-                  position: "absolute",
-                  top: "3px",
-                  left: "3px",
-                  width: "8.47px",
-                  height: "6.3px",
-                  pointerEvents: "none",
-                }}/>
-              받기
-            </button>
-            <button
-              className="flex relative items-center justify-center rounded-[10px] font-medium h-14 w-[160px]"
-              onClick={onContinue}
-              style={{
-                background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                border: "2px solid #76C1FF",
-                outline: "2px solid #000000",
-                boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "18px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              <img
-                src={Images.ButtonPointBlue}
-                alt="button-point-blue"
-                style={{
-                  position: "absolute",
-                  top: "3px",
-                  left: "3px",
-                  width: "8.47px",
-                  height: "6.3px",
-                  pointerEvents: "none",
-                }}/>
-              도전하기
-            </button>
-          </>
-        )}
+            }}
+          >
+            축하합니다!
+            <br />
+            베팅 금액의 3배를 획득하셨습니다!
+          </div>
+        </div>
+      </div>
+      {/* 버튼 */}
+      <div className="mt-4">
+        <button
+          className="flex relative items-center justify-center rounded-[10px] font-medium h-14 w-[160px]"
+          onClick={onQuit}
+          style={{
+            background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+            border: "2px solid #76C1FF",
+            outline: "2px solid #000000",
+            boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "18px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+          }}
+        >
+          <img
+            src={Images.ButtonPointBlue}
+            alt="button-point-blue"
+            style={{
+              position: "absolute",
+              top: "3px",
+              left: "3px",
+              width: "8.47px",
+              height: "6.3px",
+              pointerEvents: "none",
+            }}/>
+          완료
+        </button>
       </div>
     </div>
   );
@@ -340,10 +220,7 @@ interface RPSResultDialogProps {
   onClose: () => void;
   result: "win" | "lose" | null;
   winnings: number;
-  onContinue: () => void;
   onQuit: () => void;
-  consecutiveWins: number;
-  winMultiplier: number;
 }
 
 const RPSResultDialog: React.FC<RPSResultDialogProps> = ({
@@ -351,10 +228,7 @@ const RPSResultDialog: React.FC<RPSResultDialogProps> = ({
   onClose,
   result,
   winnings,
-  onContinue,
   onQuit,
-  consecutiveWins,
-  winMultiplier,
 }) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -373,10 +247,7 @@ const RPSResultDialog: React.FC<RPSResultDialogProps> = ({
         {result === "win" ? (
           <ResultWin
             winnings={winnings}
-            onContinue={onContinue}
             onQuit={onQuit}
-            consecutiveWins={consecutiveWins}
-            winMultiplier={winMultiplier * 3}
           />
         ) : result === "lose" ? (
           <ResultLose winnings={winnings} onQuit={onQuit} />

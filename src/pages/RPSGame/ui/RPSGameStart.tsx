@@ -1,20 +1,19 @@
 // src/pages/RPSGame/ui/RPSGameStart.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import Images from "@/shared/assets/images";
 import { formatNumber } from "@/shared/utils/formatNumber";
 import { useRPSGameStore } from "../store";
+import { useUserStore } from "@/entities/User/model/userModel";
 
 interface RPSGameStartProps {
   onStart: () => void;
-  allowedBetting: number;
   onCancel: () => void;
 }
 
 const RPSGameStart: React.FC<RPSGameStartProps> = ({
   onStart,
-  allowedBetting,
   onCancel,
 }) => {
   const [betAmount, setBetAmount] = useState<string>("");
@@ -22,18 +21,23 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
   const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>("");
   const setBetAmountStore = useRPSGameStore((state) => state.setBetAmount);
+  
+  // 사용자의 보유 포인트 가져오기
+  const starPoints = useUserStore((state) => state.starPoints);
+  
+  // 새로운 베팅 규칙에 따른 베팅 가능 금액 계산
+  const allowedBetting = starPoints >= 2000 ? 1000 : Math.floor(starPoints / 2);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const numericValue = parseInt(value);
 
-    // 빈 값이거나 숫자인 경우에만 입력 허용 (100단위 제한 제거)
+    // 빈 값이거나 숫자인 경우에만 입력 허용
     if (
       value === "" ||
-      (/^\d+$/.test(value) && numericValue <= allowedBetting + 1)
+      (/^\d+$/.test(value) && numericValue <= allowedBetting)
     ) {
       setBetAmount(value);
-      // console.log(`betAmount set to: ${value}`);
     }
   };
 
@@ -42,7 +46,7 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
       | React.FormEvent<HTMLFormElement>
       | React.MouseEvent<HTMLButtonElement>
   ) => {
-    event.preventDefault(); // 기본 폼 제출을 막습니다.
+    event.preventDefault();
 
     // 빈 값 체크
     if (!betAmount || betAmount.trim() === "") {
@@ -67,24 +71,20 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
       return;
     }
 
-    if (amount > 0 && amount <= allowedBetting + 1) {
-      // console.log("Starting game with betAmount:", amount);
-      setBetAmountStore(amount); // betAmount를 설정
-      setIsAlertOpen(false); // 알림 모달 닫기
-      onStart(); // 게임 시작
+    if (amount > 0 && amount <= allowedBetting) {
+      setBetAmountStore(amount);
+      setIsAlertOpen(false);
+      onStart();
     } else {
       setAlertMessage(
-        `The betting amount must be at least 1 star and up to a maximum of ${
-          allowedBetting + 1
-        } stars.`
+        `베팅 금액은 최소 100포인트부터 최대 ${allowedBetting}포인트까지 가능합니다.`
       );
       setIsAlertOpen(true);
     }
   };
 
   const handleCancelClick = () => {
-    onCancel(); // 취소 시 호출하여 주사위 게임으로 돌아감
-    // console.log("Game canceled by user");
+    onCancel();
   };
 
   return (
@@ -111,9 +111,9 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
             WebkitTextStroke: "1px #000000",
           }}
         >
-          삼세판의 승부!
+          단판 승부!
           <br />
-          당신의 기회를 돌려보세요!
+          행운을 시험해보세요!
         </h1>
 
         <div className="flex flex-col items-center justify-center mt-4">
@@ -156,7 +156,7 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
                   WebkitTextStroke: "1px #000000",
                 }}
               >
-                내 포인트
+                베팅 가능
               </p>
               <div className="flex flex-row items-center justify-center gap-1">
                 <img
@@ -178,14 +178,31 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
               </div>
             </div>
           </div>
+          
+          {/* 베팅 가능 금액 안내 */}
+          {/* <div className="mt-2 text-center">
+            <p
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "12px",
+                fontWeight: 400,
+                color: "#FDE047",
+                WebkitTextStroke: "0.5px #000000",
+              }}
+            >
+              베팅 가능: {formatNumber(allowedBetting)} 포인트
+              {starPoints >= 2000 && " (최대 1000포인트 제한)"}
+            </p>
+          </div> */}
+          
           <form onSubmit={handleStartClick}>
             <input
-              placeholder="베팅할 별 개수를 입력하세요!(100단위로 입력)"
+              placeholder={`베팅할 포인트를 입력하세요! (100단위)`}
               type="number"
               step="100"
               min="100"
               value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
+              onChange={handleInputChange}
               max={allowedBetting}
               className="h-12 px-4 mt-4 w-[342px] text-start"
               style={{
@@ -326,11 +343,11 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
                   <strong>1. 베팅하기</strong>
                   <ul className="list-disc pl-5">
                     <li>
-                      행운을 시험해보세요! 최대 27배 보상까지!
+                      행운을 시험해보세요! 승리 시 3배 보상!
                       <br />
-                      원하는 스타 수를 입력해주세요.
+                      원하는 포인트를 입력해주세요.
                       <br />
-                      베팅은 보유 스타의 절반까지 가능합니다.
+                      베팅은 보유 포인트의 절반까지 가능합니다.
                     </li>
                   </ul>
                 </li>
@@ -338,31 +355,27 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
                   <strong>2. 가위바위보 진행</strong>
                   <ul className="list-disc pl-5">
                     <li>
-                      각 라운드마다 가위, 바위, 보 중 하나를 선택하세요. <br />{" "}
-                      최대 3라운드까지 진행됩니다.
+                      가위, 바위, 보 중 하나를 선택하세요. <br />
+                      단판으로 진행됩니다.
                     </li>
                   </ul>
                 </li>
                 <li>
-                  <strong>3. 보상 받기</strong>
+                  <strong>3. 결과 확인</strong>
                   <ul className="list-disc pl-5">
                     <li>
-                      한 번이라도 승리하면 보상은 3배! <br /> 3연승 시 최대
-                      27배까지 보상이 누적됩니다.
-                      <br />
-                      (예: 1라운드 승리 시 3배 → 2라운드 승리 시 9배 → 3라운드
-                      승리 시 27배)
+                      승리하면 베팅 금액의 3배를 획득! <br />
+                      패배하면 베팅 금액을 잃습니다.
                     </li>
                   </ul>
                 </li>
                 <li>
-                  <strong>4. 계속 도전 or 보상 수령 결정</strong>
+                  <strong>4. 게임 종료</strong>
                   <ul className="list-disc pl-5">
                     <li>
-                      매 라운드 승리 후, 도전을 계속할지 보상을 받을지
-                      선택하세요.
+                      승리/패배 결과에 따라 게임이 종료됩니다.
                       <br />
-                      단, 한 번이라도 패배하면 모든 베팅이 사라집니다
+                      새로운 게임을 원하면 다시 시작하세요.
                     </li>
                   </ul>
                 </li>

@@ -575,14 +575,8 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         상품을 받아보세요!
       </h1>
 
-      <motion.div
-        initial={{ x: -200 }}
-        animate={{ x: 0 }}
-        transition={{
-          duration: 1,
-          ease: "easeOut",
-        }}
-        className="relative w-full h-[402px] md:h-[471px] mt-8"
+      <div
+        className="relative w-full h-[402px] md:h-[471px] mt-16"
       >
         {/* SpinProp을 받침대로 사용 */}
         <img
@@ -598,22 +592,16 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         />
 
                  {/* NewPin을 받침대 위에 고정 - 돌림판 상단 정확한 위치 */}
-         <motion.img
+         <img
            src={Images.NewPin}
            alt="Spin-pin"
            className="absolute z-20 min-[376px]:w-[70px] min-[376px]:h-[70px] w-[50px] h-[50px]"
            style={{
              ...pinStyle,
              // 핀을 돌림판의 정확한 상단에 위치하도록 미세 조정
-             transform: "translateY(-2px)",
+             transform: "translateY(-6px)",
            }}
            loading="lazy"
-           initial={{ x: -200 }}
-           animate={{ x: 0 }}
-           transition={{
-             duration: 1,
-             ease: "easeOut",
-           }}
          />
 
         {/* NewWheel을 받침대 위에서 회전 - 비율 기반 위치 */}
@@ -625,23 +613,14 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
             transform: "translateX(-50%) translateY(-50%)",
           }}
         >
-          <motion.div
-            initial={{ x: -200 }}
-            animate={{ x: 0 }}
-            transition={{
-              duration: 1,
-              ease: "easeOut",
-            }}
-          >
-            <CustomWheel
-              mustSpin={mustSpin}
-              prizeNumber={prizeNumber}
-              onSpinEnd={handleSpinEnd}
-              data={data}
-            />
-          </motion.div>
+          <CustomWheel
+            mustSpin={mustSpin}
+            prizeNumber={prizeNumber}
+            onSpinEnd={handleSpinEnd}
+            data={data}
+          />
         </div>
-      </motion.div>
+      </div>
 
       <button
         onClick={handleSpinClick}
@@ -659,7 +638,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
           boxShadow:
             "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
         }}
-        className={`flex relative items-center justify-center h-14 mt-4 w-[300px] md:w-[342px] rounded-[10px] ${
+        className={`flex relative items-center justify-center h-14 mt-2 mb-2 w-[300px] md:w-[342px] rounded-[10px] ${
           isSpinning || mustSpin ? "cursor-not-allowed" : ""
         }`}
       >
@@ -771,18 +750,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                      `${getPrizeDisplayName(prizeData?.spinType, prizeData?.baseAmount)}: ${prizeData?.amount || 0}`}
                   </p>
                 </div>
-                {/* API 문서의 추가 정보 표시 */}
-                {prizeData && prizeData.spinType !== "BOOM" && (
-                  <div className="mt-2 ml-6 text-xs text-gray-300">
-                    {prizeData.baseAmount !== prizeData.amount && (
-                      <p>기본 보상: {prizeData.baseAmount} → 최종 보상: {prizeData.amount}</p>
-                    )}
-                    {prizeData.rank && <p>순위: {prizeData.rank}</p>}
-                    {prizeData.diceCount && <p>주사위: {prizeData.diceCount}</p>}
-                    {prizeData.starCount && <p>별: {prizeData.starCount}</p>}
-                    {prizeData.slCount && <p>코인: {prizeData.slCount}</p>}
-                  </div>
-                )}
+                
               </div>
             </div>
             <div className="space-y-3 w-[300px] h-14 mt-4">
