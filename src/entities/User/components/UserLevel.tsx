@@ -33,10 +33,10 @@ const UserLevel: React.FC<{
   onAlertClick,
 }) => {
   // 디버깅을 위한 로그 추가
-  console.log("🔍 UserLevel 컴포넌트 렌더링");
-  console.log("🎯 characterType:", characterType);
-  console.log("📦 equippedItems:", equippedItems);
-  console.log("📊 equippedItems.length:", equippedItems.length);
+  // console.log("🔍 UserLevel 컴포넌트 렌더링");
+  // console.log("🎯 characterType:", characterType);
+  // console.log("📦 equippedItems:", equippedItems);
+  // console.log("📊 equippedItems.length:", equippedItems.length);
 
   // 레벨에 따른 캐릭터 이미지 선택 로직 (DiceEvent와 동일)
   const getCharacterImageSrc = () => {
@@ -49,7 +49,7 @@ const UserLevel: React.FC<{
 
   // 아이템 이미지 매핑 (index.tsx의 getEquipmentIcon과 동일한 로직)
   const getItemImage = (itemType: ItemType, rarity: number): string => {
-    console.log(`🎨 UserLevel getItemImage 호출됨 - itemType: ${itemType}, characterType: ${characterType}, rarity: ${rarity}`);
+    // console.log(`🎨 UserLevel getItemImage 호출됨 - itemType: ${itemType}, characterType: ${characterType}, rarity: ${rarity}`);
     
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
@@ -73,7 +73,7 @@ const UserLevel: React.FC<{
     }
 
     const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
-    console.log(`🎨 UserLevel 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
+    // console.log(`🎨 UserLevel 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
     
     return imagePath;
   };

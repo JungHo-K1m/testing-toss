@@ -39,11 +39,11 @@ const Board: React.FC<BoardProps> = ({
   characterType = "cat",
 }) => {
   // 디버깅을 위한 로그 추가
-  console.log("🔍 Board 컴포넌트 렌더링");
-  console.log("🎯 position:", position);
-  console.log("🎯 characterType:", characterType);
-  console.log("📦 equippedItems:", equippedItems);
-  console.log("📊 equippedItems.length:", equippedItems.length);
+  // console.log("🔍 Board 컴포넌트 렌더링");
+  // console.log("🎯 position:", position);
+  // console.log("🎯 characterType:", characterType);
+  // console.log("📦 equippedItems:", equippedItems);
+  // console.log("📊 equippedItems.length:", equippedItems.length);
 
   const { x, y } = calculateTilePosition(position, initialX, initialY, delta);
 
@@ -61,7 +61,7 @@ const Board: React.FC<BoardProps> = ({
 
   // 아이템 이미지 매핑 (index.tsx의 getEquipmentIcon과 동일한 로직)
   const getItemImage = (itemType: ItemType, rarity: number): string => {
-    console.log(`🎨 Board getItemImage 호출됨 - itemType: ${itemType}, characterType: ${characterType}, rarity: ${rarity}`);
+    // console.log(`🎨 Board getItemImage 호출됨 - itemType: ${itemType}, characterType: ${characterType}, rarity: ${rarity}`);
     
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
@@ -85,7 +85,7 @@ const Board: React.FC<BoardProps> = ({
     }
 
     const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
-    console.log(`🎨 Board 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
+    // console.log(`🎨 Board 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
     
     return imagePath;
   };

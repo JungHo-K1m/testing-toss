@@ -506,7 +506,7 @@ const MyAssets: React.FC = () => {
           onClick={() => {
             playSfx(Audios.button_click);
             // 광고 시청 로직을 여기에 추가
-            console.log("광고 시청 후 랜덤박스 얻기");
+            // console.log("광고 시청 후 랜덤박스 얻기");
           }}
         >
           <img

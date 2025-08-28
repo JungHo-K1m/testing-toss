@@ -41,7 +41,7 @@ const saveLog = (action: string, data: any) => {
     localStorage.setItem('rpsApiLogs', JSON.stringify(existingLogs));
     
     // 콘솔에도 출력
-    console.log(`[RPS API] ${action}:`, data);
+    // console.log(`[RPS API] ${action}:`, data);
   } catch (error) {
     console.error('로그 저장 실패:', error);
   }
@@ -208,7 +208,7 @@ export const getLastRPSApiLog = () => {
 export const clearRPSApiLogs = () => {
   try {
     localStorage.removeItem('rpsApiLogs');
-    console.log('RPS API 로그가 초기화되었습니다.');
+    // console.log('RPS API 로그가 초기화되었습니다.');
   } catch (error) {
     console.error('로그 초기화 실패:', error);
   }
@@ -225,7 +225,7 @@ export const exportRPSApiLogs = () => {
     link.download = `rps-api-logs-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     
-    console.log('RPS API 로그가 다운로드되었습니다.');
+    // console.log('RPS API 로그가 다운로드되었습니다.');
   } catch (error) {
     console.error('로그 다운로드 실패:', error);
   }

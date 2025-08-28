@@ -8,7 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json', // 기본 Content-Type
   },
-  withCredentials: false, // true에서 false로 변경
+  withCredentials: true, // false에서 true로 변경하여 쿠키 전송 활성화
 });
 
 // 요청 인터셉터 설정

@@ -106,7 +106,7 @@ const FirstRewardPage: React.FC = () => {
                       }}
                     >
                       <img
-                        src={Images.Raffle}
+                        src={Images.KeyIcon}
                         alt="reward-icon"
                         className="w-[62px] h-[62px]"
                       />

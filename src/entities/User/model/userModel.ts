@@ -10,6 +10,7 @@ import { completeTutorialAPI} from '@/features/DiceEvent/api/completeTutorialApi
 import { useSoundStore } from '@/shared/store/useSoundStore';
 import { fetchLeaderTabAPI } from '@/entities/Leaderboard/api/leaderboardAPI';
 import { getItemList, InventoryResponse } from '@/entities/User/api/getItemList';
+import Cookies from 'js-cookie';
 
 // 팝업 정보 인터페이스 (새로 추가)
 interface PopUp {
@@ -492,17 +493,22 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그인 함수
   login: async (initData: string): Promise<void> => {
-    // console.log('Step: login 시작, initData:', initData);
+    // // console.log('Step: login 시작, initData:', initData);
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/auth/login', { initData });
 
       if (response.data.code === 'OK') {
         const { userId, accessToken, refreshToken } = response.data.data;
-        // console.log('Step: login 성공, userId:', userId);
+        // // console.log('Step: login 성공, userId:', userId);
         // 토큰 및 userId 저장
         localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        // 리프레시 토큰을 쿠키에 저장 (7일 만료)
+        Cookies.set('refreshToken', refreshToken, { 
+          expires: 7, 
+          secure: true, 
+          sameSite: 'strict' 
+        });
         set({  });
 
         // 사용자 데이터 가져오기
@@ -535,7 +541,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 회원가입 함수
   signup: async (initData: string, petType: 'DOG' | 'CAT'): Promise<void> => {
-    // console.log('Step: signup 시작, initData:', initData, 'petType:', petType);
+    // // console.log('Step: signup 시작, initData:', initData, 'petType:', petType);
     set({ isLoading: true, error: null });
     try {
       // 회원가입 요청 보내기
@@ -559,9 +565,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그아웃 함수
   logout: () => {
-    // console.log('Step: logout 실행. 토큰 및 userId 제거 및 상태 초기화.');
+    // // console.log('Step: logout 실행. 토큰 및 userId 제거 및 상태 초기화.');
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken'); // 추가된 부분: refreshToken 제거
+    Cookies.remove('refreshToken'); // 쿠키에서 리프레시 토큰 제거
     set({
       nickName: null,
       uid: null,
@@ -598,15 +604,15 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 토큰 갱신 함수
   refreshToken: async (): Promise<boolean> => {
-    // console.log('Step: refreshToken 시작');
+    // // console.log('Step: refreshToken 시작');
     try {
       const response = await api.get('/auth/refresh');
-      // console.log('Step: refreshToken 응답:', response);
+      // // console.log('Step: refreshToken 응답:', response);
   
       const newAccessToken = response.headers['authorization'];
       if (newAccessToken) {
         localStorage.setItem('accessToken', newAccessToken.replace('Bearer ', ''));
-        // console.log('Step: 새로운 accessToken 저장 완료');
+        // // console.log('Step: 새로운 accessToken 저장 완료');
         return true;
       } else {
         // console.warn('Step: Authorization 헤더가 없습니다.');
@@ -654,7 +660,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         isAuto
       });
   
-      // console.log('스위치 변경 성공:', data);
+      // // console.log('스위치 변경 성공:', data);
     } catch (error: any) {
       // console.error('스위치 변경 중 에러 발생:', error);
       set({ error: error.message || '스위치 변경에 실패했습니다.' });
@@ -673,7 +679,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         completeTutorial
       });
   
-      // console.log('튜토리얼 완료:', data);
+      // // console.log('튜토리얼 완료:', data);
     } catch (error: any) {
       // console.error('튜토리얼 중 에러 발생:', error);
       set({ error: error.message || '튜토리얼에 실패했습니다.' });
@@ -692,7 +698,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     //   const response = await api.get('/test/items/gold');
     //   if (response.data.code === 'OK') {
     //     set({ items: response.data.data });
-    //     // console.log('골드 아이템 추가 성공:', response.data.data);
+    //     // // console.log('골드 아이템 추가 성공:', response.data.data);
     //   } else {
     //     throw new Error(response.data.message || '골드 아이템 추가 실패');
     //   }

@@ -2,7 +2,7 @@ import api from '@/shared/api/axiosInstance';
 
 async function deleteWallet(petinfo: any, navigate: any): Promise<any> {
     const id = petinfo;
-    // // console.log("Deleting pet with ID:", id);
+    // // // console.log("Deleting pet with ID:", id);
     const url = `pet/${id}`;
 
     try {

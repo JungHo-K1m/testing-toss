@@ -33,7 +33,7 @@ const SettingsPage: React.FC =() => {
     }
 
     const handleCardFlipGameEnd = (result: 'win' | 'lose', reward?: { type: string; amount: number }) => {
-        console.log('Game Result:', result, reward);
+        // console.log('Game Result:', result, reward);
         setIsCardFlipGameActive(false);
     };
 

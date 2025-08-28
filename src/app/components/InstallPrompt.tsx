@@ -56,9 +56,9 @@ const InstallPrompt: React.FC = () => {
       (deferredPrompt as any).prompt();
       (deferredPrompt as any).userChoice.then((choiceResult: any) => {
         if (choiceResult.outcome === "accepted") {
-          // console.log("User accepted the A2HS prompt");
+          // // console.log("User accepted the A2HS prompt");
         } else {
-          // console.log("User dismissed the A2HS prompt");
+          // // console.log("User dismissed the A2HS prompt");
         }
         setDeferredPrompt(null);
         setIsVisible(false);

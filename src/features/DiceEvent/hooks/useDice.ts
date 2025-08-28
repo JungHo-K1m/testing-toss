@@ -16,7 +16,7 @@ const useDice = () => {
   const handleRollComplete = (value: number) => {
     setDiceValue(value);
     setButtonDisabled(false);
-    // console.log("Gauge Value after rolling dice:", gaugeValue); // 최신 게이지 값 출력
+    // // console.log("Gauge Value after rolling dice:", gaugeValue); // 최신 게이지 값 출력
   };
 
   return {

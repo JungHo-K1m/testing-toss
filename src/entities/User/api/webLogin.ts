@@ -14,7 +14,7 @@ export const webLoginWithAddress = async (walletAddress: string, referrerCode: s
         const authorizationHeader = response.headers['authorization'];
 
         if (code === "OK" && authorizationHeader) {
-            // console.log("wallet Login: ", response);
+            // // console.log("wallet Login: ", response);
             // Bearer 접두사를 제거하여 액세스 토큰 추출
             const accessToken = authorizationHeader.replace('Bearer ', '');
             // 로컬 스토리지에 액세스 토큰 저장

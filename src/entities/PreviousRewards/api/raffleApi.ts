@@ -11,7 +11,7 @@ export interface RaffleInitialDataResponse {
 // 래플 초기 데이터 조회 API
 export const fetchInitialRaffleAPI = async (): Promise<RaffleInitialDataResponse> => {
   const response = await api.get("/leader/raffle/initial");
-  // console.log("raffle = ", response);
+  // // console.log("raffle = ", response);
   return response.data.data as RaffleInitialDataResponse;
 };
 

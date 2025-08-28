@@ -46,9 +46,9 @@ const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
 const queryClient = new QueryClient();
 
-console.log("[main.tsx] Starting app render");
-console.log("[main.tsx] Root container:", container);
-console.log("[main.tsx] Root element:", root);
+// console.log("[main.tsx] Starting app render");
+// console.log("[main.tsx] Root container:", container);
+// console.log("[main.tsx] Root element:", root);
 
 root.render(
   <React.StrictMode>
@@ -62,4 +62,4 @@ root.render(
   </React.StrictMode>
 );
 
-console.log("[main.tsx] App render completed");
+// console.log("[main.tsx] App render completed");

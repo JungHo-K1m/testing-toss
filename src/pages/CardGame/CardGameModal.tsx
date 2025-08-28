@@ -54,64 +54,64 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
   const [alertMessage, setAlertMessage] = useState<string>("");
 
   // 디버깅을 위한 로깅
-  console.log("CardBettingModal 렌더링:", { myPoint, allowedBetting });
+  // console.log("CardBettingModal 렌더링:", { myPoint, allowedBetting });
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     const numericValue = parseInt(value);
 
-    console.log("=== 입력값 변화 ===");
-    console.log("입력된 값:", value);
-    console.log("숫자 변환 결과:", numericValue);
-    console.log("베팅 가능 금액:", allowedBetting);
-    console.log(
-      "입력 허용 조건:",
-      value === "" || (/^\d+$/.test(value) && numericValue <= allowedBetting)
-    );
+    // console.log("=== 입력값 변화 ===");
+    // console.log("입력된 값:", value);
+    // console.log("숫자 변환 결과:", numericValue);
+    // console.log("베팅 가능 금액:", allowedBetting);
+    // console.log(
+    //   "입력 허용 조건:",
+    //   value === "" || (/^\d+$/.test(value) && numericValue <= allowedBetting)
+    // );
 
     // 빈 값이거나 숫자인 경우에만 입력 허용 (100단위 제한 제거)
     if (value === "" || (/^\d+$/.test(value) && numericValue <= allowedBetting)) {
       setBet(value);
-      console.log("✅ 입력값 설정됨:", value);
-      console.log("현재 bet 상태:", value);
-      console.log("bet 상태 타입:", typeof value);
+      // // console.log("✅ 입력값 설정됨:", value);
+      // // console.log("현재 bet 상태:", value);
+      // // console.log("bet 상태 타입:", typeof value);
     } else {
-      console.log("❌ 입력값 거부됨:", value);
+      // // console.log("❌ 입력값 거부됨:", value);
     }
   };
 
   const handleBet = () => {
-    console.log("=== 베팅 시도 ===");
-    console.log("입력된 베팅 금액:", bet);
-    console.log("입력된 베팅 금액 (숫자):", Number(bet));
-    console.log("보유 포인트:", myPoint);
-    console.log("베팅 버튼 클릭됨!");
+    // console.log("=== 베팅 시도 ===");
+    // console.log("입력된 베팅 금액:", bet);
+    // console.log("입력된 베팅 금액 (숫자):", Number(bet));
+    // console.log("보유 포인트:", myPoint);
+    // console.log("베팅 버튼 클릭됨!");
 
     const amount = Number(bet);
 
     // 100단위 검증
     if (amount % 100 !== 0) {
-      console.log("❌ 100단위 검증 실패:", amount, "는 100의 배수가 아님");
-      console.log("모달창 열기 시도...");
+      // // console.log("❌ 100단위 검증 실패:", amount, "는 100의 배수가 아님");
+      // // console.log("모달창 열기 시도...");
       setAlertMessage("베팅 금액은 100단위로 입력해주세요.");
       setIsAlertOpen(true);
-      console.log("모달창 상태:", isAlertOpen);
+      // // console.log("모달창 상태:", isAlertOpen);
       return;
     }
-    console.log("✅ 100단위 검증 통과:", amount, "는 100의 배수");
+    // console.log("✅ 100단위 검증 통과:", amount, "는 100의 배수");
 
     if (amount > allowedBetting) {
-      console.log("❌ 베팅 가능 금액 초과:", amount, ">", allowedBetting);
-      console.log("모달창 열기 시도...");
+      // // console.log("❌ 베팅 가능 금액 초과:", amount, ">", allowedBetting);
+      // // console.log("모달창 열기 시도...");
       setAlertMessage("베팅 가능한 금액보다 많이 입력하였습니다.");
       setIsAlertOpen(true);
-      console.log("모달창 상태:", isAlertOpen);
+      // // console.log("모달창 상태:", isAlertOpen);
       return;
     }
-    console.log("✅ 베팅 가능 금액 검증 통과:", amount, "<=", allowedBetting);
+    // // console.log("✅ 베팅 가능 금액 검증 통과:", amount, "<=", allowedBetting);
 
-    // 모든 검증을 통과한 경우 에러와 알림 초기화
-    console.log("�� 모든 검증 통과! 게임 시작:", amount);
+    // // 모든 검증을 통과한 경우 에러와 알림 초기화
+    // // console.log("�� 모든 검증 통과! 게임 시작:", amount);
     setError("");
     setIsAlertOpen(false);
     onStart(amount);
@@ -204,7 +204,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
         <form
           className="w-full"
           onSubmit={(e) => {
-            console.log("폼 제출 이벤트 발생!");
+            // console.log("폼 제출 이벤트 발생!");
             e.preventDefault();
             handleBet();
           }}
@@ -524,12 +524,12 @@ const CardGameBoard = ({ betAmount, onResult, onCancel, resetAnimationState }: a
             : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1, // 스페이드=1, 다이아=2, 하트=3, 클럽=4 (왼쪽부터 1)
       };
 
-      console.log("카드 플립 API 요청:", requestData);
+      // console.log("카드 플립 API 요청:", requestData);
 
       // API 호출
       const response: CardFlipResponseData = await flipCard(requestData);
 
-      console.log("카드 플립 API 응답:", response);
+      // // console.log("카드 플립 API 응답:", response);
 
       // API 응답 구조에 맞게 결과 처리 수정
       // result가 문자열 타입이므로 "WIN"이면 승리, "DEFEAT"이면 패배로 처리
@@ -553,7 +553,7 @@ const CardGameBoard = ({ betAmount, onResult, onCancel, resetAnimationState }: a
         selectedSuit: selectedSuit
       };
 
-      console.log("게임 결과 처리 - 현재 게임 상태:", gameState);
+      // // console.log("게임 결과 처리 - 현재 게임 상태:", gameState);
       
       // �� 핵심 수정: gameState를 5번째 매개변수로 전달
       onResult(win, reward, answer, response.cardFlipId, gameState);
@@ -897,11 +897,11 @@ const CardGameResultDialog = ({
   // 게임 패배 시 자동으로 광고 로드 시작
   useEffect(() => {
     if (isOpen && !win && !hasUsedAdForGame && isSupported) {
-      console.log('게임 패배 시 자동 광고 로드 시작');
+      // // console.log('게임 패배 시 자동 광고 로드 시작');
       
       // 🔥 핵심 수정: 이미 로딩 중이거나 로드된 상태면 건너뛰기
       if (adLoadStatus === 'loading' || adLoadStatus === 'loaded') {
-        console.log('이미 광고 로딩 중이거나 로드됨 - 자동 로드 건너뛰기');
+        // // console.log('이미 광고 로딩 중이거나 로드됨 - 자동 로드 건너뛰기');
         return;
       }
       
@@ -923,7 +923,7 @@ const CardGameResultDialog = ({
   // 광고 시청 핸들러 수정
   const handleAdWatch = async () => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
+      // // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
@@ -939,7 +939,7 @@ const CardGameResultDialog = ({
 
     try {
       setIsAdLoading(true);
-      console.log('카드게임 재시도 광고 시작 - 게임 ID:', cardFlipId);
+      // // console.log('카드게임 재시도 광고 시작 - 게임 ID:', cardFlipId);
       
       //  핵심 수정: 광고 로딩 상태 확인 및 재시도 로직
       let retryCount = 0;
@@ -949,7 +949,7 @@ const CardGameResultDialog = ({
         try {
           // 광고가 로드되지 않은 경우 먼저 로드
           if (adLoadStatus !== 'loaded') {
-            console.log(`광고 로드 시도 ${retryCount + 1}/${maxRetries}...`);
+            // // console.log(`광고 로드 시도 ${retryCount + 1}/${maxRetries}...`);
             await loadAd('CARD_FLIP_RETRY');
             
             // 로드 후 상태 확인 - 최대 3초 대기
@@ -992,15 +992,15 @@ const CardGameResultDialog = ({
           : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1
       };
 
-      console.log('카드플립 재시도 요청 데이터:', requestData);
+      // // console.log('카드플립 재시도 요청 데이터:', requestData);
 
       // 광고 표시 및 보상 결과 대기
       const rewardData = await showAd('CARD_FLIP_RETRY', requestData);
-      console.log('카드게임 재시도 광고 완료 - 보상 결과:', rewardData);
+      // // console.log('카드게임 재시도 광고 완료 - 보상 결과:', rewardData);
       
       // 🔥 핵심 수정: 광고 완료 후 게임 재시도 화면으로 이동
       if (rewardData && rewardData.type === 'CARD_FLIP_RETRY') {
-        console.log('광고 시청 완료 - 게임 재시도 화면으로 이동');
+        // // console.log('광고 시청 완료 - 게임 재시도 화면으로 이동');
         
         // 🔥 핵심 수정: localStorage 처리 개선 - 에러 방지
         try {
@@ -1023,7 +1023,7 @@ const CardGameResultDialog = ({
             if (!usedGameIds.includes(cardFlipId)) {
               usedGameIds.push(cardFlipId);
               localStorage.setItem('cardFlipAdUsedGames', JSON.stringify(usedGameIds));
-              console.log('게임 ID 저장 완료:', cardFlipId);
+              // // console.log('게임 ID 저장 완료:', cardFlipId);
             }
           }
         } catch (storageError) {
@@ -1264,16 +1264,16 @@ const CardGameModal = ({ onClose }: any) => {
     setCardRevealed(false);
     setSavedGameState(null);
     
-    console.log('새로운 카드게임 시작 - ID:', gameId);
+    // // console.log('새로운 카드게임 시작 - ID:', gameId);
   };
 
-  // �� 핵심 수정: 게임 상태 저장 함수 개선
+  // 핵심 수정: 게임 상태 저장 함수 개선
   const saveGameState = (gameState: {
     mode: "color" | "suit" | null;
     selectedColor: "RED" | "BLACK" | null;
     selectedSuit: string | null;
   }) => {
-    console.log('게임 상태 저장 시작:', gameState);
+    // // console.log('게임 상태 저장 시작:', gameState);
     
     // 전달받은 게임 상태를 저장
     setSavedGameState(gameState);
@@ -1283,13 +1283,13 @@ const CardGameModal = ({ onClose }: any) => {
     setSelectedColor(gameState.selectedColor);
     setSelectedSuit(gameState.selectedSuit);
     
-    console.log('게임 상태 저장 완료:', gameState);
+    // // console.log('게임 상태 저장 완료:', gameState);
   };
 
   // 🔥 핵심 수정: 게임 재시도 핸들러 개선
   const handleGameRetry = () => {
-    console.log('카드게임 재시도 시작');
-    console.log('저장된 게임 상태:', savedGameState);
+    // // console.log('카드게임 재시도 시작');
+    // // console.log('저장된 게임 상태:', savedGameState);
     
     if (!savedGameState) {
       console.error('저장된 게임 상태가 없습니다. 게임을 종료합니다.');
@@ -1301,14 +1301,14 @@ const CardGameModal = ({ onClose }: any) => {
     setMode(savedGameState.mode);
     setSelectedColor(savedGameState.selectedColor);
     setSelectedSuit(savedGameState.selectedSuit);
-    console.log('게임 상태 복원 완료:', savedGameState);
+    // // console.log('게임 상태 복원 완료:', savedGameState);
     
-    // �� 핵심 수정: 결과 모달만 닫고 게임 플레이 화면으로 전환
+    // 핵심 수정: 결과 모달만 닫고 게임 플레이 화면으로 전환
     setIsResultOpen(false);
     setResult({ win: false, reward: 0, answer: null });
     setCardRevealed(false);
     
-    console.log('카드게임 재시도 완료 - CardGameBoard 화면으로 이동');
+    // // console.log('카드게임 재시도 완료 - CardGameBoard 화면으로 이동');
   };
 
 
@@ -1350,7 +1350,7 @@ const CardGameModal = ({ onClose }: any) => {
             betAmount={betAmount}
             onResult={async (win: boolean, reward: number, answer: any, cardFlipId: number, gameState: any) => {
               //  핵심 수정: 결과 처리 전에 게임 상태 저장 (전달받은 gameState 사용)
-              console.log('게임 결과 수신 - 게임 상태:', gameState);
+              // // console.log('게임 결과 수신 - 게임 상태:', gameState);
               saveGameState(gameState);
               
               setResult({ win, reward, answer });

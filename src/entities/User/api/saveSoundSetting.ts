@@ -19,7 +19,7 @@ async function saveSoundSetting(soundData: SoundSettingData): Promise<boolean> {
     // 백엔드에서 code === 'OK' && data가 있으면 성공 처리
     if (response.data.code === "OK") {
       if (response.data.data !== null) {
-        // console.log("사운드 설정 저장 성공:", response.data);
+        // // console.log("사운드 설정 저장 성공:", response.data);
         return true;
       } else {
         // console.warn("사운드 설정 저장 실패 (data = null):", response.data);

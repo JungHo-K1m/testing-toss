@@ -161,7 +161,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                   <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
                     <img
-                      src={Images.LotteryTicket}
+                      src={Images.KeyIcon}
                       className="w-8 h-8"
                       alt="Ticket Reward"
                     />

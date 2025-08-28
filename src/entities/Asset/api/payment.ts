@@ -17,7 +17,7 @@ export const paymentSession = async (itemId: number, pgType: string, buyerDappPo
             // // console.error('결제 세션 실패: data가 null입니다.');
             throw new Error('결제 시도에 실패했습니다.');
         }
-        // // console.log('결제 세션 성공:', response);
+        // // // console.log('결제 세션 성공:', response);
         return response.data.data;
     } else {
         // // console.error('Unexpected response:', response);

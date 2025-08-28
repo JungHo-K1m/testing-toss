@@ -15,15 +15,15 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelec
   const { playSfx } = useSound();
   
   React.useEffect(() => {
-    // console.log('Step 5-0: SelectCharacter 컴포넌트 마운트됨.');
+    // // console.log('Step 5-0: SelectCharacter 컴포넌트 마운트됨.');
     return () => {
-      // console.log('Step 5-0: SelectCharacter 컴포넌트 언마운트됨.');
+      // // console.log('Step 5-0: SelectCharacter 컴포넌트 언마운트됨.');
     };
   }, []);
 
   const handlePetSelection = (pet: 'DOG' | 'CAT') => {
     playSfx(Audios.button_click);
-    // console.log(`Step 5-0: ${pet} 선택됨.`);
+    // // console.log(`Step 5-0: ${pet} 선택됨.`);
     setSelectedPet(pet);
   };
 

@@ -58,22 +58,22 @@ const MissionPage: React.FC = () => {
   
   const handleInviteClick = async () => {
     playSfx(Audios.button_click);
-    console.log('🚀 친구초대 시작');
-    console.log('📍 현재 페이지:', window.location.href);
-    console.log('📍 User Agent:', navigator.userAgent);
+    // console.log('🚀 친구초대 시작');
+    // console.log('📍 현재 페이지:', window.location.href);
+    // console.log('📍 User Agent:', navigator.userAgent);
 
     // 환경 체크 - 공식 문서 기반
-    console.log('🔍 환경 체크 시작');
+    // console.log('🔍 환경 체크 시작');
     
     // 1. Toss 앱 환경 체크
     const isTossApp = navigator.userAgent.includes('Toss') || 
                       (window as any).TossBridge || 
                       (window as any).ReactNativeWebView;
-    console.log('📱 Toss 앱 환경 여부:', isTossApp);
+    // console.log('📱 Toss 앱 환경 여부:', isTossApp);
     
     // 2. 모바일 환경 체크
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('📱 모바일 환경 여부:', isMobile);
+    // console.log('📱 모바일 환경 여부:', isMobile);
     
     // 3. contactsViral 함수 존재 여부 체크
     if (typeof contactsViral !== 'function') {
@@ -88,7 +88,7 @@ const MissionPage: React.FC = () => {
       return;
     }
 
-    console.log('✅ contactsViral 함수 확인됨');
+    // console.log('✅ contactsViral 함수 확인됨');
     
     // 4. 미니앱 승인 상태 체크 (간접적)
     if (!isTossApp) {
@@ -99,12 +99,12 @@ const MissionPage: React.FC = () => {
     try {
       // 기존 cleanup 함수가 있다면 호출
       if (cleanupRef.current) {
-        console.log('🧹 기존 cleanup 함수 실행');
+        // console.log('🧹 기존 cleanup 함수 실행');
         cleanupRef.current();
       }
 
-      console.log('📱 contactsViral API 호출 시작');
-      console.log('모듈 ID:', '5682bc17-9e30-4491-aed0-1cd0f1f36f4b');
+      // console.log('📱 contactsViral API 호출 시작');
+      // console.log('모듈 ID:', '5682bc17-9e30-4491-aed0-1cd0f1f36f4b');
       
       // contactsViral API 호출
       const cleanupFn = contactsViral({
@@ -113,18 +113,18 @@ const MissionPage: React.FC = () => {
         },
         onEvent: (event: ContactsViralEvent) => {
           if (event.type === 'sendViral') {
-            console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
+            // console.log('리워드 지급:', event.data.rewardAmount, event.data.rewardUnit);
           } else if (event.type === 'close') {
-            console.log('종료 사유:', event.data.closeReason);
-            console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+            // console.log('종료 사유:', event.data.closeReason);
+            // console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
             
             // 공유 완료한 친구 수가 1명 이상이면 보상 API 호출
             if (event.data.sentRewardsCount && event.data.sentRewardsCount >= 1) {
-              console.log('🎁 친구 초대 보상 획득 시도:', event.data.sentRewardsCount, '명');
+              // console.log('🎁 친구 초대 보상 획득 시도:', event.data.sentRewardsCount, '명');
               
               getViralReward(event.data.sentRewardsCount)
                 .then((response) => {
-                  console.log('✅ 친구 초대 보상 획득 성공:', response);
+                  // console.log('✅ 친구 초대 보상 획득 성공:', response);
                   
                   // message가 "Success"인 경우 모달창 표시
                   if (response.message === "Success") {
@@ -135,7 +135,7 @@ const MissionPage: React.FC = () => {
                   console.error('❌ 친구 초대 보상 획득 실패:', error);
                 });
             } else {
-              console.log('⚠️ 공유 완료한 친구가 없어 보상을 받을 수 없습니다');
+              // console.log('⚠️ 공유 완료한 친구가 없어 보상을 받을 수 없습니다');
             }
           }
         },
@@ -144,15 +144,15 @@ const MissionPage: React.FC = () => {
         }
       });
 
-      console.log('✅ contactsViral API 호출 성공');
-      console.log('cleanup 함수 설정:', typeof cleanupFn);
-      console.log('cleanup 함수 내용:', cleanupFn);
-      console.log('이벤트 핸들러 등록 완료');
-      console.log('이제 친구 초대 모듈이 열릴 때까지 대기 중...');
+      // console.log('✅ contactsViral API 호출 성공');
+      // console.log('cleanup 함수 설정:', typeof cleanupFn);
+      // console.log('cleanup 함수 내용:', cleanupFn);
+      // console.log('이벤트 핸들러 등록 완료');
+      // console.log('이제 친구 초대 모듈이 열릴 때까지 대기 중...');
       
       // cleanup 함수가 실제로 함수인지 확인
       if (typeof cleanupFn === 'function') {
-        console.log('✅ cleanup 함수가 올바르게 반환됨');
+        // console.log('✅ cleanup 함수가 올바르게 반환됨');
         cleanupRef.current = cleanupFn;
       } else {
         console.error('❌ cleanup 함수가 올바르지 않음:', cleanupFn);
@@ -161,34 +161,34 @@ const MissionPage: React.FC = () => {
       
       // API 호출 후 상태 확인
       setTimeout(() => {
-        console.log('⏰ 3초 후 상태 확인:');
-        console.log('cleanup 상태:', cleanupRef.current);
-        console.log('현재 페이지:', window.location.href);
-        console.log('이벤트 발생 여부 확인 중...');
+        // console.log('⏰ 3초 후 상태 확인:');
+        // console.log('cleanup 상태:', cleanupRef.current);
+        // console.log('현재 페이지:', window.location.href);
+        // console.log('이벤트 발생 여부 확인 중...');
         
         // contactsViral 모듈 상태 확인
-        console.log('🔍 contactsViral 모듈 상태 확인:');
-        console.log('cleanup 함수 존재 여부:', !!cleanupRef.current);
-        console.log('cleanup 함수 타입:', typeof cleanupRef.current);
+        // console.log('🔍 contactsViral 모듈 상태 확인:');
+        // console.log('cleanup 함수 존재 여부:', !!cleanupRef.current);
+        // console.log('cleanup 함수 타입:', typeof cleanupRef.current);
         
         // 전역 객체에서 contactsViral 상태 확인
-        console.log('🌐 전역 객체 상태 확인:');
-        console.log('window.contactsViral:', (window as any).contactsViral);
-        console.log('window.TossBridge:', (window as any).TossBridge);
-        console.log('window.ReactNativeWebView:', (window as any).ReactNativeWebView);
+        // console.log('🌐 전역 객체 상태 확인:');
+        // console.log('window.contactsViral:', (window as any).contactsViral);
+        // console.log('window.TossBridge:', (window as any).TossBridge);
+        // console.log('window.ReactNativeWebView:', (window as any).ReactNativeWebView);
       }, 3000);
       
       // 추가 상태 모니터링
       setTimeout(() => {
-        console.log('⏰ 10초 후 상태 확인:');
-        console.log('cleanup 상태:', cleanupRef.current);
-        console.log('현재 페이지:', window.location.href);
-        console.log('이벤트 발생 여부 확인 중...');
+        // console.log('⏰ 10초 후 상태 확인:');
+        // console.log('cleanup 상태:', cleanupRef.current);
+        // console.log('현재 페이지:', window.location.href);
+        // console.log('이벤트 발생 여부 확인 중...');
         
         // 전역 이벤트 리스너 확인
-        console.log('전역 이벤트 리스너 확인:');
-        console.log('window.addEventListener 리스너 수:', (window as any).__eventListeners?.length || '알 수 없음');
-        console.log('document.addEventListener 리스너 수:', (document as any).__eventListeners?.length || '알 수 없음');
+        // console.log('전역 이벤트 리스너 확인:');
+        // console.log('window.addEventListener 리스너 수:', (window as any).__eventListeners?.length || '알 수 없음');
+        // console.log('document.addEventListener 리스너 수:', (document as any).__eventListeners?.length || '알 수 없음');
       }, 10000);
       
     } catch (error) {

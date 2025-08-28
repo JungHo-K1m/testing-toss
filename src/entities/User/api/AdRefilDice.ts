@@ -22,7 +22,7 @@ export const getDiceRefillAdReward = async (): Promise<DiceRefillAdRewardRespons
     // API 문서에 따른 정확한 경로 사용
     const response = await api.get('/home/refill-dice/ad');
     
-    console.log('주사위 리필 광고 보상 API 응답:', response.data);
+    // // console.log('주사위 리필 광고 보상 API 응답:', response.data);
     
     // 응답 데이터 구조 확인
     const responseData = response.data;

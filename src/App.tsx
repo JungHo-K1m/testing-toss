@@ -170,22 +170,6 @@ const App: React.FC = () => {
       <ScrollToTop />
       {!isInitialized ? (
         <>
-          <div
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              backgroundColor: "#fff3cd",
-              border: "1px solid #ffeaa7",
-              borderRadius: "4px",
-              margin: "20px",
-              color: "#856404",
-            }}
-          >
-            <h1>🔐 로그인 필요</h1>
-            <p>현재 상태: {isInitialized ? "초기화됨" : "초기화 필요"}</p>
-            <p>토스 앱을 통해 로그인을 진행해주세요.</p>
-            <p>디버그: isInitialized = {String(isInitialized)}</p>
-          </div>
           <AppInitializer onInitialized={handleInitialized} />
         </>
       ) : (

@@ -10,7 +10,7 @@ export const requestKaiaMission = async(signedTx:string, walletAddress: string):
     const response = await api.post("/mission/kaia", info);
 
     if(response.data.code === "OK"){
-        console.log("kaia mission response: ", response);
+        // console.log("kaia mission response: ", response);
         return response.data;
     }else {
         console.error('Unexpected response:', response);

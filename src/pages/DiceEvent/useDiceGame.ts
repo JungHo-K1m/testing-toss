@@ -95,7 +95,7 @@ export const useDiceGame = () => {
     ) => {
       setMoving(true);
       playSfx(Audios.move, { loop: true });
-      // console.log('movePiece 호출됨:', startPosition, endPosition);
+      // // console.log('movePiece 호출됨:', startPosition, endPosition);
       let currentPosition = startPosition;
 
       const moveStep = () => {
@@ -169,7 +169,7 @@ export const useDiceGame = () => {
   // 주사위 결과 처리 함수 - 보상 중복 적용 제거
   const handleRollComplete = useCallback(
     (value: number, data: RollDiceResponseData) => {
-      // console.log('handleRollComplete 호출됨');
+      // // console.log('handleRollComplete 호출됨');
 
       const previousPosition = position; // 이전 위치 저장
       const newPosition = data.tileSequence; // 서버에서 받은 새로운 위치
@@ -216,7 +216,7 @@ export const useDiceGame = () => {
 
         if (isAuto && [5, 15, 18].includes(finalPosition)) {
           // Auto 모드이고 특정 타일에 도착했을 때 게임을 활성화하지 않음
-          // console.log(`Auto 모드: 타일 ${finalPosition} 도착, 게임 활성화 건너뜀`);
+          // // console.log(`Auto 모드: 타일 ${finalPosition} 도착, 게임 활성화 건너뜀`);
           setButtonDisabled(false);
         } else {
           // Auto 모드가 아니거나 특정 타일이 아닌 경우 기존 로직 수행
@@ -299,7 +299,7 @@ export const useDiceGame = () => {
 
         // anywhereAPI 호출
         const data = await anywhereAPI(tileId);
-        // console.log('Move via airplane successful:', data);
+        // // console.log('Move via airplane successful:', data);
 
         // 서버로부터 받은 데이터로 상태 업데이트
         setRank(data.rank);
@@ -313,17 +313,17 @@ export const useDiceGame = () => {
           setIsSpinGameActive(false); // SpinGame 비활성화
           setIsCardGameActive(false); // 카드게임 비활성화
                         // RPSGame의 베팅 가능 금액은 클라이언트에서 계산됨
-          // console.log("RPSGame 활성화됨 (타일 5 클릭).");
+          // // console.log("RPSGame 활성화됨 (타일 5 클릭).");
         } else if (tileId === 10) {
           setIsCardGameActive(true); // 카드게임 활성화
           setIsRPSGameActive(false); // RPSGame 비활성화
           setIsSpinGameActive(false); // SpinGame 비활성화
-          // console.log("카드게임 활성화됨 (타일 10 클릭).");
+          // // console.log("카드게임 활성화됨 (타일 10 클릭).");
         } else if (tileId === 15) {
           setIsSpinGameActive(true); // SpinGame 활성화
           setIsRPSGameActive(false); // RPSGame 비활성화
           setIsCardGameActive(false); // 카드게임 비활성화
-          // console.log("SpinGame 활성화됨 (타일 15 클릭).");
+          // // console.log("SpinGame 활성화됨 (타일 15 클릭).");
         }
 
       } catch (error: any) {
@@ -362,7 +362,7 @@ export const useDiceGame = () => {
     rpsId?: number, 
     lastPlayerChoice?: number
   ) => {
-      // console.log(`useDiceGame - RPS Game Ended: ${result}, Winnings: ${winnings}`);
+      // // console.log(`useDiceGame - RPS Game Ended: ${result}, Winnings: ${winnings}`);
       setIsRPSGameActive(false);
       setSelectingTile(false);
       setButtonDisabled(false);

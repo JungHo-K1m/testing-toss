@@ -15,12 +15,12 @@ const SelectCharacterPage: React.FC = () => {
         // 정상 반환이면 메인 페이지로 이동
         navigate('/first-reward');
       }else{
-        // console.log("캐릭터 선택 에러 발생");
+        // // console.log("캐릭터 선택 에러 발생");
         localStorage.removeItem('accessToken');
         navigate('/');
       }
     }catch(error: any){
-      // console.log("다시 시작해보아요.");
+      // // console.log("다시 시작해보아요.");
       localStorage.removeItem('accessToken');
       navigate('/');
     }

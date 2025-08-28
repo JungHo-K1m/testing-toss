@@ -34,7 +34,7 @@ const getRarityImageIndex = (rarity: number): number => {
 const getEquipmentIcon = (type: string, rarity: number) => {
   const imageIndex = getRarityImageIndex(rarity);
   
-  console.log('getEquipmentIcon called:', { type, rarity, imageIndex });
+  // console.log('getEquipmentIcon called:', { type, rarity, imageIndex });
   
   let result;
   switch (type.toUpperCase()) {
@@ -57,7 +57,7 @@ const getEquipmentIcon = (type: string, rarity: number) => {
       result = Images.Ballon1; // 기본값
   }
   
-  console.log('Selected image:', result);
+  // console.log('Selected image:', result);
   return result;
 };
 
@@ -170,10 +170,10 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
     // API 응답 구조에 맞게 randomBox 배열에서 첫 번째 아이템 가져오기
     const randomBoxItem = attendanceResult.randomBox?.[0];
     
-    console.log('renderRewardResult called:', { attendanceResult, randomBoxItem });
+    // console.log('renderRewardResult called:', { attendanceResult, randomBoxItem });
     
     if (!randomBoxItem) {
-      console.log('No random box item found');
+      // console.log('No random box item found');
       return null;
     }
     
@@ -184,7 +184,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
           const { type, rarity } = randomBoxItem.equipment;
           const equipmentIcon = getEquipmentIcon(type, rarity);
           
-          console.log('Equipment details:', { type, rarity, equipmentIcon });
+          // console.log('Equipment details:', { type, rarity, equipmentIcon });
           
           return (
             <div className="flex items-center gap-3 mb-2">
@@ -271,7 +271,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
         );
         
       default:
-        console.log('Unknown result type:', randomBoxItem.type);
+        // console.log('Unknown result type:', randomBoxItem.type);
         return null;
     }
   };

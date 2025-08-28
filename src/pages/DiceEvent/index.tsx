@@ -119,9 +119,9 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (UserLevel용 - 희귀도 포함)
   const getEquippedItemsForUserLevel = () => {
-    console.log("🔍 getEquippedItemsForUserLevel 호출됨");
-    console.log("📦 equippedItems:", equippedItems);
-    console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
+    // console.log("🔍 getEquippedItemsForUserLevel 호출됨");
+    // console.log("📦 equippedItems:", equippedItems);
+    // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
     
     if (!equippedItems?.slot) return [];
     
@@ -145,9 +145,9 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (Board용 - 기존 방식 유지)
   const getEquippedItemsForComponents = () => {
-    console.log("🔍 getEquippedItemsForComponents 호출됨");
-    console.log("📦 equippedItems:", equippedItems);
-    console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
+    // // console.log("🔍 getEquippedItemsForComponents 호출됨");
+    // // console.log("📦 equippedItems:", equippedItems);
+    // // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
     
     if (!equippedItems?.slot) return [];
     
@@ -166,13 +166,13 @@ const DiceEventPage: React.FC = () => {
   // 장착된 아이템 찾기 (아이템 오버레이 렌더링용)
   const getEquippedItem = (type: string) => {
     const item = equippedItems?.slot.find((item) => item.type === type);
-    console.log(`🔍 getEquippedItem(${type}):`, item);
+    // console.log(`🔍 getEquippedItem(${type}):`, item);
     return item;
   };
 
   // 장비 타입별 이미지 가져오기 함수 (아이템 오버레이용)
   const getEquipmentIcon = (type: string, rarity: number) => {
-    console.log(`🎨 getEquipmentIcon 호출됨 - type: ${type}, rarity: ${rarity}`);
+    // console.log(`🎨 getEquipmentIcon 호출됨 - type: ${type}, rarity: ${rarity}`);
     
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
@@ -195,7 +195,7 @@ const DiceEventPage: React.FC = () => {
     }
 
     const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
-    console.log(`🎨 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
+    // console.log(`🎨 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
     
     return imagePath;
   };
@@ -247,7 +247,7 @@ const DiceEventPage: React.FC = () => {
       try {
         await fetchUserData();
         await fetchEquippedItems(); // 장착 아이템 데이터도 함께 가져오기
-        console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
+        // console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
@@ -438,7 +438,7 @@ const DiceEventPage: React.FC = () => {
   // 광고보고 랜덤박스 열기 핸들러
   const handleAdRandomBox = async () => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
+      // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
@@ -463,26 +463,26 @@ const DiceEventPage: React.FC = () => {
 
     try {
       setIsAdWatching(true); // 광고 시청 시작
-      console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
+      // console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
       
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
-        console.log('광고 로드 시작...');
+        // console.log('광고 로드 시작...');
         await loadAd('RANDOM_BOX'); 
-        console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        // console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
-      console.log('광고 표시 시작...');
+      // console.log('광고 표시 시작...');
       
       // 광고 표시 및 보상 결과 대기
-      console.log('showAd() Promise 대기 시작...');
+      // console.log('showAd() Promise 대기 시작...');
       const rewardData: RandomBoxAdRewardResponse = await showAd('RANDOM_BOX');
-      console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
+      // console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
       
       if (rewardData) {
-        console.log('보상 결과 처리 시작...');
-        console.log('원본 rewardData:', rewardData);
+        // console.log('보상 결과 처리 시작...');
+        // console.log('원본 rewardData:', rewardData);
         
         // rewardData 구조 확인 및 안전한 매핑
         if (!rewardData.type) {
@@ -497,42 +497,42 @@ const DiceEventPage: React.FC = () => {
           equipment: rewardData.equipment || undefined
         };
         
-        console.log('새로운 boxResult 설정:', newBoxResult);
-        console.log('boxResult.type 확인:', newBoxResult.type);
-        console.log('boxResult.equipment 확인:', newBoxResult.equipment);
+        // console.log('새로운 boxResult 설정:', newBoxResult);
+        // console.log('boxResult.type 확인:', newBoxResult.type);
+        // console.log('boxResult.equipment 확인:', newBoxResult.equipment);
         
         setBoxResult(newBoxResult);
         
-        console.log('결과 모달 표시 설정...');
+        // console.log('결과 모달 표시 설정...');
         // 결과 모달 표시
         setShowResult(true);
         setShowRaffleBoxOpenModal(true);
         
-        console.log('진동 효과 시작...');
+        // console.log('진동 효과 시작...');
         // 진동 효과 (선택사항)
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
         
-        console.log('사용자 데이터 새로고침 시작...');
+        // console.log('사용자 데이터 새로고침 시작...');
         // 사용자 데이터 새로고침 (보상 반영)
         await fetchUserData();
         
-        console.log('광고보고 랜덤박스 완료!');
+        // console.log('광고보고 랜덤박스 완료!');
         
         // 마지막 광고 시청 시간 업데이트
         setLastAdWatchTime(now);
         
         // 🔥 핵심 수정: 광고 시청 완료 후 강제 대기 시간 추가
-        console.log('광고 시청 완료 후 2초 대기 시작...');
+        // console.log('광고 시청 완료 후 2초 대기 시작...');
         await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('대기 완료 - 다음 광고 시청 준비됨');
+        // console.log('대기 완료 - 다음 광고 시청 준비됨');
         
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
           reloadAd();
         }, 1000);
       } else {
-        console.log('보상 결과가 없습니다.');
+        // console.log('보상 결과가 없습니다.');
       }
       
     } catch (error: any) {
@@ -555,29 +555,29 @@ const DiceEventPage: React.FC = () => {
   // 주사위 리필 광고 핸들러 수정
   const handleAdRefillDice = async () => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
+      // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
     try {
-      console.log('주사위 리필 광고 시작 - 광고 상태:', adLoadStatus);
+      // console.log('주사위 리필 광고 시작 - 광고 상태:', adLoadStatus);
       
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
-        console.log('광고 로드 시작...');
+        // console.log('광고 로드 시작...');
         await loadAd('DICE_REFILL'); // 광고 타입 지정
-        console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        // console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
-      console.log('광고 표시 시작...');
+      // console.log('광고 표시 시작...');
       
       // 광고 표시 및 보상 결과 대기 (광고 타입 지정)
       const rewardData = await showAd('DICE_REFILL');
-      console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
+      // console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
       
       if (rewardData) {
-        console.log('주사위 리필 보상 처리 완료');
+        // console.log('주사위 리필 보상 처리 완료');
         
         // 사용자 데이터 새로고침
         await fetchUserData();
@@ -633,28 +633,28 @@ const DiceEventPage: React.FC = () => {
   // 디버깅용: 랜덤박스 결과 로깅
   useEffect(() => {
     if (boxResult) {
-      console.log("랜덤박스 결과:", boxResult);
-      console.log("결과 타입:", boxResult.type);
+      // console.log("랜덤박스 결과:", boxResult);
+      // console.log("결과 타입:", boxResult.type);
       if (boxResult.equipment) {
-        console.log("장비 정보:", boxResult.equipment);
-        console.log("장비 타입:", boxResult.equipment.type);
-        console.log("장비 희귀도:", boxResult.equipment.rarity);
-        console.log(
-          "이미지 경로:",
-          getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
-        );
+        // console.log("장비 정보:", boxResult.equipment);
+        // console.log("장비 타입:", boxResult.equipment.type);
+        // console.log("장비 희귀도:", boxResult.equipment.rarity);
+        // console.log(
+      //     "이미지 경로:",
+      //     getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
+      //   );
       }
     }
   }, [boxResult]);
 
   // 디버깅용: 모달 상태 변경 감지
-  useEffect(() => {
-    console.log("모달 상태 변경:", {
-      showResult,
-      showRaffleBoxOpenModal,
-      boxResult: boxResult ? '있음' : '없음'
-    });
-  }, [showResult, showRaffleBoxOpenModal, boxResult]);
+  // useEffect(() => {
+  //   // console.log("모달 상태 변경:", {
+  //     showResult,
+  //     showRaffleBoxOpenModal,
+  //     boxResult: boxResult ? '있음' : '없음'
+  //   });
+  // }, [showResult, showRaffleBoxOpenModal, boxResult]);
 
   // 사용자 데이터 초기 로딩 (중복 제거됨)
   
@@ -677,15 +677,15 @@ const DiceEventPage: React.FC = () => {
   useEffect(() => {
     const referralCode = localStorage.getItem("referralCode");
     if (referralCode === "from-dapp-portal") {
-      // console.log("[DiceEventPage] Dapp Portal referral detected. Calling reward API...");
+      // // console.log("[DiceEventPage] Dapp Portal referral detected. Calling reward API...");
       getRewardPoints()
         .then((message) => {
-          // console.log("[DiceEventPage] Reward API response:", message);
+          // // console.log("[DiceEventPage] Reward API response:", message);
           // 응답 메시지가 "Success"인 경우에만 다이얼로그 표시
           if (message === "Success") {
             setShowUrlReward(true);
           } else if (message === "Already Rewarded") {
-            // console.log("[DiceEventPage] Reward already claimed.");
+            // // console.log("[DiceEventPage] Reward already claimed.");
           }
           // 중복 호출 방지를 위해 referralCode 삭제
           localStorage.removeItem("referralCode");
@@ -803,7 +803,7 @@ const DiceEventPage: React.FC = () => {
   };
 
   const handleRPSGameEnd = (result: "win" | "lose", winnings: number, rpsId?: number, lastPlayerChoice?: number) => {
-    // console.log(`RPS Game Ended: ${result}, Winnings: ${winnings}`);
+    // // console.log(`RPS Game Ended: ${result}, Winnings: ${winnings}`);
     fetchUserData();
     game.handleRPSGameEnd(result, winnings, rpsId, lastPlayerChoice);
   };
@@ -1292,7 +1292,7 @@ const DiceEventPage: React.FC = () => {
                             }}
                           >
                             <img
-                              src={Images.LotteryTicket}
+                              src={Images.KeyIcon}
                               alt="rapple"
                               className="w-10 h-10"
                             />
@@ -1726,7 +1726,7 @@ const DiceEventPage: React.FC = () => {
                           ) : boxResult.type === "SL" ? (
                             <div className="flex items-center gap-3 mb-2">
                               <img
-                                src={Images.LotteryTicket}
+                                src={Images.KeyIcon}
                                 style={{ width: 40, height: 40 }}
                                 alt="lottery"
                               />
@@ -1739,7 +1739,7 @@ const DiceEventPage: React.FC = () => {
                                   WebkitTextStroke: "1px #000000",
                                 }}
                               >
-                                래플권 획득!
+                                열쇠 획득!
                               </span>
                             </div>
                           ) : (

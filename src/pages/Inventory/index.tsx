@@ -403,8 +403,8 @@ function ItemModal({
               }}
               onClick={async () => {
                 try {
-                  console.log("=== 장착/해제 버튼 클릭 시작 ===");
-                  console.log("아이템 정보:", {
+                  // console.log("=== 장착/해제 버튼 클릭 시작 ===");
+                  // console.log("아이템 정보:", {
                     ownedEquipmentId: item.ownedEquipmentId,
                     type: item.type,
                     isEquipped: item.isEquipped,
@@ -421,7 +421,7 @@ function ItemModal({
 
                   if (item.isEquipped) {
                     // 장착된 아이템 해제
-                    console.log("🔍 장착된 아이템 해제 시도:", {
+                    // console.log("🔍 장착된 아이템 해제 시도:", {
                       item: item,
                       hasSlotId: !!item.slotId,
                       slotId: item.slotId,
@@ -432,8 +432,8 @@ function ItemModal({
                       return;
                     }
 
-                    console.log("🚀 removeEquipment API 호출 시작...");
-                    console.log("API 요청 데이터:", {
+                    // console.log("🚀 removeEquipment API 호출 시작...");
+                    // console.log("API 요청 데이터:", {
                       slotId: item.slotId,
                     });
 
@@ -442,8 +442,8 @@ function ItemModal({
                     });
                   } else {
                     // 아이템 장착
-                    console.log("🚀 wearEquipment API 호출 시작...");
-                    console.log("API 요청 데이터:", {
+                    // console.log("🚀 wearEquipment API 호출 시작...");
+                    // console.log("API 요청 데이터:", {
                       ownedEquipmentId: item.ownedEquipmentId,
                     });
 
@@ -452,29 +452,29 @@ function ItemModal({
                     });
                   }
 
-                  console.log("✅ API 응답 성공:", newInventoryData);
-                  console.log("응답 데이터 구조:", {
+                  // console.log("✅ API 응답 성공:", newInventoryData);
+                  // console.log("응답 데이터 구조:", {
                     hasSlot: !!newInventoryData.slot,
                     hasMyItems: !!newInventoryData.myItems,
                     slotLength: newInventoryData.slot?.length || 0,
                     myItemsLength: newInventoryData.myItems?.length || 0,
                   });
 
-                  console.log("🔄 인벤토리 데이터 업데이트 시작...");
+                  // console.log("🔄 인벤토리 데이터 업데이트 시작...");
                   onEquipmentChange(newInventoryData);
-                  console.log("✅ 인벤토리 데이터 업데이트 완료");
+                  // console.log("✅ 인벤토리 데이터 업데이트 완료");
 
                   // useUserStore의 장착 아이템 상태도 업데이트
-                  console.log("🔄 useUserStore 장착 아이템 상태 업데이트 시작...");
+                  // console.log("🔄 useUserStore 장착 아이템 상태 업데이트 시작...");
                   // await fetchEquippedItems(); // 현재 구현되지 않은 함수
-                  console.log("✅ useUserStore 장착 아이템 상태 업데이트 완료");
+                  // console.log("✅ useUserStore 장착 아이템 상태 업데이트 완료");
 
-                  console.log("🚪 모달 닫기 시작...");
+                  // console.log("🚪 모달 닫기 시작...");
                   onClose();
-                  console.log("✅ 모달 닫기 완료");
+                  // console.log("✅ 모달 닫기 완료");
 
-                  console.log(`🎉 ${item.isEquipped ? "해제" : "장착"} 완료!`);
-                  console.log("=== 장착/해제 버튼 클릭 완료 ===");
+                  // console.log(`🎉 ${item.isEquipped ? "해제" : "장착"} 완료!`);
+                  // console.log("=== 장착/해제 버튼 클릭 완료 ===");
                 } catch (error: unknown) {
                   console.error("❌ 장착/해제 실패 - 에러 상세 정보:");
                   console.error("에러 객체:", error);
@@ -549,7 +549,7 @@ function ItemModal({
               }}
               onClick={async () => {
                 try {
-                  console.log("=== 강화 버튼 클릭 시작 ===");
+                  // console.log("=== 강화 버튼 클릭 시작 ===");
 
                   if (!item.ownedEquipmentId) {
                     console.error("❌ ownedEquipmentId가 없습니다:", item);
@@ -563,21 +563,21 @@ function ItemModal({
                     return;
                   }
 
-                  console.log("🔍 강화 대상 아이템:", {
+                  // console.log("🔍 강화 대상 아이템:", {
                     id: item.ownedEquipmentId,
                     type: item.type,
                     level: item.level,
                     name: item.name,
                   });
 
-                  console.log("🔍 재료 아이템:", {
+                  // console.log("🔍 재료 아이템:", {
                     id: material.ownedEquipmentId,
                     type: material.type,
                     level: material.rarity,
                   });
 
-                  console.log("🚀 upgradeEquipment API 호출 시작...");
-                  console.log("API 요청 데이터:", {
+                  // console.log("🚀 upgradeEquipment API 호출 시작...");
+                  // console.log("API 요청 데이터:", {
                     upgradeEquipmentId: item.ownedEquipmentId,
                     materialEquipmentId: material.ownedEquipmentId,
                   });
@@ -587,27 +587,27 @@ function ItemModal({
                     materialEquipmentId: material.ownedEquipmentId,
                   });
 
-                  console.log("✅ 강화 API 응답 성공:", upgradeResult);
+                  // console.log("✅ 강화 API 응답 성공:", upgradeResult);
 
                   // 강화 성공/실패와 관계없이 인벤토리 데이터 업데이트
                   // API 문서에 따르면 실패 시에도 inventory 데이터가 포함됨
                   if (upgradeResult.inventory) {
-                    console.log("🔄 인벤토리 데이터 업데이트 시작...");
+                    // console.log("🔄 인벤토리 데이터 업데이트 시작...");
                     onEquipmentChange(upgradeResult.inventory);
-                    console.log("✅ 인벤토리 데이터 업데이트 완료");
+                    // console.log("✅ 인벤토리 데이터 업데이트 완료");
                   }
 
                   if (upgradeResult.success) {
-                    console.log("🎉 강화 성공!");
-                    console.log(
+                    // console.log("🎉 강화 성공!");
+                    // console.log(
                       "강화된 아이템:",
                       upgradeResult.upgradeEquipment
                     );
 
                     // useUserStore의 장착 아이템 상태도 업데이트
-                    console.log("🔄 강화 후 useUserStore 장착 아이템 상태 업데이트 시작...");
+                    // console.log("🔄 강화 후 useUserStore 장착 아이템 상태 업데이트 시작...");
                     // await fetchEquippedItems(); // 현재 구현되지 않은 함수
-                    console.log("✅ 강화 후 useUserStore 장착 아이템 상태 업데이트 완료");
+                    // console.log("✅ 강화 후 useUserStore 장착 아이템 상태 업데이트 완료");
 
                     // 강화 결과 모달 표시
                     setUpgradeResult({
@@ -625,7 +625,7 @@ function ItemModal({
                     setShowUpgradeResult(true);
                   }
 
-                  console.log("=== 강화 버튼 클릭 완료 ===");
+                  // console.log("=== 강화 버튼 클릭 완료 ===");
                 } catch (error: unknown) {
                   console.error("❌ 강화 실패 - 에러 상세 정보:");
                   console.error("에러 객체:", error);
@@ -1129,8 +1129,8 @@ const Inventory: React.FC = () => {
       slotId: "slotId" in item ? item.slotId : undefined,
     });
     setIsModalOpen(true);
-    console.log("Modal opened, isModalOpen:", true); // 디버깅용
-    console.log("Selected item data:", {
+    // console.log("Modal opened, isModalOpen:", true); // 디버깅용
+    // console.log("Selected item data:", {
       type: item.type,
       rarity: item.rarity,
       ownedEquipmentId: item.ownedEquipmentId,
@@ -1142,7 +1142,7 @@ const Inventory: React.FC = () => {
   // 장착된 아이템 클릭 핸들러
   const handleEquippedItemClick = (item: EquippedSlotItem) => {
     // slotId 정보 로깅 (디버깅용)
-    console.log(
+    // console.log(
       `장착된 아이템 클릭: ${item.type}, 슬롯 ID: ${item.slotId}, 장비 ID: ${item.ownedEquipmentId}`
     );
 
@@ -1167,7 +1167,7 @@ const Inventory: React.FC = () => {
     });
     setIsModalOpen(true);
 
-    console.log("장착된 아이템 모달 열기:", {
+    // console.log("장착된 아이템 모달 열기:", {
       type: item.type,
       rarity: item.rarity,
       ownedEquipmentId: item.ownedEquipmentId,
@@ -1439,7 +1439,7 @@ const Inventory: React.FC = () => {
           item={selectedItem}
           inventoryData={inventoryData}
           onEquipmentChange={(newInventoryData) => {
-            console.log("🔄 인벤토리 데이터 업데이트:", newInventoryData);
+            // console.log("🔄 인벤토리 데이터 업데이트:", newInventoryData);
 
             // API 응답 데이터 구조 확인 및 검증
             if (
@@ -1447,7 +1447,7 @@ const Inventory: React.FC = () => {
               Array.isArray(newInventoryData.slot) &&
               Array.isArray(newInventoryData.myItems)
             ) {
-              console.log("✅ 유효한 응답 데이터:", {
+              // console.log("✅ 유효한 응답 데이터:", {
                 slotCount: newInventoryData.slot.length,
                 myItemsCount: newInventoryData.myItems.length,
               });

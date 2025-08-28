@@ -142,15 +142,15 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   useEffect(() => {
     // 🔥 핵심 수정: 중복 실행 방지
     if (isSupported && !hasUsedAdForGame && adLoadStatus === 'not_loaded') {
-      console.log('RPS 결과 모달 열림 - 자동 광고 로딩 시작');
-      console.log('현재 rpsId:', rpsId, 'lastPlayerChoice:', lastPlayerChoice);
+      // console.log('RPS 결과 모달 열림 - 자동 광고 로딩 시작');
+      // console.log('현재 rpsId:', rpsId, 'lastPlayerChoice:', lastPlayerChoice);
       autoLoadAd();
     } else {
-      console.log('광고 자동 로딩 건너뜀:', { 
-        isSupported, 
-        hasUsedAdForGame, 
-        adLoadStatus 
-      });
+      // console.log('광고 자동 로딩 건너뜀:', { 
+      //   isSupported, 
+      //   hasUsedAdForGame, 
+      //   adLoadStatus 
+      // });
     }
   }, [isSupported, hasUsedAdForGame, autoLoadAd, rpsId, lastPlayerChoice, adLoadStatus]);
 
@@ -159,13 +159,13 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   useEffect(() => {
     const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
     const usedGameIds = JSON.parse(usedGames);
-    console.log('로컬스토리지에서 광고 사용 게임 확인:', { usedGameIds, currentRpsId: rpsId });
+    // console.log('로컬스토리지에서 광고 사용 게임 확인:', { usedGameIds, currentRpsId: rpsId });
     
     if (usedGameIds.includes(rpsId)) {
-      console.log('이미 광고를 사용한 게임:', rpsId);
+      // console.log('이미 광고를 사용한 게임:', rpsId);
       setHasUsedAdForGame(true);
     } else {
-      console.log('광고를 사용하지 않은 게임:', rpsId);
+      // console.log('광고를 사용하지 않은 게임:', rpsId);
       setHasUsedAdForGame(false);
     }
   }, [rpsId]);
@@ -174,7 +174,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   // 광고 시청 핸들러
   const handleAdWatch = async () => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
+      // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
@@ -185,11 +185,11 @@ const ResultLose: React.FC<ResultLoseProps> = ({
 
     try {
       setIsAdLoading(true);
-      console.log('RPS 재시도 광고 시작');
+      // console.log('RPS 재시도 광고 시작');
 
       // 핵심 수정: 광고 타입을 명시적으로 'RPS_RETRY'로 설정
       if (adLoadStatus !== 'loaded') {
-        console.log('광고 로드 시작...');
+        // console.log('광고 로드 시작...');
         await loadAd('RPS_RETRY');
         return;
       }
@@ -200,16 +200,16 @@ const ResultLose: React.FC<ResultLoseProps> = ({
         value: lastPlayerChoice // 0=가위, 1=바위, 2=보
       };
 
-      console.log('RPS 재시도 요청 데이터:', requestData);
-      console.log('RPS_RETRY 광고 표시 시작 - API 호출 없이 게임 재시도만 제공');
+      // console.log('RPS 재시도 요청 데이터:', requestData);
+      // console.log('RPS_RETRY 광고 표시 시작 - API 호출 없이 게임 재시도만 제공');
 
       // 핵심 수정: 광고 타입을 명시적으로 'RPS_RETRY'로 전달
       const rewardData = await showAd('RPS_RETRY', requestData);
-      console.log('RPS 재시도 광고 완료:', rewardData);
+      // console.log('RPS 재시도 광고 완료:', rewardData);
 
       // 핵심 수정: 광고 성공 여부 확인 및 에러 처리
       if (rewardData && rewardData.success && rewardData.type === 'RPS_RETRY') {
-        console.log('RPS 재시도 광고 성공 - 게임 진행 페이지로 이동');
+        // console.log('RPS 재시도 광고 성공 - 게임 진행 페이지로 이동');
         
         // �� 핵심 수정: 광고 사용 기록을 먼저 저장
         const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
@@ -217,12 +217,12 @@ const ResultLose: React.FC<ResultLoseProps> = ({
         if (!usedGameIds.includes(rpsId)) {
           usedGameIds.push(rpsId);
           localStorage.setItem('rpsAdUsedGames', JSON.stringify(usedGameIds));
-          console.log('RPS 광고 사용 기록 저장됨:', rpsId);
+          // console.log('RPS 광고 사용 기록 저장됨:', rpsId);
         }
         
         // 핵심 수정: 게임 진행 페이지로만 이동 (재시도 API 호출 안함)
         if (onRetry) {
-          console.log('RPS 게임 진행 페이지로 이동 - 재시도 API는 사용자가 가위바위보 선택 시 호출');
+          // console.log('RPS 게임 진행 페이지로 이동 - 재시도 API는 사용자가 가위바위보 선택 시 호출');
           onRetry(); // 게임 진행 페이지로만 이동
         }
       }else {
@@ -245,7 +245,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
         }
         
         // 핵심 수정: 광고 실패 시 onRetry 호출하지 않음
-        console.log('광고 실패로 인해 게임 재시도 중단');
+        // console.log('광고 실패로 인해 게임 재시도 중단');
         return;
       }
     } catch (error) {
@@ -265,7 +265,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       }
       
       // 핵심 수정: 에러 발생 시 onRetry 호출하지 않음
-      console.log('광고 에러로 인해 게임 재시도 중단');
+      // console.log('광고 에러로 인해 게임 재시도 중단');
       return;
     } finally {
       setIsAdLoading(false);

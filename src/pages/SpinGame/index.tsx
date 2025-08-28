@@ -385,7 +385,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
 
       // /play-spin API 호출
       const response = await api.get("/play-spin");
-      console.log("Server response:", response.data);
+      // console.log("Server response:", response.data);
       
       if (response.data.code === "OK" && response.data.data) {
         // API 응답 구조 안전하게 처리
@@ -398,21 +398,21 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         const starCount = responseData.starCount;
         const slCount = responseData.slCount;
         
-        console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
-        console.log("Available prize types in data array:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
+        // console.log("Received data:", { spinType, amount, baseAmount, rank, diceCount, starCount, slCount });
+        // console.log("Available prize types in data array:", data.map(item => ({ type: item.prize.type, amount: item.prize.amount })));
 
         // data 배열에서 spinType과 baseAmount에 맞는 인덱스 찾기
         // API 응답의 spinType과 baseAmount를 기준으로 매칭
         const foundIndex = data.findIndex(
           (item) => {
             const match = item.prize.type === spinType.toUpperCase() && item.prize.amount === baseAmount;
-            console.log(`Checking item:`, item.prize, `against API:`, { type: spinType.toUpperCase(), amount: baseAmount }, `Match:`, match);
+            // console.log(`Checking item:`, item.prize, `against API:`, { type: spinType.toUpperCase(), amount: baseAmount }, `Match:`, match);
             return match;
           }
         );
 
         if (foundIndex !== -1) {
-          console.log("Prize index found:", foundIndex);
+          // console.log("Prize index found:", foundIndex);
           setPrizeNumber(foundIndex);
           // API 문서에 맞게 모든 필드 포함
           setPrizeData({ 
@@ -459,7 +459,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     setMustSpin(false);
     // 사용자 상태 업데이트
     if (prizeData) {
-      // console.log("Prize data:", prizeData);
+      // // console.log("Prize data:", prizeData);
       const { spinType, amount, baseAmount, rank, diceCount, starCount, slCount } = prizeData;
 
       const normalizedSpinType = spinType.trim().toUpperCase();
@@ -468,7 +468,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       if (normalizedSpinType === "BOOM") {
         // 붐(꽝)이면 패배 사운드
         playSfx(Audios.rps_lose);
-        // console.log("Boom! Better luck next time!");
+        // // console.log("Boom! Better luck next time!");
       } else {
         // 그 외엔 보상 사운드
         playSfx(Audios.reward);
@@ -483,11 +483,11 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         setSlToken((prev: number) => prev + amount);
       } else if (normalizedSpinType === "BOOM") {
         // BOOM은 꽝이므로 보상 없음
-        console.log("Boom! Better luck next time!");
+        // console.log("Boom! Better luck next time!");
       }
 
       // 추가 정보 로깅 (디버깅용)
-      // console.log("Additional prize info:", { rank, diceCount, starCount, slCount });
+      // // console.log("Additional prize info:", { rank, diceCount, starCount, slCount });
     }
     setIsDialogOpen(true);
   };

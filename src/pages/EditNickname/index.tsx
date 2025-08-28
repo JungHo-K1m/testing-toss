@@ -39,7 +39,7 @@ const EditNickname: React.FC = () => {
         setModalMessage("다시 시도해주세요.");
       }
     } catch (error: any) {
-      // console.log("error 확인: ", error);
+      // // console.log("error 확인: ", error);
       setShowModal(true);
       setModalMessage("다시 시도해주세요.");
     }

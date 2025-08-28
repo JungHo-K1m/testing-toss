@@ -30,8 +30,8 @@ const Leaderboard: React.FC = () => {
     return str.slice(0, num) + "...";
   };
 
-  // console.log('Current Page:', currentPage);
-  // console.log('Total Pages:', totalPages);
+  // // console.log('Current Page:', currentPage);
+  // // console.log('Total Pages:', totalPages);
 
   if (isLoading && leaderBoard.length === 0) {
     return <LoadingSpinner className="h-screen" />;

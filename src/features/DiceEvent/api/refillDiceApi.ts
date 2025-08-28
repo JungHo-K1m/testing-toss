@@ -20,7 +20,7 @@ export const refillDiceAPI = async () => {
       },
     });
 
-    // console.log('refillDiceAPI response:', response); // 디버깅을 위한 로그 추가
+    // // console.log('refillDiceAPI response:', response); // 디버깅을 위한 로그 추가
 
     // 서버의 응답 구조에 맞게 반환
     return response.data.data;

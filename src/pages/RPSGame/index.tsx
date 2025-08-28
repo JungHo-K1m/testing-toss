@@ -111,7 +111,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     setSlotState("spinning");
     setIsAnimating(true);
     setCanStartGame(false);
-    // console.log("Game started with betAmount:", betAmount);
+    // // console.log("Game started with betAmount:", betAmount);
   };
 
   
@@ -140,38 +140,38 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
         // handleSpin 함수 내부의 재시도 게임 처리 부분 수정
         if (rpsId && usedGameIds.includes(rpsId)) {
           // 광고를 시청한 재시도 게임인 경우 RetryRPS.ts API 호출
-          console.log('재시도 게임 - RetryRPS.ts API 호출');
+          // console.log('재시도 게임 - RetryRPS.ts API 호출');
           const retryResponse = await getRPSRetryAdReward({
             rpsId: rpsId,
             value: choiceMap[userChoice]
           });
           
           // �� 핵심 수정: 응답 데이터 상세 로깅
-          console.log('=== 재시도 게임 API 응답 전체 ===');
-          console.log('retryResponse:', retryResponse);
-          console.log('retryResponse.success:', retryResponse.success);
-          console.log('retryResponse.data:', retryResponse.data);
-          console.log('retryResponse.message:', retryResponse.message);
-          console.log('================================');
+          // console.log('=== 재시도 게임 API 응답 전체 ===');
+          // console.log('retryResponse:', retryResponse);
+          // console.log('retryResponse.success:', retryResponse.success);
+          // console.log('retryResponse.data:', retryResponse.data);
+          // console.log('retryResponse.message:', retryResponse.message);
+          // console.log('================================');
           
           if (retryResponse.success && retryResponse.data) {
             const { result, reward, pcValue } = retryResponse.data;
             
             // �� 핵심 수정: 게임 데이터 상세 로깅
-            console.log('=== 재시도 게임 데이터 상세 ===');
-            console.log('result (승패):', result);
-            console.log('reward (보상):', reward);
-            console.log('pcValue (컴퓨터 선택):', pcValue);
-            console.log('userChoice (사용자 선택):', userChoice);
-            console.log('choiceMap[userChoice]:', choiceMap[userChoice]);
-            console.log('================================');
+            // console.log('=== 재시도 게임 데이터 상세 ===');
+            // console.log('result (승패):', result);
+            // console.log('reward (보상):', reward);
+            // console.log('pcValue (컴퓨터 선택):', pcValue);
+            // console.log('userChoice (사용자 선택):', userChoice);
+            // console.log('choiceMap[userChoice]:', choiceMap[userChoice]);
+            // console.log('================================');
             
             const computerChoice = pcValue === 0 ? "scissors" : pcValue === 1 ? "rock" : "paper";
             
             // �� 핵심 수정: 컴퓨터 선택 변환 로깅
-            console.log('=== 컴퓨터 선택 변환 ===');
-            console.log('pcValue:', pcValue, '→ computerChoice:', computerChoice);
-            console.log('========================');
+            // console.log('=== 컴퓨터 선택 변환 ===');
+            // console.log('pcValue:', pcValue, '→ computerChoice:', computerChoice);
+            // console.log('========================');
             
             stopSpin(userChoice, computerChoice);
             setSlotState("stopped");
@@ -179,15 +179,15 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
             
             // 게임 결과 처리 로직
             if (result === "WIN") {
-              console.log('🎉 재시도 게임 승리! 보상:', reward);
+              // console.log('🎉 재시도 게임 승리! 보상:', reward);
               // 승리 결과 처리 - 결과 다이얼로그 표시
               handleRetryGameResult("win", reward);
             } else if (result === "DEFEAT") {
-              console.log(' 재시도 게임 패배');
+              // console.log(' 재시도 게임 패배');
               // 패배 결과 처리 - 결과 다이얼로그 표시
               handleRetryGameResult("lose", 0);
             } else {
-              console.log('❓ 알 수 없는 게임 결과:', result);
+              // console.log('❓ 알 수 없는 게임 결과:', result);
               // 무승부 또는 에러 처리 - 패배로 처리
               handleRetryGameResult("lose", 0);
             }
@@ -203,16 +203,16 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
           }
         } else {
           // 일반 게임인 경우 기존 playRound API 호출
-          console.log('일반 게임 - playRound API 호출');
+          // console.log('일반 게임 - playRound API 호출');
           const response = await playRound(userChoice);
 
           if (response) {
             // �� 핵심 수정: 일반 게임 응답 로깅
-            console.log('=== 일반 게임 응답 ===');
-            console.log('response:', response);
-            console.log('response.rpsId:', response.rpsId);
-            console.log('response.computerChoice:', response.computerChoice);
-            console.log('=====================');
+            // console.log('=== 일반 게임 응답 ===');
+            // console.log('response:', response);
+            // console.log('response.rpsId:', response.rpsId);
+            // console.log('response.computerChoice:', response.computerChoice);
+            // console.log('=====================');
             
             if (response.rpsId) {
               setRpsId(response.rpsId);
@@ -244,13 +244,13 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   const handleQuit = () => {
     endGame();
     onGameEnd(gameResult!, lastReward);
-    // console.log(`Game ended with ${gameResult}:`, lastReward);
+    // // console.log(`Game ended with ${gameResult}:`, lastReward);
   };
 
   
   // handleGameRetry 함수 수정
   const handleGameRetry = async () => {
-    console.log('RPS 게임 진행 페이지로 이동');
+    // console.log('RPS 게임 진행 페이지로 이동');
     
     // �� 핵심 수정: 즉시 API 호출하지 않고 게임 상태만 리셋
     // 이미 광고를 사용한 게임인지 확인
@@ -265,7 +265,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     
     try {
       // �� 핵심 수정: API 호출하지 않고 게임 상태만 리셋
-      console.log('RPS 재시도 권한 확인됨 - 게임 진행 페이지로 이동');
+      // console.log('RPS 재시도 권한 확인됨 - 게임 진행 페이지로 이동');
       
       // 게임 상태 리셋 (베팅은 유지)
       resetForRetry();
@@ -279,7 +279,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
       setSlotState("spinning");
       setIsAnimating(true);
       
-      console.log('RPS 게임 진행 페이지 이동 완료 - 사용자가 가위바위보 선택할 때까지 대기');
+      // console.log('RPS 게임 진행 페이지 이동 완료 - 사용자가 가위바위보 선택할 때까지 대기');
     } catch (error) {
       console.error('RPS 게임 진행 페이지 이동 중 오류:', error);
       alert('게임 진행 페이지 이동 중 오류가 발생했습니다.');
