@@ -17,6 +17,15 @@ import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import Attendance from "@/widgets/Attendance/Attendance";
 import { contactsViral } from '@apps-in-toss/web-framework';
+import { getViralReward } from "@/entities/User/api/getViralReward";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from "@/shared/components/ui";
+
 interface RewardFromContactsViralEvent {
   type: 'sendViral';
   data: {
@@ -42,6 +51,9 @@ type ContactsViralEvent = RewardFromContactsViralEvent | ContactsViralSuccessEve
 
 const MissionPage: React.FC = () => {
   const cleanupRef = useRef<(() => void) | null>(null); // contactsViral cleanup 함수를 useRef로 변경
+  // 친구 초대 보상 모달 상태 추가
+  const [showViralRewardModal, setShowViralRewardModal] = useState<boolean>(false);
+
 
   
   const handleInviteClick = async () => {
@@ -105,6 +117,26 @@ const MissionPage: React.FC = () => {
           } else if (event.type === 'close') {
             console.log('종료 사유:', event.data.closeReason);
             console.log('공유 완료한 친구 수:', event.data.sentRewardsCount);
+            
+            // 공유 완료한 친구 수가 1명 이상이면 보상 API 호출
+            if (event.data.sentRewardsCount && event.data.sentRewardsCount >= 1) {
+              console.log('🎁 친구 초대 보상 획득 시도:', event.data.sentRewardsCount, '명');
+              
+              getViralReward(event.data.sentRewardsCount)
+                .then((response) => {
+                  console.log('✅ 친구 초대 보상 획득 성공:', response);
+                  
+                  // message가 "Success"인 경우 모달창 표시
+                  if (response.message === "Success") {
+                    setShowViralRewardModal(true);
+                  }
+                })
+                .catch((error) => {
+                  console.error('❌ 친구 초대 보상 획득 실패:', error);
+                });
+            } else {
+              console.log('⚠️ 공유 완료한 친구가 없어 보상을 받을 수 없습니다');
+            }
           }
         },
         onError: (error) => {
@@ -398,7 +430,91 @@ const MissionPage: React.FC = () => {
       </div>
 
 
+
       <div className="my-10"></div>
+
+      {/* 친구 초대 보상 모달 */}
+      <Dialog open={showViralRewardModal} onOpenChange={setShowViralRewardModal}>
+        <DialogContent
+          className="border-none rounded-3xl text-white h-svh overflow-x-hidden font-semibold overflow-y-auto max-w-[90%] md:max-w-lg max-h-[60%]"
+          style={{
+            background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="flex flex-col items-center justify-around h-full">
+            <div className="flex flex-col items-center gap-6">
+              <h1
+                className="text-center"
+                style={{
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "30px",
+                  fontWeight: 400,
+                  color: "#FDE047",
+                  WebkitTextStroke: "2px #000000",
+                }}
+              >
+                친구 초대 보상
+              </h1>
+              
+              <div className="flex items-center justify-center w-16 h-16">
+                <img
+                  src={Images.KeyIcon}
+                  alt="Key Icon"
+                  className="w-16 h-16"
+                />
+              </div>
+              
+              <p
+                className="text-center"
+                style={{
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "18px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  WebkitTextStroke: "1px #000000",
+                }}
+              >
+                친구를 초대하고 열쇠를 획득하였습니다!
+              </p>
+            </div>
+            
+            <button
+              onClick={() => setShowViralRewardModal(false)}
+              className="rounded-[10px] w-[250px] h-14 relative"
+              style={{
+                background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                border: "2px solid #76C1FF",
+                outline: "2px solid #000000",
+                boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                color: "#FFFFFF",
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "18px",
+                fontWeight: "400",
+                WebkitTextStroke: "1px #000000",
+                opacity: 1,
+              }}
+            >
+              <img
+                src={Images.ButtonPointBlue}
+                alt="button-point-blue"
+                style={{
+                  position: "absolute",
+                  top: "3px",
+                  left: "3px",
+                  width: "8.47px",
+                  height: "6.3px",
+                  pointerEvents: "none",
+                }}
+              />
+              확인
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
