@@ -201,49 +201,62 @@ export const useAdMob = (): UseAdMobReturn => {
               if (pendingAdPromiseRef.current) {
                 console.log('loadAd: 보류 중인 광고 Promise 발견 - 보상 API 호출 시작');
                 
-                // �� 핵심 수정: 카드플립 재시도는 즉시 API 호출하지 않음
-                if (currentAdTypeRef.current === 'CARD_FLIP_RETRY') {
-                  console.log('카드플립 재시도 - 게임 재시도 기회만 제공');
+                // 🔥 핵심 수정: RPS_RETRY와 CARD_FLIP_RETRY는 즉시 API 호출하지 않음
+                if (currentAdTypeRef.current === 'CARD_FLIP_RETRY' || currentAdTypeRef.current === 'RPS_RETRY') {
+                  console.log(`${currentAdTypeRef.current} 재시도 - 게임 재시도 기회만 제공 (API 호출 없음)`);
+                  
                   // Promise resolve (requestData 포함하여 전달)
                   if (pendingAdPromiseRef.current) {
-                    pendingAdPromiseRef.current.resolve({
-                      type: 'CARD_FLIP_RETRY',
+                    const rewardResponse = {
+                      type: currentAdTypeRef.current,
                       message: '게임 재시도 기회를 획득했습니다',
                       requestData: pendingAdPromiseRef.current.requestData,
                       success: true
-                    });
+                    };
+                    
+                    console.log(`${currentAdTypeRef.current} 광고 보상 응답 생성:`, rewardResponse);
+                    pendingAdPromiseRef.current.resolve(rewardResponse);
                     pendingAdPromiseRef.current = null;
                   }
-                } else {
-                  // 다른 광고 타입들은 기존과 동일하게 처리
-                  (async () => {
-                    try {
-                      // 광고 보상 API 호출
-                      const rewardData = await callAdRewardAPI(
-                        currentAdTypeRef.current || 'RANDOM_BOX',
-                        pendingAdPromiseRef.current?.requestData
-                      );
-                      console.log('loadAd: 광고 보상 API 응답:', rewardData);
-                      console.log('loadAd: rewardData 타입: ', typeof rewardData);
-                      console.log('loadAd: rewardData.type:', rewardData?.type);
-                      
-                      // Promise resolve
-                      if (pendingAdPromiseRef.current) {
-                        pendingAdPromiseRef.current.resolve(rewardData);
-                        pendingAdPromiseRef.current = null;
-                      }
-                    } catch (error) {
-                      console.error('loadAd: 광고 보상 API 호출 실패:', error);
-                      if (pendingAdPromiseRef.current) {
-                        pendingAdPromiseRef.current.reject(error);
-                        pendingAdPromiseRef.current = null;
-                      }
-                    }
-                  })();
+                  
+                  // 🔥 핵심 수정: 광고 시청 완료 후 자동으로 인스턴스 정리 (즉시)
+                  console.log('게임 재시도 광고 시청 완료 후 자동 인스턴스 정리 시작');
+                  resetAdInstance();
+                  return; // 여기서 함수 종료하여 아래 API 호출 방지
                 }
+
+                // 🔥 핵심 수정: 다른 광고 타입들만 API 호출
+                (async () => {
+                  try {
+                    // currentAdTypeRef.current가 제대로 설정되었는지 확인
+                    const adType = currentAdTypeRef.current || 'RANDOM_BOX';
+                    console.log(`loadAd: ${adType} 광고 보상 API 호출 시작`);
+                    
+                    // 광고 보상 API 호출
+                    const rewardData = await callAdRewardAPI(
+                      adType,
+                      pendingAdPromiseRef.current?.requestData
+                    );
+                    console.log('loadAd: 광고 보상 API 응답:', rewardData);
+                    console.log('loadAd: rewardData 타입: ', typeof rewardData);
+                    console.log('loadAd: rewardData.type:', rewardData?.type);
+                    
+                    // Promise resolve
+                    if (pendingAdPromiseRef.current) {
+                      pendingAdPromiseRef.current.resolve(rewardData);
+                      pendingAdPromiseRef.current = null;
+                    }
+                  } catch (error) {
+                    console.error('loadAd: 광고 보상 API 호출 실패:', error);
+                    if (pendingAdPromiseRef.current) {
+                      pendingAdPromiseRef.current.reject(error);
+                      pendingAdPromiseRef.current = null;
+                    }
+                  }
+                })();
                 
-                // 광고 시청 완료 후 자동으로 인스턴스 정리 (즉시)
-                console.log('광고 시청 완료 후 자동 인스턴스 정리 시작');
+                // 🔥 핵심 수정: 다른 광고 타입들도 광고 시청 완료 후 자동으로 인스턴스 정리
+                console.log('일반 광고 시청 완료 후 자동 인스턴스 정리 시작');
                 resetAdInstance();
               }
               break;
@@ -268,17 +281,22 @@ export const useAdMob = (): UseAdMobReturn => {
     }
   }, [isSupported, callAdRewardAPI]);
 
-
-  // 광고 표시 함수 수정 - 상태 확인 로직 개선
+  // 광고 표시 함수 수정 - 광고 타입 설정 개선 및 에러 처리 개선
   const showAd = useCallback(async (adType: AdType = 'RANDOM_BOX', requestData?: any): Promise<any> => {
     if (!isSupported) {
       throw new Error('광고가 지원되지 않는 환경입니다');
     }
+    
+    // 🔥 핵심 수정: 광고 타입을 명시적으로 설정
+    currentAdTypeRef.current = adType;
+    console.log(`showAd: 광고 타입 설정됨 - ${adType}`);
+    
     // 🔥 핵심 수정: 광고 시청 전 강제 상태 확인
     console.log('광고 시청 전 상태 확인:', { 
       adLoadStatus, 
       isAdReady: isAdReadyRef.current,
-      hasPendingPromise: !!pendingAdPromiseRef.current 
+      hasPendingPromise: !!pendingAdPromiseRef.current,
+      currentAdType: currentAdTypeRef.current
     });
 
     // 보류 중인 Promise가 있으면 정리
@@ -350,8 +368,19 @@ export const useAdMob = (): UseAdMobReturn => {
           },
           onError: (error: unknown) => {
             console.error('showAd: 광고 표시 중 오류:', error);
+            
+            // 🔥 핵심 수정: 에러 발생 시 Promise reject
             if (pendingAdPromiseRef.current) {
-              pendingAdPromiseRef.current.reject(error);
+              const errorResponse = {
+                type: adType,
+                message: '광고 시청에 실패했습니다',
+                error: true,
+                success: false,
+                errorDetails: error
+              };
+              
+              console.log('광고 에러 응답 생성:', errorResponse);
+              pendingAdPromiseRef.current.reject(errorResponse); // resolve → reject로 변경
               pendingAdPromiseRef.current = null;
             }
           }
@@ -361,7 +390,18 @@ export const useAdMob = (): UseAdMobReturn => {
         const timeoutId = setTimeout(() => {
           if (pendingAdPromiseRef.current) {
             console.error('showAd: 광고 표시 타임아웃 (90초)');
-            pendingAdPromiseRef.current.reject(new Error('광고 시청 시간이 초과되었습니다. 다시 시도해주세요.'));
+            
+            // 🔥 핵심 수정: 타임아웃 시 적절한 에러 응답 생성
+            const timeoutResponse = {
+              type: adType,
+              message: '광고 시청 시간이 초과되었습니다. 다시 시도해주세요.',
+              error: true,
+              success: false,
+              errorDetails: 'timeout'
+            };
+            
+            console.log('광고 타임아웃 응답 생성:', timeoutResponse);
+            pendingAdPromiseRef.current.resolve(timeoutResponse);
             pendingAdPromiseRef.current = null;
           }
         }, 90000);
@@ -382,8 +422,8 @@ export const useAdMob = (): UseAdMobReturn => {
       }
     });
   }, [adLoadStatus, isSupported, loadAd]);
-
-  // resetAdInstance 함수 개선
+  
+  // resetAdInstance 함수 수정
   const resetAdInstance = useCallback(() => {
     console.log('광고 인스턴스 리셋 시작');
     
@@ -397,25 +437,18 @@ export const useAdMob = (): UseAdMobReturn => {
       }
     }
     
-    // 모든 상태 초기화
+    // �� 핵심 수정: 상태 변경 순서 조정
+    // 1. 먼저 참조 정리
     adInstanceRef.current = null;
     isAdReadyRef.current = false;
+    
+    // 2. 마지막에 상태 업데이트
     setAdLoadStatus('not_loaded');
     
-    // 보류 중인 Promise 정리
+    // 3. 보류 중인 Promise 정리
     if (pendingAdPromiseRef.current) {
       pendingAdPromiseRef.current = null;
     }
-    
-    // 🔥 핵심 수정: 상태 변경 후 추가 대기 시간
-    setTimeout(() => {
-      console.log('상태 변경 후 추가 검증 - adLoadStatus:', adLoadStatus);
-      if (adLoadStatus !== 'not_loaded') {
-        console.log('상태 불일치 감지 - 강제 리셋');
-        setAdLoadStatus('not_loaded');
-        isAdReadyRef.current = false;
-      }
-    }, 100);
     
     console.log('광고 인스턴스 리셋 완료');
   }, []);

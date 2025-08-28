@@ -12,6 +12,7 @@ import LoadingSpinner from "@/shared/components/ui/loadingSpinner"; // ★ 로�
 import { preloadImages } from "@/shared/utils/preloadImages"; // ★ 이미지 프리로딩 함수
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
+import { getRPSRetryAdReward } from "@/entities/User/api/RetryRPS";
 
 interface RPSGameProps {
   onGameEnd: (result: "win" | "lose", winnings: number) => void;
@@ -74,6 +75,7 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     gameResult,
     lastReward,
     isGameStarted,
+    rpsId, // store에서 rpsId 가져오기
     startGame,
     spin,
     stopSpin,
@@ -81,6 +83,9 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     closeDialog,
     playRound,
     handleRPSGameEnd,
+    handleRetryGameResult, // 재시도 게임용 결과 처리 함수
+    setRpsId, // rpsId 설정 함수
+    resetForRetry, // 재시도를 위한 상태 리셋 함수
   } = useRPSGameStore();
 
   const { starPoints } = useUserStore();
@@ -95,7 +100,6 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
   // -----------------------
   // RPS 게임 재시도 관련 상태 추가
   // -----------------------
-  const [rpsId, setRpsId] = useState<number | null>(null);
   const [lastPlayerChoice, setLastPlayerChoice] = useState<number | null>(null);
   const [canStartGame, setCanStartGame] = useState<boolean>(true);
 
@@ -110,12 +114,13 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     // console.log("Game started with betAmount:", betAmount);
   };
 
+  
   const handleSpin = async (userChoice: string) => {
     playSfx(Audios.button_click);
-
+  
     if (isSpinning || slotState !== "spinning") return;
     spin();
-
+  
     // 사용자 선택을 숫자로 변환하여 저장
     const choiceMap: { [key: string]: number } = {
       rock: 0,
@@ -123,36 +128,116 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
       scissors: 2
     };
     setLastPlayerChoice(choiceMap[userChoice]);
-
+  
     playSfx(Audios.rps_slot);
-
+  
     setTimeout(async () => {
       try {
-        const response = await playRound(userChoice);
-
-        // console.log("Server response =>", response);
-        if (response) {
-          // RPS 게임 ID 저장
-          if (response.rpsId) {
-            setRpsId(response.rpsId);
-          }
+        // �� 핵심 수정: 재시도 게임인지 확인
+        const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
+        const usedGameIds = JSON.parse(usedGames);
+        
+        // handleSpin 함수 내부의 재시도 게임 처리 부분 수정
+        if (rpsId && usedGameIds.includes(rpsId)) {
+          // 광고를 시청한 재시도 게임인 경우 RetryRPS.ts API 호출
+          console.log('재시도 게임 - RetryRPS.ts API 호출');
+          const retryResponse = await getRPSRetryAdReward({
+            rpsId: rpsId,
+            value: choiceMap[userChoice]
+          });
           
-          stopSpin(userChoice, response.computerChoice);
-          setSlotState("stopped");
-          setIsAnimating(false);
+          // �� 핵심 수정: 응답 데이터 상세 로깅
+          console.log('=== 재시도 게임 API 응답 전체 ===');
+          console.log('retryResponse:', retryResponse);
+          console.log('retryResponse.success:', retryResponse.success);
+          console.log('retryResponse.data:', retryResponse.data);
+          console.log('retryResponse.message:', retryResponse.message);
+          console.log('================================');
+          
+          if (retryResponse.success && retryResponse.data) {
+            const { result, reward, pcValue } = retryResponse.data;
+            
+            // �� 핵심 수정: 게임 데이터 상세 로깅
+            console.log('=== 재시도 게임 데이터 상세 ===');
+            console.log('result (승패):', result);
+            console.log('reward (보상):', reward);
+            console.log('pcValue (컴퓨터 선택):', pcValue);
+            console.log('userChoice (사용자 선택):', userChoice);
+            console.log('choiceMap[userChoice]:', choiceMap[userChoice]);
+            console.log('================================');
+            
+            const computerChoice = pcValue === 0 ? "scissors" : pcValue === 1 ? "rock" : "paper";
+            
+            // �� 핵심 수정: 컴퓨터 선택 변환 로깅
+            console.log('=== 컴퓨터 선택 변환 ===');
+            console.log('pcValue:', pcValue, '→ computerChoice:', computerChoice);
+            console.log('========================');
+            
+            stopSpin(userChoice, computerChoice);
+            setSlotState("stopped");
+            setIsAnimating(false);
+            
+            // 게임 결과 처리 로직
+            if (result === "WIN") {
+              console.log('🎉 재시도 게임 승리! 보상:', reward);
+              // 승리 결과 처리 - 결과 다이얼로그 표시
+              handleRetryGameResult("win", reward);
+            } else if (result === "DEFEAT") {
+              console.log(' 재시도 게임 패배');
+              // 패배 결과 처리 - 결과 다이얼로그 표시
+              handleRetryGameResult("lose", 0);
+            } else {
+              console.log('❓ 알 수 없는 게임 결과:', result);
+              // 무승부 또는 에러 처리 - 패배로 처리
+              handleRetryGameResult("lose", 0);
+            }
+          } else {
+            //  핵심 수정: 에러 응답 상세 로깅
+            console.error('❌ 재시도 게임 API 응답 실패 상세:');
+            console.error('retryResponse 전체:', retryResponse);
+            console.error('success 필드:', retryResponse.success);
+            console.error('data 필드:', retryResponse.data);
+            console.error('message 필드:', retryResponse.message);
+            // 에러 발생 시 패배로 처리하여 결과 다이얼로그 표시
+            handleRetryGameResult("lose", 0);
+          }
         } else {
-          throw new Error("Failed to play round.");
+          // 일반 게임인 경우 기존 playRound API 호출
+          console.log('일반 게임 - playRound API 호출');
+          const response = await playRound(userChoice);
+
+          if (response) {
+            // �� 핵심 수정: 일반 게임 응답 로깅
+            console.log('=== 일반 게임 응답 ===');
+            console.log('response:', response);
+            console.log('response.rpsId:', response.rpsId);
+            console.log('response.computerChoice:', response.computerChoice);
+            console.log('=====================');
+            
+            if (response.rpsId) {
+              setRpsId(response.rpsId);
+            }
+            
+            stopSpin(userChoice, response.computerChoice);
+            setSlotState("stopped");
+            setIsAnimating(false);
+          } else {
+            console.error('일반 게임 API 응답 실패:', response);
+            // API 응답 실패 시 패배로 처리
+            handleRPSGameEnd("lose", 0);
+          }
         }
       } catch (error) {
-        // console.error("Error during RPS playRound:", error);
-        alert(
-          "An error occurred while playing Rock-Paper-Scissors. The page will reload."
-        );
-        window.location.reload();
+        // �� 핵심 수정: catch 블록에서도 페이지 리프레시 방지
+        console.error("Error during RPS playRound:", error);
+        // alert와 window.location.reload() 제거
+        // 에러 발생 시 패배로 처리하여 결과 다이얼로그 표시
+        handleRPSGameEnd("lose", 0);
       }
     }, 2000);
   };
 
+  
   // -----------------------
   // 게임 종료 핸들러
   // -----------------------
@@ -162,26 +247,43 @@ const RPSGame: React.FC<RPSGameProps> = ({ onGameEnd, onCancel }) => {
     // console.log(`Game ended with ${gameResult}:`, lastReward);
   };
 
-  // -----------------------
-  // 게임 재시도 핸들러 추가
-  // -----------------------
-  const handleGameRetry = () => {
-    console.log('RPS 게임 재시도 시작');
+  
+  // handleGameRetry 함수 수정
+  const handleGameRetry = async () => {
+    console.log('RPS 게임 진행 페이지로 이동');
     
-    // 게임 상태 리셋 (베팅은 유지) - store 액션 사용
-    startGame(); // 게임 시작 상태로 리셋
-    closeDialog(); // 결과 모달 닫기
+    // �� 핵심 수정: 즉시 API 호출하지 않고 게임 상태만 리셋
+    // 이미 광고를 사용한 게임인지 확인
+    const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
+    const usedGameIds = JSON.parse(usedGames);
     
-    // 로컬 상태 리셋
-    setRpsId(null);
-    setLastPlayerChoice(null);
-    setCanStartGame(true); // true로 변경하여 게임 시작 가능하게
+    if (!rpsId || !usedGameIds.includes(rpsId)) {
+      console.error('RPS 재시도 권한이 없습니다. rpsId:', rpsId, 'usedGameIds:', usedGameIds);
+      alert('게임 재시도 권한이 없습니다.');
+      return;
+    }
     
-    // 슬롯 애니메이션 상태를 게임 시작 상태로 설정
-    setSlotState("spinning"); // "stopped"에서 "spinning"으로 변경
-    setIsAnimating(true); // true로 변경하여 애니메이션 활성화
-    
-    console.log('RPS 게임 재시도 완료 - 게임 시작 화면으로 이동');
+    try {
+      // �� 핵심 수정: API 호출하지 않고 게임 상태만 리셋
+      console.log('RPS 재시도 권한 확인됨 - 게임 진행 페이지로 이동');
+      
+      // 게임 상태 리셋 (베팅은 유지)
+      resetForRetry();
+      closeDialog();
+      
+      // 로컬 상태 리셋
+      setLastPlayerChoice(null);
+      setCanStartGame(true);
+      
+      // 슬롯 애니메이션 상태를 게임 시작 상태로 설정
+      setSlotState("spinning");
+      setIsAnimating(true);
+      
+      console.log('RPS 게임 진행 페이지 이동 완료 - 사용자가 가위바위보 선택할 때까지 대기');
+    } catch (error) {
+      console.error('RPS 게임 진행 페이지 이동 중 오류:', error);
+      alert('게임 진행 페이지 이동 중 오류가 발생했습니다.');
+    }
   };
 
   // -----------------------

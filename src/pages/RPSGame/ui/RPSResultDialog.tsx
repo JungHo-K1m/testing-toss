@@ -138,14 +138,38 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [hasUsedAdForGame, setHasUsedAdForGame] = useState(false);
 
+  // 자동 광고 로딩 useEffect 수정
+  useEffect(() => {
+    // 🔥 핵심 수정: 중복 실행 방지
+    if (isSupported && !hasUsedAdForGame && adLoadStatus === 'not_loaded') {
+      console.log('RPS 결과 모달 열림 - 자동 광고 로딩 시작');
+      console.log('현재 rpsId:', rpsId, 'lastPlayerChoice:', lastPlayerChoice);
+      autoLoadAd();
+    } else {
+      console.log('광고 자동 로딩 건너뜀:', { 
+        isSupported, 
+        hasUsedAdForGame, 
+        adLoadStatus 
+      });
+    }
+  }, [isSupported, hasUsedAdForGame, autoLoadAd, rpsId, lastPlayerChoice, adLoadStatus]);
+
+  
   // 이미 광고를 사용한 게임인지 확인
   useEffect(() => {
     const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
     const usedGameIds = JSON.parse(usedGames);
+    console.log('로컬스토리지에서 광고 사용 게임 확인:', { usedGameIds, currentRpsId: rpsId });
+    
     if (usedGameIds.includes(rpsId)) {
+      console.log('이미 광고를 사용한 게임:', rpsId);
       setHasUsedAdForGame(true);
+    } else {
+      console.log('광고를 사용하지 않은 게임:', rpsId);
+      setHasUsedAdForGame(false);
     }
   }, [rpsId]);
+
   
   // 광고 시청 핸들러
   const handleAdWatch = async () => {
@@ -163,7 +187,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       setIsAdLoading(true);
       console.log('RPS 재시도 광고 시작');
 
-      // 광고가 로드되지 않은 경우 먼저 로드
+      // 핵심 수정: 광고 타입을 명시적으로 'RPS_RETRY'로 설정
       if (adLoadStatus !== 'loaded') {
         console.log('광고 로드 시작...');
         await loadAd('RPS_RETRY');
@@ -177,28 +201,72 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       };
 
       console.log('RPS 재시도 요청 데이터:', requestData);
+      console.log('RPS_RETRY 광고 표시 시작 - API 호출 없이 게임 재시도만 제공');
 
-      // 광고 표시 및 보상 결과 대기 (requestData 전달)
+      // 핵심 수정: 광고 타입을 명시적으로 'RPS_RETRY'로 전달
       const rewardData = await showAd('RPS_RETRY', requestData);
       console.log('RPS 재시도 광고 완료:', rewardData);
 
-      if (rewardData) {
-        // 광고 사용 기록
+      // 핵심 수정: 광고 성공 여부 확인 및 에러 처리
+      if (rewardData && rewardData.success && rewardData.type === 'RPS_RETRY') {
+        console.log('RPS 재시도 광고 성공 - 게임 진행 페이지로 이동');
+        
+        // �� 핵심 수정: 광고 사용 기록을 먼저 저장
         const usedGames = localStorage.getItem('rpsAdUsedGames') || '[]';
         const usedGameIds = JSON.parse(usedGames);
-        usedGameIds.push(rpsId);
-        localStorage.setItem('rpsAdUsedGames', JSON.stringify(usedGameIds));
-        
-        // 게임 재시도 콜백 호출
-        if (onRetry) {
-          onRetry();
+        if (!usedGameIds.includes(rpsId)) {
+          usedGameIds.push(rpsId);
+          localStorage.setItem('rpsAdUsedGames', JSON.stringify(usedGameIds));
+          console.log('RPS 광고 사용 기록 저장됨:', rpsId);
         }
         
-        // 광고 시청 완료 후 인스턴스는 자동으로 정리됨
+        // 핵심 수정: 게임 진행 페이지로만 이동 (재시도 API 호출 안함)
+        if (onRetry) {
+          console.log('RPS 게임 진행 페이지로 이동 - 재시도 API는 사용자가 가위바위보 선택 시 호출');
+          onRetry(); // 게임 진행 페이지로만 이동
+        }
+      }else {
+        // 핵심 수정: 광고 실패 또는 잘못된 타입 시 처리
+        console.error('RPS 재시도 광고 실패 또는 잘못된 타입:', rewardData);
+        
+        if (rewardData && rewardData.error) {
+          // 광고 시청 실패 에러
+          alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+        } else if (rewardData && rewardData.type !== 'RPS_RETRY') {
+          // 잘못된 광고 타입
+          console.error('잘못된 광고 타입:', rewardData.type);
+          alert('광고 타입이 올바르지 않습니다. 다시 시도해주세요.');
+        } else if (rewardData && !rewardData.success) {
+          // 광고 보상 실패
+          alert('광고 보상 획득에 실패했습니다. 다시 시도해주세요.');
+        } else {
+          // 알 수 없는 에러
+          alert('광고 시청 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+        
+        // 핵심 수정: 광고 실패 시 onRetry 호출하지 않음
+        console.log('광고 실패로 인해 게임 재시도 중단');
+        return;
       }
     } catch (error) {
       console.error('RPS 재시도 광고 중 오류:', error);
-      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+      
+      // 핵심 수정: 에러 타입별 처리
+      if (error instanceof Error) {
+        if (error.message.includes('광고 시청 시간이 초과')) {
+          alert('광고 시청 시간이 초과되었습니다. 다시 시도해주세요.');
+        } else if (error.message.includes('광고가 지원되지 않는 환경')) {
+          alert('광고가 지원되지 않는 환경입니다.');
+        } else {
+          alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+        }
+      } else {
+        alert('광고 시청 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+      
+      // 핵심 수정: 에러 발생 시 onRetry 호출하지 않음
+      console.log('광고 에러로 인해 게임 재시도 중단');
+      return;
     } finally {
       setIsAdLoading(false);
     }
@@ -218,6 +286,21 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       default:
         return '광고 시청 후 재시도';
     }
+  };
+  
+  // 핵심 수정 5: 광고 버튼 표시 조건 개선
+  const shouldShowAdButton = () => {
+    // 이미 광고를 사용한 게임이면 버튼 숨김
+    if (hasUsedAdForGame) {
+      return false;
+    }
+    
+    // 광고가 지원되지 않으면 버튼 숨김
+    if (!isSupported) {
+      return false;
+    }
+    
+    return true;
   };
 
   // 광고 버튼 비활성화 여부
@@ -284,53 +367,55 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       </div>
       
       {/* 버튼 영역 - 세로로 배치 */}
-      <div className="flex flex-col gap-3 mt-10">
-        {/* 광고보기 버튼 */}
-        <button
-          className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-            isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-          }`}
-          style={{
-            width: "300px",
-            height: "56px",
-            background:
-              "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-            border: "2px solid #76C1FF",
-            outline: "2px solid #000000",
-            boxShadow:
-              "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-            color: "#FFFFFF",
-            fontFamily: "'ONE Mobile POP', sans-serif",
-            fontSize: "18px",
-            fontWeight: "400",
-            WebkitTextStroke: "1px #000000",
-            opacity: isAdButtonDisabled ? 0.5 : 1,
-          }}
-          onClick={handleAdWatch}
-          disabled={isAdButtonDisabled}
-        >
-          <img
-            src={Images.ButtonPointBlue}
-            alt="button-point-blue"
+      <div className="flex flex-col gap-3 mt-2">
+        {/* 핵심 수정 6: 광고 버튼 조건부 표시 */}
+        {shouldShowAdButton() && (
+          <button
+            className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+              isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+            }`}
             style={{
-              position: "absolute",
-              top: "3px",
-              left: "3px",
-              width: "8.47px",
-              height: "6.3px",
-              pointerEvents: "none",
+              width: "300px",
+              height: "56px",
+              background:
+                "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+              border: "2px solid #76C1FF",
+              outline: "2px solid #000000",
+              boxShadow:
+                "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+              color: "#FFFFFF",
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontSize: "18px",
+              fontWeight: "400",
+              WebkitTextStroke: "1px #000000",
+              opacity: isAdButtonDisabled ? 0.5 : 1,
             }}
-          />
-          <img
-            src={Images.AdButton}
-            alt="광고 버튼"
-            style={{
-              width: "32px",
-              height: "32px",
-            }}
-          />
-          <span>{getAdButtonText()}</span>
-        </button>
+            onClick={handleAdWatch}
+            disabled={isAdButtonDisabled}
+          >
+            <img
+              src={Images.ButtonPointBlue}
+              alt="button-point-blue"
+              style={{
+                position: "absolute",
+                top: "3px",
+                left: "3px",
+                width: "8.47px",
+                height: "6.3px",
+                pointerEvents: "none",
+              }}
+            />
+            <img
+              src={Images.AdButton}
+              alt="광고 버튼"
+              style={{
+                width: "32px",
+                height: "32px",
+              }}
+            />
+            <span>{getAdButtonText()}</span>
+          </button>
+        )}
 
         {/* 나가기 버튼 */}
         <button
