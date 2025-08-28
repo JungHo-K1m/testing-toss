@@ -44,7 +44,7 @@ const Reward: React.FC = () => {
   const [showMoreUSDT, setShowMoreUSDT] = useState(false);
   const [showMoreSL, setShowMoreSL] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
+  const [showHallOfFameModal, setShowHallOfFameModal] = useState(false);
   // useEffect(() => {
   //   fetchLeaderHome();
   // }, [fetchLeaderHome]);
@@ -264,7 +264,7 @@ const Reward: React.FC = () => {
             "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
           borderRadius: "24px",
         }}
-        onClick={() => navigate("/hall-of-fame")}
+        onClick={() => setShowHallOfFameModal(true)}
       >
         <div className="flex justify-between items-center">
           {/* 텍스트 영역 */}
@@ -325,6 +325,20 @@ const Reward: React.FC = () => {
             <button
               className="mt-4 px-4 py-2 bg-[#0147E5] text-white rounded-lg"
               onClick={handleCloseModal}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showHallOfFameModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 w-full">
+          <div className="bg-white text-black p-6 rounded-lg text-center w-[70%] max-w-[550px]">
+            <p>지난달 랭킹이 없습니다.</p>
+            <button
+              className="mt-4 px-4 py-2 bg-[#0147E5] text-white rounded-lg"
+              onClick={() => setShowHallOfFameModal(false)}
             >
               OK
             </button>

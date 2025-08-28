@@ -405,12 +405,12 @@ function ItemModal({
                 try {
                   // console.log("=== 장착/해제 버튼 클릭 시작 ===");
                   // console.log("아이템 정보:", {
-                    ownedEquipmentId: item.ownedEquipmentId,
-                    type: item.type,
-                    isEquipped: item.isEquipped,
-                    name: item.name,
-                    level: item.level,
-                  });
+                  //   ownedEquipmentId: item.ownedEquipmentId,
+                  //   type: item.type,
+                  //   isEquipped: item.isEquipped,
+                  //   name: item.name,
+                  //   level: item.level,
+                  // });
 
                   if (!item.ownedEquipmentId) {
                     console.error("❌ ownedEquipmentId가 없습니다:", item);
@@ -422,10 +422,10 @@ function ItemModal({
                   if (item.isEquipped) {
                     // 장착된 아이템 해제
                     // console.log("🔍 장착된 아이템 해제 시도:", {
-                      item: item,
-                      hasSlotId: !!item.slotId,
-                      slotId: item.slotId,
-                    });
+                      //   item: item,
+                      //   hasSlotId: !!item.slotId,
+                      //   slotId: item.slotId,
+                      // });
 
                     if (!item.slotId) {
                       console.error("❌ slotId가 없습니다:", item);
@@ -434,8 +434,8 @@ function ItemModal({
 
                     // console.log("🚀 removeEquipment API 호출 시작...");
                     // console.log("API 요청 데이터:", {
-                      slotId: item.slotId,
-                    });
+                    //   slotId: item.slotId,
+                    // });
 
                     newInventoryData = await removeEquipment({
                       slotId: item.slotId,
@@ -443,9 +443,9 @@ function ItemModal({
                   } else {
                     // 아이템 장착
                     // console.log("🚀 wearEquipment API 호출 시작...");
-                    // console.log("API 요청 데이터:", {
-                      ownedEquipmentId: item.ownedEquipmentId,
-                    });
+                    // // console.log("API 요청 데이터:", {
+                    //   ownedEquipmentId: item.ownedEquipmentId,
+                    // });
 
                     newInventoryData = await wearEquipment({
                       ownedEquipmentId: item.ownedEquipmentId,
@@ -454,11 +454,11 @@ function ItemModal({
 
                   // console.log("✅ API 응답 성공:", newInventoryData);
                   // console.log("응답 데이터 구조:", {
-                    hasSlot: !!newInventoryData.slot,
-                    hasMyItems: !!newInventoryData.myItems,
-                    slotLength: newInventoryData.slot?.length || 0,
-                    myItemsLength: newInventoryData.myItems?.length || 0,
-                  });
+                  //   hasSlot: !!newInventoryData.slot,
+                  //   hasMyItems: !!newInventoryData.myItems,
+                  //   slotLength: newInventoryData.slot?.length || 0,
+                  //   myItemsLength: newInventoryData.myItems?.length || 0,
+                  // });
 
                   // console.log("🔄 인벤토리 데이터 업데이트 시작...");
                   onEquipmentChange(newInventoryData);
@@ -564,23 +564,23 @@ function ItemModal({
                   }
 
                   // console.log("🔍 강화 대상 아이템:", {
-                    id: item.ownedEquipmentId,
-                    type: item.type,
-                    level: item.level,
-                    name: item.name,
-                  });
+                  //   id: item.ownedEquipmentId,
+                  //   type: item.type,
+                  //   level: item.level,
+                  //   name: item.name,
+                  // });
 
-                  // console.log("🔍 재료 아이템:", {
-                    id: material.ownedEquipmentId,
-                    type: material.type,
-                    level: material.rarity,
-                  });
+                  // // console.log("🔍 재료 아이템:", {
+                  //   id: material.ownedEquipmentId,
+                  //   type: material.type,
+                  //   level: material.rarity,
+                  // });
 
                   // console.log("🚀 upgradeEquipment API 호출 시작...");
                   // console.log("API 요청 데이터:", {
-                    upgradeEquipmentId: item.ownedEquipmentId,
-                    materialEquipmentId: material.ownedEquipmentId,
-                  });
+                  //   upgradeEquipmentId: item.ownedEquipmentId,
+                  //   materialEquipmentId: material.ownedEquipmentId,
+                  // });
 
                   const upgradeResult = await upgradeEquipment({
                     upgradeEquipmentId: item.ownedEquipmentId,
@@ -600,9 +600,9 @@ function ItemModal({
                   if (upgradeResult.success) {
                     // console.log("🎉 강화 성공!");
                     // console.log(
-                      "강화된 아이템:",
-                      upgradeResult.upgradeEquipment
-                    );
+                    //   "강화된 아이템:",
+                    //   upgradeResult.upgradeEquipment
+                    // );
 
                     // useUserStore의 장착 아이템 상태도 업데이트
                     // console.log("🔄 강화 후 useUserStore 장착 아이템 상태 업데이트 시작...");
@@ -1131,20 +1131,20 @@ const Inventory: React.FC = () => {
     setIsModalOpen(true);
     // console.log("Modal opened, isModalOpen:", true); // 디버깅용
     // console.log("Selected item data:", {
-      type: item.type,
-      rarity: item.rarity,
-      ownedEquipmentId: item.ownedEquipmentId,
-      isEquipped,
-      slotId: "slotId" in item ? item.slotId : undefined,
-    });
+    //   type: item.type,
+    //   rarity: item.rarity,
+    //   ownedEquipmentId: item.ownedEquipmentId,
+    //   isEquipped,
+    //   slotId: "slotId" in item ? item.slotId : undefined,
+    // });
   };
 
   // 장착된 아이템 클릭 핸들러
   const handleEquippedItemClick = (item: EquippedSlotItem) => {
     // slotId 정보 로깅 (디버깅용)
     // console.log(
-      `장착된 아이템 클릭: ${item.type}, 슬롯 ID: ${item.slotId}, 장비 ID: ${item.ownedEquipmentId}`
-    );
+    //   `장착된 아이템 클릭: ${item.type}, 슬롯 ID: ${item.slotId}, 장비 ID: ${item.ownedEquipmentId}`
+    // );
 
     // 장착된 아이템의 경우 slotId를 포함하여 모달 열기
     const itemNames: { [key: string]: string } = {
@@ -1167,13 +1167,13 @@ const Inventory: React.FC = () => {
     });
     setIsModalOpen(true);
 
-    // console.log("장착된 아이템 모달 열기:", {
-      type: item.type,
-      rarity: item.rarity,
-      ownedEquipmentId: item.ownedEquipmentId,
-      slotId: item.slotId,
-      isEquipped: true,
-    });
+    // // console.log("장착된 아이템 모달 열기:", {
+    //   type: item.type,
+    //   rarity: item.rarity,
+    //   ownedEquipmentId: item.ownedEquipmentId,
+    //   slotId: item.slotId,
+    //   isEquipped: true,
+    // });
   };
 
   // 장착된 아이템을 효율적으로 찾는 헬퍼 함수
@@ -1448,9 +1448,9 @@ const Inventory: React.FC = () => {
               Array.isArray(newInventoryData.myItems)
             ) {
               // console.log("✅ 유효한 응답 데이터:", {
-                slotCount: newInventoryData.slot.length,
-                myItemsCount: newInventoryData.myItems.length,
-              });
+              //   slotCount: newInventoryData.slot.length,
+              //   myItemsCount: newInventoryData.myItems.length,
+              // });
 
               setInventoryData(newInventoryData);
             } else {

@@ -43,25 +43,25 @@ const SettingsPage: React.FC =() => {
 
             <div className="w-full">
                 {/* 서비스 이용 약관 */}
-                <div 
+                {/* <div 
                     className="bg-gray-800 p-4 rounded-lg mb-4 flex justify-between items-center"
                     onClick={() => handleNavigation('service')}>
                     <div>
                         <p className="font-semibold">서비스 이용 약관</p>
                     </div>
                     <FaChevronLeft className="text-lg cursor-pointer transform rotate-180" />
-                </div>
+                </div> */}
                 {/* 개인정보 처리 방침 */}
-                <div 
+                {/* <div 
                     className="bg-gray-800 p-4 rounded-lg mb-4 flex justify-between items-center"
                     onClick={() => handleNavigation('privacy')}>
                     <div>
                         <p className="font-semibold">개인정보 처리 방침</p>
                     </div>
                     <FaChevronLeft className="text-lg cursor-pointer transform rotate-180" />
-                </div>
+                </div> */}
                 {/* 전자상거래 이용약관 */}
-                <div 
+                {/* <div 
                     className="bg-gray-800 p-4 rounded-lg mb-4 flex justify-between items-center"
                     onClick={() => handleNavigation('commerce')}>
                     <div>
@@ -77,7 +77,7 @@ const SettingsPage: React.FC =() => {
                         <p className="font-semibold">언어</p>
                     </div>
                     <FaChevronLeft className="text-lg cursor-pointer transform rotate-180" />
-                </div>
+                </div> */}
                 <div 
                     className="bg-gray-800 p-4 rounded-lg mb-4 flex justify-between items-center"
                     onClick={handleSound}>
@@ -88,23 +88,23 @@ const SettingsPage: React.FC =() => {
                 </div>
 
                 {/* 카드 뒤집기 게임 테스트 버튼 */}
-                <div 
+                {/* <div 
                     className="bg-gray-800 p-4 rounded-lg mb-4 flex justify-between items-center"
                     onClick={() => setIsCardFlipGameActive(true)}>
                     <div>
                         <p className="font-semibold">카드 뒤집기 게임 테스트</p>
                     </div>
                     <FaChevronLeft className="text-lg cursor-pointer transform rotate-180" />
-                </div>
+                </div> */}
             </div>
 
             
             {/* 카드 뒤집기 게임 */}
-            {isCardFlipGameActive && (
+            {/* {isCardFlipGameActive && (
                 <CardGameModal
                     onClose={() => setIsCardFlipGameActive(false)}
                 />
-            )}
+            )} */}
         </div>
     );
 };
