@@ -146,7 +146,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       setHasUsedAdForGame(true);
     }
   }, [rpsId]);
-
+  
   // 광고 시청 핸들러
   const handleAdWatch = async () => {
     if (!isSupported) {
@@ -170,8 +170,16 @@ const ResultLose: React.FC<ResultLoseProps> = ({
         return;
       }
 
-      // 광고 표시 및 보상 결과 대기
-      const rewardData = await showAd('RPS_RETRY');
+      // RPS 재시도에 필요한 데이터 준비
+      const requestData = {
+        rpsId: rpsId,
+        value: lastPlayerChoice // 0=가위, 1=바위, 2=보
+      };
+
+      console.log('RPS 재시도 요청 데이터:', requestData);
+
+      // 광고 표시 및 보상 결과 대기 (requestData 전달)
+      const rewardData = await showAd('RPS_RETRY', requestData);
       console.log('RPS 재시도 광고 완료:', rewardData);
 
       if (rewardData) {

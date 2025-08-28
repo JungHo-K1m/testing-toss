@@ -436,11 +436,9 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
   );
 };
 
-const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
+const CardGameBoard = ({ betAmount, onResult, onCancel, resetAnimationState }: any) => {
   const [mode, setMode] = useState<"color" | "suit" | null>(null);
-  const [selectedColor, setSelectedColor] = useState<"RED" | "BLACK" | null>(
-    null
-  );
+  const [selectedColor, setSelectedColor] = useState<"RED" | "BLACK" | null>(null);
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
   const [topSelected, setTopSelected] = useState(false);
@@ -449,6 +447,14 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
   const [screenHeight, setScreenHeight] = useState(0);
   const [animationDistance, setAnimationDistance] = useState(40);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 🔥 핵심 수정: 외부에서 애니메이션 상태 리셋 가능하도록 useEffect 추가
+  useEffect(() => {
+    if (resetAnimationState) {
+      setTopSelected(false);
+      setBottomSelected(false);
+    }
+  }, [resetAnimationState]);
 
   // 화면 높이 측정 및 애니메이션 거리 계산
   useEffect(() => {
@@ -540,7 +546,17 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
           : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
       };
 
-      onResult(win, reward, answer);
+      // 🔥 핵심 수정: 현재 게임 상태를 함께 전달
+      const gameState = {
+        mode: mode,
+        selectedColor: selectedColor,
+        selectedSuit: selectedSuit
+      };
+
+      console.log("게임 결과 처리 - 현재 게임 상태:", gameState);
+      
+      // �� 핵심 수정: gameState를 5번째 매개변수로 전달
+      onResult(win, reward, answer, response.cardFlipId, gameState);
 
       // 게임 상태 리셋
       setMode(null);
@@ -551,25 +567,11 @@ const CardGameBoard = ({ betAmount, onResult, onCancel }: any) => {
       setBottomSelected(false);
     } catch (error: any) {
       console.error("카드 플립 API 에러:", error);
-      // 에러 발생 시 기본 결과 처리
-      const win = false;
-      const reward = 0;
-      const answer = {
-        color: mode === "color" ? selectedColor : "UNKNOWN",
-        suit: mode === "suit" 
-          ? SUITS.find((suit) => suit.value === selectedSuit) || SUITS[0]
-          : { label: "UNKNOWN", value: "UNKNOWN", color: "UNKNOWN" },
-      };
-
-      onResult(win, reward, answer);
-
-      // 에러 발생 시에도 게임 상태 리셋
-      setMode(null);
-      setSelectedColor(null);
-      setSelectedSuit(null);
-      setCardRevealed(false);
-      setTopSelected(false);
-      setBottomSelected(false);
+      
+      // 🔥 에러 발생 시 게임 종료
+      alert('게임 진행 중 오류가 발생했습니다. 게임을 종료합니다.');
+      onCancel(); // 게임 종료
+      return;
     } finally {
       setIsLoading(false);
     }
@@ -871,14 +873,17 @@ const CardGameResultDialog = ({
   cardFlipId,
   hasUsedAdForGame,
   setHasUsedAdForGame,
+  // 게임 상태 추가
+  gameMode,           // "color" 또는 "suit"
+  selectedColor,      // "RED" 또는 "BLACK"
+  selectedSuit,       // 선택된 카드 문양
 }: any) => {
   // CardGameResultDialog에서 광고 로드
-const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
+  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
 
   const [platform] = useState(getPlatform());
   const [isAdLoading, setIsAdLoading] = useState(false);
 
-  // 이미 광고를 사용한 게임인지 확인
   useEffect(() => {
     if (cardFlipId) {
       const usedGames = localStorage.getItem('cardFlipAdUsedGames') || '[]';
@@ -893,12 +898,28 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
   useEffect(() => {
     if (isOpen && !win && !hasUsedAdForGame && isSupported) {
       console.log('게임 패배 시 자동 광고 로드 시작');
-      loadAd('CARD_FLIP_RETRY');
+      
+      // 🔥 핵심 수정: 이미 로딩 중이거나 로드된 상태면 건너뛰기
+      if (adLoadStatus === 'loading' || adLoadStatus === 'loaded') {
+        console.log('이미 광고 로딩 중이거나 로드됨 - 자동 로드 건너뛰기');
+        return;
+      }
+      
+      // 🔥 핵심 수정: 한 번만 실행되도록 플래그 추가
+      let isAutoLoading = false;  
+      if (!isAutoLoading) {
+        isAutoLoading = true;
+        try {
+          loadAd('CARD_FLIP_RETRY');
+        } catch (error: any) {
+          console.error('자동 광고 로드 실패:', error);
+          isAutoLoading = false;
+        }
+      }
     }
-  }, [isOpen, win, hasUsedAdForGame, isSupported, loadAd]);
+  }, [isOpen, win, hasUsedAdForGame, isSupported]); // loadAd 의존성 제거
 
 
-  
   // 광고 시청 핸들러 수정
   const handleAdWatch = async () => {
     if (!isSupported) {
@@ -920,53 +941,105 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
       setIsAdLoading(true);
       console.log('카드게임 재시도 광고 시작 - 게임 ID:', cardFlipId);
       
-      // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== 'loaded') {
-        console.log('광고 로드 시작...');
-        await loadAd('CARD_FLIP_RETRY');
-        
-        // 로드 후 상태 확인 - 최대 3초 대기
-        let waitCount = 0;
-        while (waitCount < 30) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          waitCount++;
-          // 현재 상태 확인 - 타입 단언 사용
-          if ((adLoadStatus as any) === 'loaded') {
-            break;
+      //  핵심 수정: 광고 로딩 상태 확인 및 재시도 로직
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          // 광고가 로드되지 않은 경우 먼저 로드
+          if (adLoadStatus !== 'loaded') {
+            console.log(`광고 로드 시도 ${retryCount + 1}/${maxRetries}...`);
+            await loadAd('CARD_FLIP_RETRY');
+            
+            // 로드 후 상태 확인 - 최대 3초 대기
+            let waitCount = 0;
+            while (waitCount < 30) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              waitCount++;
+              if ((adLoadStatus as any) === 'loaded') {
+                break;
+              }
+            }
+            
+            if ((adLoadStatus as any) !== 'loaded') {
+              throw new Error('광고 로드에 실패했습니다');
+            }
           }
-        }
-        
-        if ((adLoadStatus as any) !== 'loaded') {
-          throw new Error('광고 로드에 실패했습니다');
+          
+          // 광고 로드 성공 시 루프 탈출
+          break;
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`광고 로드 시도 ${retryCount}/${maxRetries} 실패:`, error);
+          
+          if (retryCount >= maxRetries) {
+            throw new Error('광고 로드를 여러 번 시도했지만 실패했습니다.');
+          }
+          
+          // 재시도 전 잠시 대기
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
+      // 카드플립 재시도에 필요한 데이터 준비
+      const requestData = {
+        cardFlipId: cardFlipId,
+        type: gameMode === "color" ? "COLOR" : "FLIP",
+        num: gameMode === "color" 
+          ? (selectedColor === "RED" ? 1 : 2)
+          : SUITS.findIndex((suit) => suit.value === selectedSuit) + 1
+      };
 
-      console.log('광고 표시 시작...');
-      
+      console.log('카드플립 재시도 요청 데이터:', requestData);
+
       // 광고 표시 및 보상 결과 대기
-      const rewardData = await showAd('CARD_FLIP_RETRY');
+      const rewardData = await showAd('CARD_FLIP_RETRY', requestData);
       console.log('카드게임 재시도 광고 완료 - 보상 결과:', rewardData);
       
-      if (rewardData) {
-        // 광고 사용 기록
-        const usedGames = localStorage.getItem('cardFlipAdUsedGames') || '[]';
-        const usedGameIds = JSON.parse(usedGames);
-        usedGameIds.push(cardFlipId);
-        localStorage.setItem('cardFlipAdUsedGames', JSON.stringify(usedGameIds));
+      // 🔥 핵심 수정: 광고 완료 후 게임 재시도 화면으로 이동
+      if (rewardData && rewardData.type === 'CARD_FLIP_RETRY') {
+        console.log('광고 시청 완료 - 게임 재시도 화면으로 이동');
+        
+        // 🔥 핵심 수정: localStorage 처리 개선 - 에러 방지
+        try {
+          if (cardFlipId) {
+            const usedGamesStr = localStorage.getItem('cardFlipAdUsedGames');
+            let usedGameIds: number[] = [];
+            
+            if (usedGamesStr) {
+              try {
+                usedGameIds = JSON.parse(usedGamesStr);
+                if (!Array.isArray(usedGameIds)) {
+                  usedGameIds = [];
+                }
+              } catch (parseError) {
+                console.warn('localStorage 파싱 에러, 빈 배열로 초기화:', parseError);
+                usedGameIds = [];
+              }
+            }
+            
+            if (!usedGameIds.includes(cardFlipId)) {
+              usedGameIds.push(cardFlipId);
+              localStorage.setItem('cardFlipAdUsedGames', JSON.stringify(usedGameIds));
+              console.log('게임 ID 저장 완료:', cardFlipId);
+            }
+          }
+        } catch (storageError) {
+          console.error('localStorage 저장 중 에러:', storageError);
+          // localStorage 에러가 있어도 게임 재시도는 계속 진행
+        }
         
         // 로컬 상태 업데이트
         setHasUsedAdForGame(true);
         
-        // 게임 재시도 콜백 호출
+        // 🔥 핵심 수정: 모달을 닫지 않고 바로 게임 재시도 실행
         if (onRetry) {
           onRetry();
         }
         
-        // 광고 시청 완료 후 인스턴스 리셋 (자동으로 처리되므로 제거)
-        // setTimeout(() => {
-        //   resetAdInstance();
-        // }, 1000);
+        return; // 함수 종료
       }
       
     } catch (error: any) {
@@ -979,12 +1052,14 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
           errorMessage = '광고 로딩 시간이 초과되었습니다. 다시 시도해주세요.';
         } else if (error.message.includes('로드에 실패')) {
           errorMessage = '광고를 불러올 수 없습니다. 네트워크 상태를 확인해주세요.';
+        } else if (error.message.includes('여러 번 시도')) {
+          errorMessage = '광고 로드에 실패했습니다. 잠시 후 다시 시도해주세요.';
         }
       }
       
       alert(errorMessage);
       
-      // 오류 발생 시 광고 재로드
+      // 🔥 핵심 수정: 에러 발생 시 광고 상태 리셋
       setTimeout(() => {
         resetAdInstance();
       }, 1000);
@@ -993,11 +1068,20 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
     }
   };
 
+  // 광고 버튼 비활성화 여부 수정
+  const isAdButtonDisabled = () => {
+    // 🔥 핵심 수정: 게임 ID별 광고 사용 여부 확인
+    if (hasUsedAdForGame) return true;
+    if (isAdLoading) return true;
+    if (adLoadStatus === 'loading') return true;
+    if (adLoadStatus === 'failed') return false; // 실패 시에는 재시도 가능
+    return adLoadStatus !== 'loaded';
+  };
 
   // 광고 상태에 따른 버튼 텍스트 개선
   const getAdButtonText = () => {
     if (hasUsedAdForGame) {
-      return '이미 사용된 게임';
+      return '이미 광고를 시청한 게임입니다';
     }
     
     if (isAdLoading) {
@@ -1016,15 +1100,6 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
       default:
         return '광고 시청 후 재시도';
     }
-  };
-
-  // 광고 버튼 비활성화 여부 수정
-  const isAdButtonDisabled = () => {
-    if (hasUsedAdForGame) return true;
-    if (isAdLoading) return true;
-    if (adLoadStatus === 'loading') return true;
-    if (adLoadStatus === 'failed') return false; // 실패 시에는 재시도 가능
-    return adLoadStatus !== 'loaded';
   };
 
   if (!isOpen) return null;
@@ -1117,30 +1192,12 @@ const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAd
                 onClick={handleAdWatch}
                 disabled={isAdButtonDisabled()}
               >
-                {/* ... existing button content ... */}
                 <span>{getAdButtonText()}</span>
               </button>
             )}
 
-            {/* 이미 광고를 사용한 게임인 경우 안내 메시지 표시 */}
-            {!win && hasUsedAdForGame && (
-              <div className="px-6 py-4 rounded-[10px] bg-gray-600 bg-opacity-50 text-center">
-                <p
-                  style={{
-                    fontFamily: "'ONE Mobile POP', sans-serif",
-                    fontSize: "16px",
-                    fontWeight: "400",
-                    color: "#B4CADA",
-                    WebkitTextStroke: "0.5px #000000",
-                  }}
-                >
-                  이미 광고를 시청한 게임입니다
-                </p>
-              </div>
-            )}
-
-                        {/* 종료 버튼 */}
-                        <button
+            {/* 종료 버튼 */}
+            <button
               className="w-full py-3 rounded-xl font-bold text-white"
               style={{
                 background: win
@@ -1170,10 +1227,17 @@ const CardGameModal = ({ onClose }: any) => {
   const [selectedColor, setSelectedColor] = useState<"RED" | "BLACK" | null>(null);
   const [selectedSuit, setSelectedSuit] = useState<string | null>(null);
   const [cardRevealed, setCardRevealed] = useState(false);
-  
+    
   // 게임 ID 및 광고 사용 상태 추가
   const [currentCardFlipId, setCurrentCardFlipId] = useState<number | null>(null);
   const [hasUsedAdForGame, setHasUsedAdForGame] = useState(false);
+
+  // 🔥 핵심 수정: 게임 상태 저장을 위한 변수 추가
+  const [savedGameState, setSavedGameState] = useState<{
+    mode: "color" | "suit" | null;
+    selectedColor: "RED" | "BLACK" | null;
+    selectedSuit: string | null;
+  } | null>(null);
 
   // 사용자의 보유 포인트 가져오기
   const starPoints = useUserStore((state) => state.starPoints);
@@ -1186,33 +1250,67 @@ const CardGameModal = ({ onClose }: any) => {
     return Date.now() + Math.random();
   };
 
-  // 게임 시작 핸들러 수정
   const handleGameStart = (amount: number) => {
     const gameId = generateGameId();
     setCurrentCardFlipId(gameId);
     setHasUsedAdForGame(false); // 새 게임 시작 시 광고 사용 상태 리셋
     setBetAmount(amount);
     setIsGameStarted(true);
-    console.log('새로운 카드게임 시작 - ID:', gameId);
-  };
-
-  // 게임 재시도 핸들러 수정
-  const handleGameRetry = () => {
-    console.log('카드게임 재시도 시작');
     
-    // 게임 상태 리셋 (베팅 금액은 유지)
-    setIsGameStarted(true); // 게임 플레이 화면으로 바로 전환
-    setResult({ win: false, reward: 0, answer: null });
-    setIsResultOpen(false);
-    
-    // 게임 관련 상태 리셋
+    // 🔥 핵심 수정: 게임 상태 초기화
     setMode(null);
     setSelectedColor(null);
     setSelectedSuit(null);
     setCardRevealed(false);
+    setSavedGameState(null);
     
-    console.log('카드게임 재시도 완료 - 게임 플레이 화면으로 이동');
+    console.log('새로운 카드게임 시작 - ID:', gameId);
   };
+
+  // �� 핵심 수정: 게임 상태 저장 함수 개선
+  const saveGameState = (gameState: {
+    mode: "color" | "suit" | null;
+    selectedColor: "RED" | "BLACK" | null;
+    selectedSuit: string | null;
+  }) => {
+    console.log('게임 상태 저장 시작:', gameState);
+    
+    // 전달받은 게임 상태를 저장
+    setSavedGameState(gameState);
+    
+    // 로컬 상태도 동기화
+    setMode(gameState.mode);
+    setSelectedColor(gameState.selectedColor);
+    setSelectedSuit(gameState.selectedSuit);
+    
+    console.log('게임 상태 저장 완료:', gameState);
+  };
+
+  // 🔥 핵심 수정: 게임 재시도 핸들러 개선
+  const handleGameRetry = () => {
+    console.log('카드게임 재시도 시작');
+    console.log('저장된 게임 상태:', savedGameState);
+    
+    if (!savedGameState) {
+      console.error('저장된 게임 상태가 없습니다. 게임을 종료합니다.');
+      onClose();
+      return;
+    }
+    
+    // 게임 상태 복원 (베팅 금액은 유지)
+    setMode(savedGameState.mode);
+    setSelectedColor(savedGameState.selectedColor);
+    setSelectedSuit(savedGameState.selectedSuit);
+    console.log('게임 상태 복원 완료:', savedGameState);
+    
+    // �� 핵심 수정: 결과 모달만 닫고 게임 플레이 화면으로 전환
+    setIsResultOpen(false);
+    setResult({ win: false, reward: 0, answer: null });
+    setCardRevealed(false);
+    
+    console.log('카드게임 재시도 완료 - CardGameBoard 화면으로 이동');
+  };
+
 
   return (
     <div
@@ -1244,14 +1342,19 @@ const CardGameModal = ({ onClose }: any) => {
           <CardBettingModal
             myPoint={starPoints}
             allowedBetting={allowedBetting}
-            onStart={handleGameStart} // 수정된 핸들러 사용
+            onStart={handleGameStart}
             onCancel={onClose}
           />
         ) : (
           <CardGameBoard
             betAmount={betAmount}
-            onResult={async (win: boolean, reward: number, answer: any) => {
+            onResult={async (win: boolean, reward: number, answer: any, cardFlipId: number, gameState: any) => {
+              //  핵심 수정: 결과 처리 전에 게임 상태 저장 (전달받은 gameState 사용)
+              console.log('게임 결과 수신 - 게임 상태:', gameState);
+              saveGameState(gameState);
+              
               setResult({ win, reward, answer });
+              setCurrentCardFlipId(cardFlipId);
               setIsResultOpen(true);
             }}
             onCancel={onClose}
@@ -1263,13 +1366,18 @@ const CardGameModal = ({ onClose }: any) => {
           reward={result.reward}
           answer={result.answer || { color: "", suit: { label: "" } }}
           onClose={() => {
+            // 🔥 핵심 수정: 결과 모달 닫기 시 게임 완전 종료
             setIsResultOpen(false);
-            onClose();
+            onClose(); // 게임 완전 종료
           }}
           onRetry={handleGameRetry}
-          cardFlipId={currentCardFlipId} // 게임 ID 전달
-          hasUsedAdForGame={hasUsedAdForGame} // 광고 사용 상태 전달
-          setHasUsedAdForGame={setHasUsedAdForGame} // 광고 사용 상태 설정 함수 전달
+          cardFlipId={currentCardFlipId}
+          hasUsedAdForGame={hasUsedAdForGame}
+          setHasUsedAdForGame={setHasUsedAdForGame}
+          // 게임 상태 추가
+          gameMode={mode}
+          selectedColor={selectedColor}
+          selectedSuit={selectedSuit}
         />
       </div>
     </div>

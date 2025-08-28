@@ -3,38 +3,31 @@
 import api from '@/shared/api/axiosInstance';
 
 export interface CardFlipRetryRequest {
-  // 카드게임 재시도 요청 데이터
-  // 필요한 경우 추가 필드 정의
+  cardFlipId: number;      // 카드플립 게임 ID
+  type: "COLOR" | "FLIP"; // 게임 타입
+  num: number;             // 선택 값 (왼쪽부터 1)
 }
 
 export interface CardFlipRetryResponse {
-    success: boolean;
-    message: string;
-    data?: {
-      canRetry: boolean;
-      retryCount: number;
-      maxRetries: number;
-      // 게임 재시도에 필요한 추가 정보
-      gameState?: {
-        bettingAmount: number;
-        gameType: "COLOR" | "FLIP";
-        selectedValue: number;
-      };
-      // 보상 정보
-      reward?: {
-        type: "RETRY" | "BONUS";
-        value: number;
-      };
-    };
-  }
+  success: boolean;
+  message: string;
+  data?: {
+    bettingAmount: number;
+    reward: number;
+    result: string;        // "WIN" 또는 "DEFEAT"
+    rank: number;
+    starCount: number;
+    cardFlipId: number;
+  };
+}
 
 /**
  * 카드게임 재시도 광고 보상 API
  * 광고 시청 후 카드게임을 다시 시도할 수 있는 기회를 제공
  */
-export const getCardFlipRetryAdReward = async (): Promise<CardFlipRetryResponse> => {
+export const getCardFlipRetryAdReward = async (requestData: CardFlipRetryRequest): Promise<CardFlipRetryResponse> => {
   try {
-    const response = await api.post<CardFlipRetryResponse>('/cardflip/retry');
+    const response = await api.post<CardFlipRetryResponse>('/cardflip/retry', requestData);
     
     console.log('카드게임 재시도 광고 보상 API 응답:', response.data);
     
@@ -49,9 +42,12 @@ export const getCardFlipRetryAdReward = async (): Promise<CardFlipRetryResponse>
         success: false,
         message: error.response.data?.message || '카드게임 재시도에 실패했습니다.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          rank: 0,
+          starCount: 0,
+          cardFlipId: 0,
         }
       };
       return errorResponse;
@@ -61,9 +57,12 @@ export const getCardFlipRetryAdReward = async (): Promise<CardFlipRetryResponse>
         success: false,
         message: '서버와의 연결에 실패했습니다. 다시 시도해주세요.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          rank: 0,
+          starCount: 0,
+          cardFlipId: 0,
         }
       };
       return errorResponse;
@@ -73,9 +72,12 @@ export const getCardFlipRetryAdReward = async (): Promise<CardFlipRetryResponse>
         success: false,
         message: '요청을 처리할 수 없습니다. 다시 시도해주세요.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          rank: 0,
+          starCount: 0,
+          cardFlipId: 0,
         }
       };
       return errorResponse;

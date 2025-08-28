@@ -3,18 +3,21 @@
 import api from '@/shared/api/axiosInstance';
 
 export interface RPSRetryRequest {
-  // RPS 재시도 요청 데이터
-  // 필요한 경우 추가 필드 정의
+  rpsId: number;           // RPS 게임 ID
+  value: number;           // 0 = 가위, 1 = 바위, 2 = 보
 }
 
 export interface RPSRetryResponse {
   success: boolean;
   message: string;
   data?: {
-    canRetry: boolean;
-    retryCount: number;
-    maxRetries: number;
-    // 추가 보상 정보가 있다면 여기에 정의
+    bettingAmount: number;
+    reward: number;
+    result: string;        // "WIN" 또는 "DEFEAT"
+    pcValue: number;       // 0 = 가위, 1 = 바위, 2 = 보
+    rank: number;
+    starCount: number;
+    rpsId: number;         // 추후 Retry를 위한 ID
   };
 }
 
@@ -22,9 +25,9 @@ export interface RPSRetryResponse {
  * RPS 재시도 광고 보상 API
  * 광고 시청 후 RPS 게임을 다시 시도할 수 있는 기회를 제공
  */
-export const getRPSRetryAdReward = async (): Promise<RPSRetryResponse> => {
+export const getRPSRetryAdReward = async (requestData: RPSRetryRequest): Promise<RPSRetryResponse> => {
   try {
-    const response = await api.post<RPSRetryResponse>('/rps/retry');
+    const response = await api.post<RPSRetryResponse>('/rps/retry', requestData);
     
     console.log('RPS 재시도 광고 보상 API 응답:', response.data);
     
@@ -39,9 +42,13 @@ export const getRPSRetryAdReward = async (): Promise<RPSRetryResponse> => {
         success: false,
         message: error.response.data?.message || 'RPS 재시도에 실패했습니다.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          pcValue: 0,
+          rank: 0,
+          starCount: 0,
+          rpsId: 0,
         }
       };
       return errorResponse;
@@ -51,9 +58,13 @@ export const getRPSRetryAdReward = async (): Promise<RPSRetryResponse> => {
         success: false,
         message: '서버와의 연결에 실패했습니다. 다시 시도해주세요.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          pcValue: 0,
+          rank: 0,
+          starCount: 0,
+          rpsId: 0,
         }
       };
       return errorResponse;
@@ -63,9 +74,13 @@ export const getRPSRetryAdReward = async (): Promise<RPSRetryResponse> => {
         success: false,
         message: '요청을 처리할 수 없습니다. 다시 시도해주세요.',
         data: {
-          canRetry: false,
-          retryCount: 0,
-          maxRetries: 0,
+          bettingAmount: 0,
+          reward: 0,
+          result: "",
+          pcValue: 0,
+          rank: 0,
+          starCount: 0,
+          rpsId: 0,
         }
       };
       return errorResponse;

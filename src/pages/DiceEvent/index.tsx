@@ -409,10 +409,10 @@ const DiceEventPage: React.FC = () => {
   const handleAdButtonClick = async () => {
     if (adLoadStatus === 'not_loaded') {
       // 광고가 로드되지 않은 경우 로드 시작
-      await loadAd();
+      await loadAd('RANDOM_BOX');
     } else if (adLoadStatus === 'loaded') {
       // 광고가 로드된 경우 표시
-      await showAd();
+      await showAd('RANDOM_BOX');
     } else if (adLoadStatus === 'failed') {
       // 광고 로드 실패 시 재로드
       await reloadAd();
@@ -454,6 +454,12 @@ const DiceEventPage: React.FC = () => {
       alert(`광고 시청 간격이 너무 짧습니다. ${remainingTime}초 후에 다시 시도해주세요.`);
       return;
     }
+    
+    // 광고 상태 추가 확인
+    if (adLoadStatus === 'loading') {
+      alert('광고 로딩 중입니다. 잠시 기다려주세요.');
+      return;
+    }
 
     try {
       setIsAdWatching(true); // 광고 시청 시작
@@ -462,7 +468,7 @@ const DiceEventPage: React.FC = () => {
       // 광고가 로드되지 않은 경우 먼저 로드
       if (adLoadStatus !== 'loaded') {
         console.log('광고 로드 시작...');
-        await loadAd();
+        await loadAd('RANDOM_BOX'); 
         console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
@@ -471,7 +477,7 @@ const DiceEventPage: React.FC = () => {
       
       // 광고 표시 및 보상 결과 대기
       console.log('showAd() Promise 대기 시작...');
-      const rewardData: RandomBoxAdRewardResponse = await showAd();
+      const rewardData: RandomBoxAdRewardResponse = await showAd('RANDOM_BOX');
       console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
       
       if (rewardData) {
@@ -515,6 +521,11 @@ const DiceEventPage: React.FC = () => {
         
         // 마지막 광고 시청 시간 업데이트
         setLastAdWatchTime(now);
+        
+        // 🔥 핵심 수정: 광고 시청 완료 후 강제 대기 시간 추가
+        console.log('광고 시청 완료 후 2초 대기 시작...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('대기 완료 - 다음 광고 시청 준비됨');
         
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
