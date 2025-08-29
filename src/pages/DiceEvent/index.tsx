@@ -248,8 +248,19 @@ const DiceEventPage: React.FC = () => {
         await fetchUserData();
         await fetchEquippedItems(); // 장착 아이템 데이터도 함께 가져오기
         // console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch user data:", error);
+        
+        // "Full authentication is required" 에러인 경우 특별 처리
+        if (error.message && error.message.includes("Full authentication is required to access this resource")) {
+          console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+          // 로그인 페이지로 리다이렉트
+          // window.location.href = "/";
+          return;
+        }
+        
+        // 기타 에러는 콘솔에만 기록하고 계속 진행
+        console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
       }
     };
 
@@ -515,7 +526,21 @@ const DiceEventPage: React.FC = () => {
         
         // console.log('사용자 데이터 새로고침 시작...');
         // 사용자 데이터 새로고침 (보상 반영)
-        await fetchUserData();
+        try {
+          await fetchUserData();
+        } catch (error: any) {
+          console.error('[DiceEvent] 광고 보상 후 사용자 데이터 새로고침 실패:', error);
+          
+          // "Full authentication is required" 에러인 경우 특별 처리
+          if (error.message && error.message.includes("Full authentication is required to access this resource")) {
+            console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+            // window.location.href = "/";
+            return;
+          }
+          
+          // 기타 에러는 콘솔에만 기록하고 계속 진행
+          console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
+        }
         
         // console.log('광고보고 랜덤박스 완료!');
         
@@ -580,7 +605,21 @@ const DiceEventPage: React.FC = () => {
         // console.log('주사위 리필 보상 처리 완료');
         
         // 사용자 데이터 새로고침
-        await fetchUserData();
+        try {
+          await fetchUserData();
+        } catch (error: any) {
+          console.error('[DiceEvent] 주사위 리필 후 사용자 데이터 새로고침 실패:', error);
+          
+          // "Full authentication is required" 에러인 경우 특별 처리
+          if (error.message && error.message.includes("Full authentication is required to access this resource")) {
+            console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+            // window.location.href = "/";
+            return;
+          }
+          
+          // 기타 에러는 콘솔에만 기록하고 계속 진행
+          console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
+        }
         
         // 성공 메시지 표시
         alert('주사위가 성공적으로 리필되었습니다!');
@@ -673,6 +712,18 @@ const DiceEventPage: React.FC = () => {
     setPrevLevel(userLv);
   }, [userLv, prevLevel]);
 
+  // "Please choose your character first." 에러 처리 및 리다이렉트
+  useEffect(() => {
+    if (error && error.includes("Please choose your character first")) {
+      const timer = setTimeout(() => {
+        // window.location.href = "/choose-character";
+        navigate("/choose-character");
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   // 보상 링크를 통한 접근 여부 확인 및 보상 API 호출
   useEffect(() => {
     const referralCode = localStorage.getItem("referralCode");
@@ -713,7 +764,46 @@ const DiceEventPage: React.FC = () => {
   }
 
   if (error) {
-    return <div>Error loading data: {error}</div>;
+    // "Full authentication is required" 에러인 경우 로그인 페이지로 리다이렉트
+    if (error.includes("Full authentication is required to access this resource")) {
+      console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+      // 약간의 지연 후 리다이렉트 (무한 리프레시 방지)
+      setTimeout(() => {
+        // window.location.href = "/";
+      }, 1000);
+      return (
+        <div style={{ 
+          padding: "20px", 
+          textAlign: "center",
+          color: "#666"
+        }}>
+          인증이 필요합니다. 로그인 페이지로 이동합니다...
+        </div>
+      );
+    }
+    
+    // "Please choose your character first." 메시지인 경우 /choose-character로 리다이렉트
+    if (error && error.includes("Please choose your character first")) {
+      return (
+        <div style={{ 
+          padding: "20px", 
+          textAlign: "center",
+          color: "#666"
+        }}>
+          캐릭터 선택이 필요합니다. 캐릭터 선택 페이지로 이동합니다...
+        </div>
+      );
+    }
+    
+    return (
+      <div style={{ 
+        padding: "20px", 
+        textAlign: "center",
+        color: "#666"
+      }}>
+        데이터 로딩 중 오류가 발생했습니다: {error}
+      </div>
+    );
   }
 
 

@@ -29,13 +29,8 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
     }
 
     try {
-        // // console.log('🔍 [tossLogin] API 요청 시작:', { authorizationCode, referrer });
         const response = await api.post('/auth/login/toss', userInfo);
         
-        // // console.log('🔍 [tossLogin] 전체 응답:', response);
-        // // console.log('🔍 [tossLogin] 응답 헤더:', response.headers);
-        // // console.log('🔍 [tossLogin] 응답 데이터:', response.data);
-
         // 타입 가드를 사용한 안전한 응답 처리
         if (!response.data || typeof response.data !== 'object') {
             throw new Error('Invalid response format');
@@ -47,83 +42,78 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
         if (responseData.code === "OK" && 'data' in responseData) {
             const { data } = responseData as TossLoginResponse;
             
-            // // console.log('🔍 [tossLogin] 성공 응답 데이터:', data);
-            
-            // 1. 액세스 토큰 저장 (헤더 대소문자 고려)
+            // 액세스 토큰 저장 (헤더 대소문자 고려)
             const authorizationHeader = response.headers['authorization'] || response.headers['Authorization'];
             if (authorizationHeader) {
                 const accessToken = authorizationHeader.replace('Bearer ', '');
+                
+                // 액세스 토큰 형식 검증
+                if (accessToken.length < 10) {
+                    console.warn('⚠️ 액세스 토큰이 너무 짧습니다:', accessToken);
+                }
+                
                 localStorage.setItem('accessToken', accessToken);
-                // // console.log('✅ Access token saved to localStorage:', accessToken.substring(0, 20) + '...');
+                console.log('✅ 액세스 토큰이 localStorage에 저장되었습니다');
             } else {
-                // console.warn('⚠️ Authorization header not found in response');
-                // // console.log('🔍 [tossLogin] 사용 가능한 헤더 키들:', Object.keys(response.headers));
+                console.warn('⚠️ Authorization 헤더를 찾을 수 없습니다');
+                console.log('응답 헤더:', response.headers);
             }
-
-            // 2. 사용자 정보 저장 (주석 해제)
-            // if (data) {
-            //     // localStorage.setItem('userId', data.userId.toString());
-            //     // localStorage.setItem('userName', data.userName);
-            //     // localStorage.setItem('referrerId', data.referrerId || '');
-            //     // localStorage.setItem('isInitial', data.isInitial.toString());
-            //     // // console.log('✅ User data saved to localStorage:', {
-            //     //     userId: data.userId,
-            //     //     userName: data.userName,
-            //     //     referrerId: data.referrerId,
-            //     //     isInitial: data.isInitial
-            //     // });
-            // } else {
-            //     console.warn('⚠️ User data is missing in response');
-            // }
-
-            // 3. 리프레시 토큰 저장 (응답 바디에서 추출하여 쿠키에 저장)
-            if (data && data.refreshToken) {
-                // 쿠키에 리프레시 토큰 저장 (7일 만료)
-                Cookies.set('refreshToken', data.refreshToken, { 
-                    expires: 7, 
-                    secure: true, 
-                    sameSite: 'strict' 
-                });
-                // // console.log('✅ Refresh token saved to cookies from response body:', data.refreshToken.substring(0, 20) + '...');
-            } else {
-                // console.warn('⚠️ Refresh token not found in response body');
-                // // console.log('🔍 [tossLogin] 응답 바디 데이터:', data);
-            }
-
-            // 4. 기존 Set-Cookie 헤더 확인 (참고용)
+            // 리프레시 토큰 확인 (HttpOnly 쿠키로 자동 설정됨)
             const setCookieHeader = response.headers['set-cookie'] || response.headers['Set-Cookie'];
             if (setCookieHeader) {
-                // // console.log('ℹ️ Set-Cookie 헤더 발견 (참고용):', setCookieHeader);
+                // HttpOnly 쿠키는 자동으로 브라우저에서 관리되므로 별도 저장 불필요
+                console.log('✅ 리프레시 토큰이 HttpOnly 쿠키로 설정되었습니다');
+                console.log('Set-Cookie 헤더:', setCookieHeader);
             } else {
-                // // console.log('ℹ️ Set-Cookie 헤더 없음 (withCredentials: false로 설정됨)');
+                console.warn('⚠️ Set-Cookie 헤더에서 리프레시 토큰을 찾을 수 없습니다');
             }
-
-            // 5. 쿠키 확인 (HttpOnly 쿠키는 접근 불가하지만 시도)
-            // // console.log('🔍 [tossLogin] 쿠키 확인:');
-            // // console.log('  - 전체 쿠키 (HttpOnly 제외):', document.cookie);
-            // // console.log('  - refreshToken 포함 여부:', document.cookie.includes('refreshToken') ? '✅ 포함됨' : '❌ 포함되지 않음 (HttpOnly일 가능성)');
-            
-            // 6. 브라우저별 쿠키 확인 방법 안내
-            // // console.log('💡 리프레시 토큰 확인 방법:');
-            // // console.log('  1. 브라우저 개발자 도구 → Application/Storage → Cookies');
-            // // console.log('  2. Network 탭에서 /auth/login/toss 응답의 Set-Cookie 헤더 확인');
-            // // console.log('  3. HttpOnly 쿠키는 JavaScript로 접근 불가능');
 
             return data;
         } else {
             // 에러 응답 처리
             const errorData = responseData as TossLoginErrorResponse;
-            // console.error('❌ Login failed:', {
-            //     code: errorData.code,
-            //     message: errorData.message,
-            //     data: errorData.data
-            // });
             throw new Error(`Login failed: ${errorData.message}`); // 에러를 다시 던지지 않고 예외 발생
         }
-    } catch (error) {
-        // console.error("❌ 인증 중 오류 발생:", error);
-        // 에러를 다시 던지지 않고 false 반환으로 변경
-        throw error; // 예외를 다시 던지지 않고 예외 발생
+    } catch (error: any) {
+        console.error('[tossLogin] 에러 발생:', error);
+        
+        // HTTP 에러 응답 처리
+        if (error.response) {
+            const { status, data } = error.response;
+            console.error('[tossLogin] HTTP 에러:', { status, data });
+            
+            // 서버에서 반환한 에러 메시지가 있는 경우
+            if (data && data.message) {
+                throw new Error(data.message);
+            }
+            
+            // 상태 코드별 기본 메시지
+            switch (status) {
+                case 400:
+                    throw new Error('잘못된 요청입니다. 입력값을 확인해주세요.');
+                case 401:
+                    throw new Error('인증이 필요합니다. 다시 로그인해주세요.');
+                case 403:
+                    throw new Error('접근 권한이 없습니다.');
+                case 404:
+                    throw new Error('로그인 서비스를 찾을 수 없습니다.');
+                case 500:
+                    throw new Error('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                case 502:
+                    throw new Error('서버 게이트웨이 오류가 발생했습니다.');
+                case 503:
+                    throw new Error('서비스가 일시적으로 사용할 수 없습니다.');
+                default:
+                    throw new Error(`서버 오류 (${status})`);
+            }
+        } else if (error.request) {
+            // 요청은 보냈지만 응답을 받지 못한 경우
+            console.error('[tossLogin] 네트워크 에러:', error.request);
+            throw new Error('네트워크 연결을 확인해주세요.');
+        } else {
+            // 요청 자체를 보내지 못한 경우
+            throw new Error(error.message || '로그인 요청을 처리할 수 없습니다.');
+        }
     }
 };
 

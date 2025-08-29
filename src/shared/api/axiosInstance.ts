@@ -4,11 +4,11 @@ import { useUserStore } from '@/entities/User/model/userModel';
 
 // Axios 인스턴스 생성
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://28d8c99bdda5.ngrok-free.app/api/',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://appsintoss.savethelife.io/api/',
   headers: {
     'Content-Type': 'application/json', // 기본 Content-Type
   },
-  withCredentials: true, // false에서 true로 변경하여 쿠키 전송 활성화
+  withCredentials: true, // true로 설정하여 쿠키 전송 활성화
 });
 
 // 요청 인터셉터 설정
@@ -91,15 +91,34 @@ api.interceptors.response.use(
       // 현재 경로가 루트가 아닌 경우에만 리다이렉트
       const currentPath = window.location.pathname;
       if (currentPath !== "/" && currentPath !== "/login") {
-        window.location.href = "/"; // 로그인 페이지 등으로 리다이렉트
+        // 무한 리프레시 방지를 위해 한 번만 리다이렉트
+        if (!sessionStorage.getItem('redirectingToLogin')) {
+          sessionStorage.setItem('redirectingToLogin', 'true');
+          console.log('[axiosInstance] 액세스 토큰 없음, 로그인 페이지로 리다이렉트');
+          // window.location.href = "/";
+        }
       }
-      return Promise.reject(new Error("Access token not found."));
+      // 에러 던지기 주석처리 (테스트용)
+      // return Promise.reject(new Error("Access token not found."));
+      console.log('[axiosInstance] 액세스 토큰 없음 - 에러 던지기 주석처리됨 (테스트용)');
+      return Promise.reject(error); // 원래 에러를 그대로 반환
     }
 
     const errorMessage =
       error.response && typeof error.response.data === "string"
         ? error.response.data
         : "";
+
+    // 401 에러인 경우 특별 처리
+    if (error.response && error.response.status === 401) {
+      console.log('[axiosInstance] 401 인증 에러 발생:', errorMessage);
+      
+      // "Full authentication is required" 에러인 경우 리다이렉트 방지
+      if (errorMessage.includes("Full authentication is required to access this resource")) {
+        console.log('[axiosInstance] 전체 인증 필요 에러 - 리다이렉트 방지');
+        return Promise.reject(error);
+      }
+    }
 
     if (
       error.response &&
@@ -108,26 +127,56 @@ api.interceptors.response.use(
         error.response.status === 401 ||
         error.response.status === 404 ||
         errorMessage.includes("Token not found in Redis or expired")
-      )
+      ) &&
+      // "Full authentication" 에러가 아닌 경우에만 리프레시 토큰 로직 실행
+      !errorMessage.includes("Full authentication is required to access this resource")
     ) {
+      // 리프레시 토큰 로직 복구
       originalRequest._retry = true;
       try {
+        console.log('[axiosInstance] 리프레시 토큰으로 액세스 토큰 재발급 시도');
+        
+        // 리프레시 토큰이 쿠키에 있는지 확인
+        const refreshToken = Cookies.get('refreshToken');
+        if (!refreshToken) {
+          console.error('[axiosInstance] 쿠키에서 리프레시 토큰을 찾을 수 없습니다');
+          console.log('[axiosInstance] 에러를 던지지 않고 콘솔에만 기록');
+          return Promise.reject(error);
+        }
+
+        console.log('[axiosInstance] 리프레시 토큰 발견, 토큰 재발급 요청');
+        
+        // useUserStore의 refreshToken 함수 호출하여 액세스 토큰 재발급
         const refreshSuccessful = await useUserStore.getState().refreshToken();
         if (refreshSuccessful) {
           const newAccessToken = localStorage.getItem("accessToken");
           if (newAccessToken) {
+            console.log('[axiosInstance] 액세스 토큰 재발급 성공, 원래 요청 재시도');
             originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
             return api(originalRequest);
+          } else {
+            console.error('[axiosInstance] 액세스 토큰이 localStorage에 저장되지 않음');
+            console.log('[axiosInstance] 에러를 던지지 않고 콘솔에만 기록');
+            return Promise.reject(error);
           }
+        } else {
+          console.error('[axiosInstance] 리프레시 토큰 재발급 실패');
+          console.log('[axiosInstance] 에러를 던지지 않고 콘솔에만 기록');
+          return Promise.reject(error);
         }
-        localStorage.removeItem('accessToken');
-        Cookies.remove('refreshToken');
-        window.location.href = "/";
-        return Promise.reject(error);
       } catch (refreshError) {
+        console.error('[axiosInstance] 토큰 재발급 중 오류 발생:', refreshError);
+        
+        // 재발급 실패 시 기존 토큰 제거
         localStorage.removeItem('accessToken');
         Cookies.remove('refreshToken');
-        window.location.href = "/";
+        
+        // 무한 리프레시 방지를 위해 한 번만 리다이렉트
+        if (!sessionStorage.getItem('redirectingToLogin')) {
+          sessionStorage.setItem('redirectingToLogin', 'true');
+          console.log('[axiosInstance] 토큰 재발급 실패, 로그인 페이지로 리다이렉트');
+          // window.location.href = "/";
+        }
         return Promise.reject(refreshError);
       }
     }
