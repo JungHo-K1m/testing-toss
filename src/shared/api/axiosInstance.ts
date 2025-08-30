@@ -2,6 +2,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useUserStore } from '@/entities/User/model/userModel';
 
+
+
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://appsintoss.savethelife.io/api/',
@@ -111,33 +113,44 @@ api.interceptors.response.use(
 
     // 401 에러인 경우 특별 처리
     if (error.response && error.response.status === 401) {
-      console.log('[axiosInstance] 401 인증 에러 발생:', errorMessage);
-      
       // "Full authentication is required" 에러인 경우 리다이렉트 방지
       if (errorMessage.includes("Full authentication is required to access this resource")) {
-        console.log('[axiosInstance] 전체 인증 필요 에러 - 리다이렉트 방지');
         return Promise.reject(error);
       }
     }
 
+    // 리프레시 토큰으로 액세스 토큰 재발급 시도 (딱 한 번만)
     if (
       error.response &&
-      (!originalRequest._retry) &&
+      !originalRequest._retry && // 아직 재시도하지 않은 요청
       (
         error.response.status === 401 ||
+        error.response.status === 403 ||        // 403 에러 추가
         error.response.status === 404 ||
         errorMessage.includes("Token not found in Redis or expired")
       ) &&
       // "Full authentication" 에러가 아닌 경우에만 리프레시 토큰 로직 실행
       !errorMessage.includes("Full authentication is required to access this resource")
     ) {
-      // 리프레시 토큰 로직 복구
+      // 재시도 플래그 설정 (한 번만 시도)
       originalRequest._retry = true;
+      
       try {
         console.log('[axiosInstance] 리프레시 토큰으로 액세스 토큰 재발급 시도');
         
+        // 이미 리프레시를 시도했는지 확인 (sessionStorage 기반)
+        const hasAttemptedRefresh = sessionStorage.getItem('refreshAttempted');
+        if (hasAttemptedRefresh) {
+          console.log('[axiosInstance] 이미 리프레시를 시도했음 - 중복 시도 방지');
+          return Promise.reject(error);
+        }
+        
+        // 리프레시 시도 플래그 설정
+        sessionStorage.setItem('refreshAttempted', 'true');
+        
         // 리프레시 토큰이 쿠키에 있는지 확인
         const refreshToken = Cookies.get('refreshToken');
+        
         if (!refreshToken) {
           console.error('[axiosInstance] 쿠키에서 리프레시 토큰을 찾을 수 없습니다');
           console.log('[axiosInstance] 에러를 던지지 않고 콘솔에만 기록');
@@ -148,8 +161,10 @@ api.interceptors.response.use(
         
         // useUserStore의 refreshToken 함수 호출하여 액세스 토큰 재발급
         const refreshSuccessful = await useUserStore.getState().refreshToken();
+        
         if (refreshSuccessful) {
           const newAccessToken = localStorage.getItem("accessToken");
+          
           if (newAccessToken) {
             console.log('[axiosInstance] 액세스 토큰 재발급 성공, 원래 요청 재시도');
             originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
@@ -160,7 +175,7 @@ api.interceptors.response.use(
             return Promise.reject(error);
           }
         } else {
-          console.error('[axiosInstance] 리프레시 토큰 재발급 실패');
+          console.error('[axiosInstance] 리프레시 토큰 재발급 실패 (1회 시도 완료)');
           console.log('[axiosInstance] 에러를 던지지 않고 콘솔에만 기록');
           return Promise.reject(error);
         }

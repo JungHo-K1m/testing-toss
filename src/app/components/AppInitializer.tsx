@@ -18,6 +18,8 @@ interface AppInitializerProps {
   onInitialized: () => void;
 }
 
+
+
 const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const navigate = useNavigate();  
   const [isLoading, setIsLoading] = useState(false);
@@ -204,7 +206,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const handleNoTokenFlow = async (authCode?: string, refCode?: string) => {
     try {
       // 2-1. 토큰 리프레시 1회만 시도
-      console.log('[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시도');
+      console.log('[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시도 (1회 시도)');
       const refreshSuccessful = await handleRefreshTokenOnce();
       
       if (refreshSuccessful) {
@@ -246,8 +248,19 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 리프레시 토큰으로 1회만 시도
   const handleRefreshTokenOnce = async (): Promise<boolean> => {
     try {
+      // 이미 리프레시를 시도했는지 확인 (sessionStorage 기반)
+      const hasAttemptedRefresh = sessionStorage.getItem('refreshAttempted');
+      if (hasAttemptedRefresh) {
+        console.log('[AppInitializer] 이미 리프레시를 시도했음 - 중복 시도 방지');
+        return false;
+      }
+      
+      // 리프레시 시도 플래그 설정
+      sessionStorage.setItem('refreshAttempted', 'true');
+      
       // 쿠키에서 리프레시 토큰 확인
       const refreshToken = Cookies.get('refreshToken');
+      
       if (!refreshToken) {
         console.log('[AppInitializer] 리프레시 토큰이 쿠키에 없음');
         return false;
@@ -257,8 +270,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       
       // useUserStore의 refreshToken 함수 호출하여 액세스 토큰 재발급
       const refreshSuccessful = await useUserStore.getState().refreshToken();
+      
       if (refreshSuccessful) {
         const newAccessToken = localStorage.getItem("accessToken");
+        
         if (newAccessToken) {
           console.log('[AppInitializer] 액세스 토큰 재발급 성공');
           return true;
@@ -321,8 +336,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       
       // 인증 관련 에러인 경우 특별 처리
       if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-        console.log('[AppInitializer] 전체 인증 필요 에러로 인한 로그인 실패');
-        console.log('[AppInitializer] 에러를 던지지 않고 콘솔에만 기록');
         setError("인증이 필요합니다. 다시 로그인해주세요.");
         // 기존 토큰 제거
         localStorage.removeItem("accessToken");
@@ -345,9 +358,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       await handleNavigationAfterLogin();
       
     } catch (error: any) {
+      
       // "Please choose your character first." 메시지 처리 (에러로 던져진 경우)
       if (error.message && error.message.includes("Please choose your character first")) {
-        console.log('[AppInitializer] 에러에서 캐릭터 선택 필요 메시지 감지 - /choose-character로 이동');
         safeNavigate('/choose-character');
         onInitialized();
         return; // 재시도하지 않고 함수 종료
@@ -355,8 +368,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       
       // 인증 관련 에러 특별 처리
       if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-        console.log('[AppInitializer] 전체 인증 필요 에러 감지 - 재시도 중단');
-        console.log('[AppInitializer] 에러를 던지지 않고 콘솔에만 기록');
         setError("인증이 필요합니다. 다시 로그인해주세요.");
         return; // 재시도하지 않고 함수 종료
       }
@@ -374,11 +385,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도
   const handleRefreshTokenAndRetry = async () => {
     try {
+      
       // 쿠키에서 리프레시 토큰 확인
       const refreshToken = Cookies.get('refreshToken');
+      
       if (!refreshToken) {
         console.error('[AppInitializer] 리프레시 토큰이 쿠키에 없습니다.');
-        console.log('[AppInitializer] 에러를 던지지 않고 콘솔에만 기록');
         setError('리프레시 토큰을 찾을 수 없습니다.');
         return;
       }
@@ -402,6 +414,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 로그인 후 적절한 페이지로 이동하는 로직
   const handleNavigationAfterLogin = async () => {
     try {
+      
       const { characterType } = useUserStore.getState();
 
       if (!characterType) {
@@ -458,6 +471,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         const initializationFlag = localStorage.getItem("isInitialized");
         const accessToken = localStorage.getItem("accessToken");
         
+        
         // 상태가 제대로 설정되었는지 확인 후 페이지 이동
         if (initializationFlag === "true" && accessToken) {
           // 약간의 지연 후 페이지 이동 (초기화 상태 업데이트를 위해)
@@ -465,7 +479,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             window.location.href = path;
           }, 100);
         } else {
-          console.error(`[AppInitializer] 초기화 상태가 제대로 설정되지 않음!`);
           setError('초기화 상태 설정에 실패했습니다. 다시 시도해주세요.');
         }
         
@@ -489,6 +502,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }, 100);
       
     } catch (error) {
+      
       if (fallbackToWindowLocation) {
         window.location.href = path;
         onInitialized();
@@ -507,20 +521,14 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       const currentRefCode = refCode || referrer;
       
       if (!currentAuthCode || !currentRefCode) {
-        console.error('[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음');
-        setError('로그인 정보가 올바르지 않습니다.');
         return;
       }
 
       const result = await tossLogin(currentAuthCode, currentRefCode);
 
       if (!result) {
-        console.error('[AppInitializer] tossLogin에서 응답을 받지 못했습니다.');
-        console.log('[AppInitializer] 에러를 던지지 않고 콘솔에만 기록');
-        setError('tossLogin에서 응답을 받지 못했습니다.');
         return;
       }
-
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
       const accessToken = localStorage.getItem("accessToken");
@@ -529,20 +537,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // userId를 문자열로 변환 (API 응답에서 number로 오는 경우)
       const userIdStr = userId?.toString();
 
+
       // 토큰이 제대로 저장되었는지 확인
       if (!accessToken) {
-        console.error('[AppInitializer] 액세스 토큰이 저장되지 않음!');
-        setError('액세스 토큰 저장에 실패했습니다. 다시 시도해주세요.');
         return;
       }
 
-      // 리프레시 토큰 확인 (HttpOnly 쿠키는 자동으로 처리됨)
-      if (!refreshToken) {
-        console.warn('[AppInitializer] 리프레시 토큰이 응답 바디에 없습니다. HttpOnly 쿠키로 처리됩니다.');
-        // HttpOnly 쿠키는 자동으로 HTTP 요청에 포함되므로 별도 처리 불필요
-      } else {
-        console.log('[AppInitializer] 리프레시 토큰이 응답 바디에도 포함됨:', refreshToken);
-      }
 
       setServerLoginResult({ 
         userId: userIdStr, 
@@ -554,7 +554,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // isInitial에 따른 페이지 이동 로직
       if (isInitial === true) {
         // 신규 사용자: fetchUserData 호출
-        console.log('[AppInitializer] 신규 사용자 (isInitial: true), fetchUserData 호출');
         try {
           await fetchUserData();
           
@@ -562,23 +561,35 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           await handleNavigationAfterLogin();
           
         } catch (error: any) {
-          console.error('[AppInitializer] fetchUserData 에러:', error);
+          // "Please choose your character first." 메시지 확인 (에러로 던져진 경우)
+          if (error.message && error.message.includes("Please choose your character first")) {
+            safeNavigate('/choose-character');
+            onInitialized();
+          } else {
+            setError(`fetchUserData 에러: ${error.message || '알 수 없는 오류'}`);
+          }
+        }
+      } else {
+        // 기존 사용자: fetchUserData 호출하여 실제 캐릭터 상태 확인
+        console.log('[AppInitializer] 기존 사용자 (isInitial: false), fetchUserData 호출하여 캐릭터 상태 확인');
+        try {
+          await fetchUserData();
+          // fetchUserData 성공 시 적절한 페이지로 이동
+          await handleNavigationAfterLogin();
+          
+        } catch (error: any) {
+          console.error('[AppInitializer] 기존 사용자 fetchUserData 에러:', error);
           
           // "Please choose your character first." 메시지 확인 (에러로 던져진 경우)
           if (error.message && error.message.includes("Please choose your character first")) {
-            console.log('[AppInitializer] 캐릭터 선택 필요 메시지 감지 - /choose-character로 이동');
             safeNavigate('/choose-character');
             onInitialized();
           } else {
             // 다른 에러인 경우 에러 표시
-            setError(`fetchUserData 에러: ${error.message || '알 수 없는 오류'}`);
+            setError(`기존 사용자 fetchUserData 에러: ${error.message || '알 수 없는 오류'}`);
           }
         }
-              } else {
-          // 기존 사용자: choose-character 페이지로 이동
-          console.log('[AppInitializer] 기존 사용자 (isInitial: false), choose-character 페이지로 이동');
-          safeNavigate('/choose-character');
-        }
+      }
 
     } catch (error: any) {
       console.error('[AppInitializer] 서버 로그인 실패:', error);
