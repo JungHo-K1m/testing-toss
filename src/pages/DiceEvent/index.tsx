@@ -38,7 +38,10 @@ import {
   purchaseRandomBox,
   RandomBoxResult,
 } from "@/entities/User/api/purchaseRandomBox";
-import { getRandomBoxAdReward, RandomBoxAdRewardResponse } from "@/entities/User/api/randomBoxAdReward";
+import {
+  getRandomBoxAdReward,
+  RandomBoxAdRewardResponse,
+} from "@/entities/User/api/randomBoxAdReward";
 import { useAdMob } from "@/hooks/useAdMob";
 import { getPlatform } from "@/types/adMob";
 
@@ -333,14 +336,20 @@ const DiceEventPage: React.FC = () => {
   const [boxResult, setBoxResult] = useState<RandomBoxResult | null>(null);
   const [isLoadingBox, setIsLoadingBox] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
-  const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string } | null>(null);
-  
+  const [refillTimeInfo, setRefillTimeInfo] = useState<{
+    canRefill: boolean;
+    timeUntilRefill: string;
+  } | null>(null);
+
   // 광고 관련 상태 및 훅
   const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd } = useAdMob();
   const [platform] = useState(getPlatform());
 
   // 리필 시간 클릭 핸들러
-  const handleRefillTimeClick = (timeInfo: { canRefill: boolean; timeUntilRefill: string }) => {
+  const handleRefillTimeClick = (timeInfo: {
+    canRefill: boolean;
+    timeUntilRefill: string;
+  }) => {
     // if (!timeInfo.canRefill) {
     //   alert(`다이스 리필까지 ${timeInfo.timeUntilRefill} 남았습니다.`);
     // }
@@ -350,10 +359,10 @@ const DiceEventPage: React.FC = () => {
 
   // 광고 버튼 클릭 핸들러
   const handleAdButtonClick = async () => {
-    if (adLoadStatus === 'not_loaded') {
+    if (adLoadStatus === "not_loaded") {
       // 광고가 로드되지 않은 경우 로드 시작
       await loadAd();
-    } else if (adLoadStatus === 'loaded') {
+    } else if (adLoadStatus === "loaded") {
       // 광고가 로드된 경우 표시
       await showAd();
     }
@@ -362,96 +371,94 @@ const DiceEventPage: React.FC = () => {
   // 광고 상태에 따른 버튼 텍스트 및 비활성화 여부
   const getAdButtonText = () => {
     switch (adLoadStatus) {
-      case 'not_loaded':
-        return '광고 로드하기';
-      case 'loading':
-        return '광고 로딩 중...';
-      case 'loaded':
-        return '광고 시청 후 주사위 얻기';
-      case 'failed':
-        return '광고 로드 실패 - 다시 시도';
+      case "not_loaded":
+        return "광고 로드하기";
+      case "loading":
+        return "광고 로딩 중...";
+      case "loaded":
+        return "광고 시청 후 주사위 얻기";
+      case "failed":
+        return "광고 로드 실패 - 다시 시도";
       default:
-        return '광고 시청 후 주사위 얻기';
+        return "광고 시청 후 주사위 얻기";
     }
   };
 
   // 광고보고 랜덤박스 열기 핸들러
   const handleAdRandomBox = async () => {
     if (!isSupported) {
-      console.log('광고가 지원되지 않는 환경입니다');
+      console.log("광고가 지원되지 않는 환경입니다");
       return;
     }
 
     try {
-      console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
-      
+      console.log("광고보고 랜덤박스 시작 - 광고 상태:", adLoadStatus);
+
       // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== 'loaded') {
-        console.log('광고 로드 시작...');
+      if (adLoadStatus !== "loaded") {
+        console.log("광고 로드 시작...");
         await loadAd();
-        console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        console.log("광고 로드 완료 후 상태:", adLoadStatus);
         return;
       }
 
-      console.log('광고 표시 시작...');
-      
+      console.log("광고 표시 시작...");
+
       // 광고 표시 및 보상 결과 대기
-      console.log('showAd() Promise 대기 시작...');
+      console.log("showAd() Promise 대기 시작...");
       const rewardData: RandomBoxAdRewardResponse = await showAd();
-      console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
-      
+      console.log("showAd() Promise 완료 - 보상 결과:", rewardData);
+
       if (rewardData) {
-        console.log('보상 결과 처리 시작...');
-        console.log('원본 rewardData:', rewardData);
-        
+        console.log("보상 결과 처리 시작...");
+        console.log("원본 rewardData:", rewardData);
+
         // rewardData 구조 확인 및 안전한 매핑
         if (!rewardData.type) {
-          console.error('rewardData.type이 없습니다:', rewardData);
-          alert('보상 데이터 형식이 올바르지 않습니다.');
+          console.error("rewardData.type이 없습니다:", rewardData);
+          alert("보상 데이터 형식이 올바르지 않습니다.");
           return;
         }
-        
+
         // 보상 결과를 상태에 저장
         const newBoxResult: RandomBoxResult = {
-          type: rewardData.type,  // type → type으로 매핑
-          equipment: rewardData.equipment || undefined
+          type: rewardData.type, // type → type으로 매핑
+          equipment: rewardData.equipment || undefined,
         };
-        
-        console.log('새로운 boxResult 설정:', newBoxResult);
-        console.log('boxResult.type 확인:', newBoxResult.type);
-        console.log('boxResult.equipment 확인:', newBoxResult.equipment);
-        
+
+        console.log("새로운 boxResult 설정:", newBoxResult);
+        console.log("boxResult.type 확인:", newBoxResult.type);
+        console.log("boxResult.equipment 확인:", newBoxResult.equipment);
+
         setBoxResult(newBoxResult);
-        
-        console.log('결과 모달 표시 설정...');
+
+        console.log("결과 모달 표시 설정...");
         // 결과 모달 표시
         setShowResult(true);
         setShowRaffleBoxOpenModal(true);
-        
-        console.log('진동 효과 시작...');
+
+        console.log("진동 효과 시작...");
         // 진동 효과 (선택사항)
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
-        
-        console.log('사용자 데이터 새로고침 시작...');
+
+        console.log("사용자 데이터 새로고침 시작...");
         // 사용자 데이터 새로고침 (보상 반영)
         await fetchUserData();
-        
-        console.log('광고보고 랜덤박스 완료!');
+
+        console.log("광고보고 랜덤박스 완료!");
       } else {
-        console.log('보상 결과가 없습니다.');
+        console.log("보상 결과가 없습니다.");
       }
-      
     } catch (error: any) {
-      console.error('광고 표시 중 오류:', error);
-      console.error('에러 상세 정보:', {
+      console.error("광고 표시 중 오류:", error);
+      console.error("에러 상세 정보:", {
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
-      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
+      alert("광고 시청에 실패했습니다. 다시 시도해주세요.");
     }
   };
-
 
   // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
   useEffect(() => {
@@ -460,7 +467,8 @@ const DiceEventPage: React.FC = () => {
     }
   }, [showRaffleBoxModal, autoLoadAd]);
 
-  const isAdButtonDisabled = adLoadStatus === 'loading' || adLoadStatus === 'failed';
+  const isAdButtonDisabled =
+    adLoadStatus === "loading" || adLoadStatus === "failed";
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
@@ -486,7 +494,7 @@ const DiceEventPage: React.FC = () => {
     console.log("모달 상태 변경:", {
       showResult,
       showRaffleBoxOpenModal,
-      boxResult: boxResult ? '있음' : '없음'
+      boxResult: boxResult ? "있음" : "없음",
     });
   }, [showResult, showRaffleBoxOpenModal, boxResult]);
 
@@ -502,7 +510,7 @@ const DiceEventPage: React.FC = () => {
 
     initializeUserData();
   }, [fetchUserData]);
-  
+
   useEffect(() => {
     if (showAdModal) {
       autoLoadAd();
@@ -738,7 +746,7 @@ const DiceEventPage: React.FC = () => {
               rollDice={game.rollDice}
               isCardGameActive={game.isCardGameActive}
               handleCardGameEnd={game.handleCardGameEnd}
-              onRefillTimeClick={handleRefillTimeClick} 
+              onRefillTimeClick={handleRefillTimeClick}
             />
 
             {/* 카드게임 모달 - 한 번만 진행되는 게임 */}
@@ -1018,7 +1026,7 @@ const DiceEventPage: React.FC = () => {
                           }}
                         >
                           <img
-                            src={Images.StarpointIcon}
+                            src={Images.StarIcon}
                             alt="star"
                             className="w-10 h-10"
                           />
@@ -1048,7 +1056,7 @@ const DiceEventPage: React.FC = () => {
                             }}
                           >
                             <img
-                              src={Images.LotteryTicket}
+                              src={Images.KeyIcon}
                               alt="rapple"
                               className="w-10 h-10"
                             />
@@ -1288,7 +1296,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="mt-3 mb-5 w-full flex justify-center">
                       <button
                         onClick={handleAdRandomBox}
-                        disabled={adLoadStatus !== 'loaded'}
+                        disabled={adLoadStatus !== "loaded"}
                         className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
                         style={{
                           background:
@@ -1327,14 +1335,14 @@ const DiceEventPage: React.FC = () => {
                         />
 
                         <span>
-                          {adLoadStatus === 'loading' && '로딩 중...'}
-                          {adLoadStatus === 'loaded' && '광고보고 램덤박스 열기'}
-                          {adLoadStatus === 'failed' && '로드 실패'}
-                          {adLoadStatus === 'not_loaded' && '준비 중...'}
+                          {adLoadStatus === "loading" && "로딩 중..."}
+                          {adLoadStatus === "loaded" &&
+                            "광고보고 램덤박스 열기"}
+                          {adLoadStatus === "failed" && "로드 실패"}
+                          {adLoadStatus === "not_loaded" && "준비 중..."}
                         </span>
                       </button>
                     </div>
-                    
                   </div>
                 </div>
               </DialogContent>
@@ -1424,9 +1432,13 @@ const DiceEventPage: React.FC = () => {
                   {/* 결과 표시 */}
                   {showResult && boxResult && (
                     <div className="flex flex-col items-center mb-4">
-                      {boxResult.type && ['EQUIPMENT', 'DICE', 'SL', 'NONE'].includes(boxResult.type) ? (
+                      {boxResult.type &&
+                      ["EQUIPMENT", "DICE", "SL", "NONE"].includes(
+                        boxResult.type
+                      ) ? (
                         <>
-                          {boxResult.type === "EQUIPMENT" && boxResult.equipment ? (
+                          {boxResult.type === "EQUIPMENT" &&
+                          boxResult.equipment ? (
                             <div className="flex items-center gap-3 mb-2">
                               <img
                                 src={getEquipmentIcon(
@@ -1457,7 +1469,8 @@ const DiceEventPage: React.FC = () => {
                                   WebkitTextStroke: "1px #000000",
                                 }}
                               >
-                                {getEquipmentName(boxResult.equipment.type)} 장비
+                                {getEquipmentName(boxResult.equipment.type)}{" "}
+                                장비
                               </span>
                             </div>
                           ) : boxResult.type === "DICE" ? (
@@ -1676,7 +1689,7 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            {/* 리필 시간 및 광고 버튼 모달 */} 
+            {/* 리필 시간 및 광고 버튼 모달 */}
             <Dialog open={showAdModal}>
               <DialogTitle></DialogTitle>
               <DialogContent
@@ -1774,7 +1787,7 @@ const DiceEventPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* 광고 상태 및 플랫폼 정보 표시 */}
                   <div className="flex flex-col items-center gap-2 mb-4">
                     <div className="text-center">
@@ -1798,17 +1811,24 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "0.5px #000000",
                         }}
                       >
-                        광고 상태: {adLoadStatus === 'not_loaded' ? '대기 중' : 
-                                  adLoadStatus === 'loading' ? '로딩 중' : 
-                                  adLoadStatus === 'loaded' ? '로드 완료' : '로드 실패'}
+                        광고 상태:{" "}
+                        {adLoadStatus === "not_loaded"
+                          ? "대기 중"
+                          : adLoadStatus === "loading"
+                          ? "로딩 중"
+                          : adLoadStatus === "loaded"
+                          ? "로드 완료"
+                          : "로드 실패"}
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-6">
                     <button
                       className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                        isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                        isAdButtonDisabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:scale-105"
                       }`}
                       style={{
                         background:
@@ -1862,7 +1882,6 @@ const DiceEventPage: React.FC = () => {
             <div className="hidden md:block md:mb-40"> &nbsp;</div>
           </>
         )}
-
 
         {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
         {!game.isSpinGameActive &&
