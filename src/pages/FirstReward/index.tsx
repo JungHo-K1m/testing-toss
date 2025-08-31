@@ -144,7 +144,7 @@ const FirstRewardPage: React.FC = () => {
             }}
           >
             <img
-              src={Images.Dice}
+              src={Images.DiceIcon}
               alt="reward-icon"
               className="w-[62px] h-[62px]"
             />
@@ -171,24 +171,36 @@ const FirstRewardPage: React.FC = () => {
       {/* 하단 버튼 영역 고정 */}
       <div className="w-full px-6 pb-6 flex justify-center">
         <button
-          className="h-14 w-full mx-6 rounded-[10px]"
-          style={{
-            background: "linear-gradient(135deg, #4FD9FF 0%, #02BCFF 100%)",
-            border: "2px solid #82E4FF",
-            boxShadow:
-              "0 0 0 4px #000, 0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
-            fontFamily: "'ONE Mobile POP OTF', sans-serif",
-            fontSize: "18px",
-            fontWeight: 400,
-            lineHeight: "22px",
-            letterSpacing: "-2.5%",
-            color: "#ffffff",
-            textAlign: "center",
-            verticalAlign: "middle",
-            WebkitTextStroke: "1px #000000",
-          }}
+          className="font-medium h-14 w-full rounded-[10px] relative"
+          type="button"
           onClick={handleReceiveReward}
+          style={{
+            background:
+              "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+            border: "2px solid #76C1FF",
+            outline: "2px solid #000000",
+            boxShadow:
+              "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+            color: "#FFFFFF",
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "18px",
+            fontWeight: "400",
+            WebkitTextStroke: "1px #000000",
+            opacity: 1,
+          }}
         >
+          <img
+            src={Images.ButtonPointBlue}
+            alt="button-point-blue"
+            style={{
+              position: "absolute",
+              top: "3px",
+              left: "3px",
+              width: "8.47px",
+              height: "6.3px",
+              pointerEvents: "none",
+            }}
+          />
           확인
         </button>
       </div>
