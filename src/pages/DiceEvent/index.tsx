@@ -38,7 +38,10 @@ import {
   purchaseRandomBox,
   RandomBoxResult,
 } from "@/entities/User/api/purchaseRandomBox";
-import { getRandomBoxAdReward, RandomBoxAdRewardResponse } from "@/entities/User/api/randomBoxAdReward";
+import {
+  getRandomBoxAdReward,
+  RandomBoxAdRewardResponse,
+} from "@/entities/User/api/randomBoxAdReward";
 import { useAdMob } from "@/hooks/useAdMob";
 import { getPlatform } from "@/types/adMob";
 import { FaChevronRight } from "react-icons/fa";
@@ -122,23 +125,35 @@ const DiceEventPage: React.FC = () => {
     // console.log("🔍 getEquippedItemsForUserLevel 호출됨");
     // console.log("📦 equippedItems:", equippedItems);
     // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
-    
+
     if (!equippedItems?.slot) return [];
-    
-    return equippedItems.slot.map(item => {
+
+    return equippedItems.slot.map((item) => {
       let type: string;
       switch (item.type) {
-        case 'HEAD': type = 'crown'; break;
-        case 'EYE': type = 'sunglasses'; break;
-        case 'EAR': type = 'ribbon'; break;
-        case 'NECK': type = 'muffler'; break;
-        case 'BACK': type = 'balloon'; break;
-        default: type = 'crown'; break;
+        case "HEAD":
+          type = "crown";
+          break;
+        case "EYE":
+          type = "sunglasses";
+          break;
+        case "EAR":
+          type = "ribbon";
+          break;
+        case "NECK":
+          type = "muffler";
+          break;
+        case "BACK":
+          type = "balloon";
+          break;
+        default:
+          type = "crown";
+          break;
       }
-      
+
       return {
         type: type as any,
-        rarity: item.rarity
+        rarity: item.rarity,
       };
     });
   };
@@ -148,17 +163,23 @@ const DiceEventPage: React.FC = () => {
     // // console.log("🔍 getEquippedItemsForComponents 호출됨");
     // // console.log("📦 equippedItems:", equippedItems);
     // // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
-    
+
     if (!equippedItems?.slot) return [];
-    
-    return equippedItems.slot.map(item => {
+
+    return equippedItems.slot.map((item) => {
       switch (item.type) {
-        case 'HEAD': return 'crown';
-        case 'EYE': return 'sunglasses';
-        case 'EAR': return 'ribbon';
-        case 'NECK': return 'muffler';
-        case 'BACK': return 'balloon';
-        default: return 'crown';
+        case "HEAD":
+          return "crown";
+        case "EYE":
+          return "sunglasses";
+        case "EAR":
+          return "ribbon";
+        case "NECK":
+          return "muffler";
+        case "BACK":
+          return "balloon";
+        default:
+          return "crown";
       }
     });
   };
@@ -173,7 +194,7 @@ const DiceEventPage: React.FC = () => {
   // 장비 타입별 이미지 가져오기 함수 (아이템 오버레이용)
   const getEquipmentIcon = (type: string, rarity: number) => {
     // console.log(`🎨 getEquipmentIcon 호출됨 - type: ${type}, rarity: ${rarity}`);
-    
+
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
       if (rarity <= 3) return 2; // 하늘색
@@ -186,17 +207,28 @@ const DiceEventPage: React.FC = () => {
     let imageKey: string = "Ballon1";
 
     switch (type.toUpperCase()) {
-      case "HEAD": imageKey = `Crown${imageIndex}`; break;
-      case "EAR": imageKey = `Hairpin${imageIndex}`; break;
-      case "EYE": imageKey = `Sunglass${imageIndex}`; break;
-      case "NECK": imageKey = `Muffler${imageIndex}`; break;
-      case "BACK": imageKey = `Ballon${imageIndex}`; break;
-      default: imageKey = "Ballon1";
+      case "HEAD":
+        imageKey = `Crown${imageIndex}`;
+        break;
+      case "EAR":
+        imageKey = `Hairpin${imageIndex}`;
+        break;
+      case "EYE":
+        imageKey = `Sunglass${imageIndex}`;
+        break;
+      case "NECK":
+        imageKey = `Muffler${imageIndex}`;
+        break;
+      case "BACK":
+        imageKey = `Ballon${imageIndex}`;
+        break;
+      default:
+        imageKey = "Ballon1";
     }
 
     const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
     // console.log(`🎨 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
-    
+
     return imagePath;
   };
 
@@ -233,8 +265,6 @@ const DiceEventPage: React.FC = () => {
     return Images[effectImageKey] || Images.LevelEffect1;
   };
 
-
-
   useEffect(() => {
     return () => {
       game.setIsAuto(false);
@@ -250,17 +280,24 @@ const DiceEventPage: React.FC = () => {
         // console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
       } catch (error: any) {
         console.error("Failed to fetch user data:", error);
-        
+
         // "Full authentication is required" 에러인 경우 특별 처리
-        if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-          console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+        if (
+          error.message &&
+          error.message.includes(
+            "Full authentication is required to access this resource"
+          )
+        ) {
+          console.log(
+            "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
+          );
           // 로그인 페이지로 리다이렉트
           // window.location.href = "/";
           return;
         }
-        
+
         // 기타 에러는 콘솔에만 기록하고 계속 진행
-        console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
+        console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
       }
     };
 
@@ -395,20 +432,25 @@ const DiceEventPage: React.FC = () => {
   const [boxResult, setBoxResult] = useState<RandomBoxResult | null>(null);
   const [isLoadingBox, setIsLoadingBox] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
-  const [refillTimeInfo, setRefillTimeInfo] = useState<{ canRefill: boolean; timeUntilRefill: string; hasRemainingDice?: boolean; } | null>(null);
-  
+  const [refillTimeInfo, setRefillTimeInfo] = useState<{
+    canRefill: boolean;
+    timeUntilRefill: string;
+    hasRemainingDice?: boolean;
+  } | null>(null);
+
   // 광고 관련 상태 및 훅
-  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
+  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } =
+    useAdMob();
   const [platform] = useState(getPlatform());
-  
+
   // 연속 광고 시청 방지를 위한 상태 추가
   const [isAdWatching, setIsAdWatching] = useState(false);
   const [lastAdWatchTime, setLastAdWatchTime] = useState<number>(0);
   const AD_COOLDOWN = 5000; // 광고 시청 간 최소 대기 시간 (5초)
 
   // 리필 시간 클릭 핸들러 수정
-  const handleRefillTimeClick = (timeInfo: { 
-    canRefill: boolean; 
+  const handleRefillTimeClick = (timeInfo: {
+    canRefill: boolean;
     timeUntilRefill: string;
     hasRemainingDice?: boolean; // 추가된 필드
   }) => {
@@ -418,13 +460,13 @@ const DiceEventPage: React.FC = () => {
 
   // 광고 버튼 클릭 핸들러
   const handleAdButtonClick = async () => {
-    if (adLoadStatus === 'not_loaded') {
+    if (adLoadStatus === "not_loaded") {
       // 광고가 로드되지 않은 경우 로드 시작
-      await loadAd('RANDOM_BOX');
-    } else if (adLoadStatus === 'loaded') {
+      await loadAd("RANDOM_BOX");
+    } else if (adLoadStatus === "loaded") {
       // 광고가 로드된 경우 표시
-      await showAd('RANDOM_BOX');
-    } else if (adLoadStatus === 'failed') {
+      await showAd("RANDOM_BOX");
+    } else if (adLoadStatus === "failed") {
       // 광고 로드 실패 시 재로드
       await reloadAd();
     }
@@ -433,16 +475,16 @@ const DiceEventPage: React.FC = () => {
   // 광고 상태에 따른 버튼 텍스트 및 비활성화 여부
   const getAdButtonText = () => {
     switch (adLoadStatus) {
-      case 'not_loaded':
-        return '광고 로드하기';
-      case 'loading':
-        return '광고 로딩 중...';
-      case 'loaded':
-        return '광고 시청 후 주사위 얻기';
-      case 'failed':
-        return '광고 로드 실패 - 다시 시도';
+      case "not_loaded":
+        return "광고 로드하기";
+      case "loading":
+        return "광고 로딩 중...";
+      case "loaded":
+        return "광고 시청 후 주사위 얻기";
+      case "failed":
+        return "광고 로드 실패 - 다시 시도";
       default:
-        return '광고 시청 후 주사위 얻기';
+        return "광고 시청 후 주사위 얻기";
     }
   };
 
@@ -456,102 +498,116 @@ const DiceEventPage: React.FC = () => {
     // 연속 광고 시청 방지 체크
     const now = Date.now();
     if (isAdWatching) {
-      alert('광고 시청 중입니다. 잠시 기다려주세요.');
+      alert("광고 시청 중입니다. 잠시 기다려주세요.");
       return;
     }
 
     if (now - lastAdWatchTime < AD_COOLDOWN) {
-      const remainingTime = Math.ceil((AD_COOLDOWN - (now - lastAdWatchTime)) / 1000);
-      alert(`광고 시청 간격이 너무 짧습니다. ${remainingTime}초 후에 다시 시도해주세요.`);
+      const remainingTime = Math.ceil(
+        (AD_COOLDOWN - (now - lastAdWatchTime)) / 1000
+      );
+      alert(
+        `광고 시청 간격이 너무 짧습니다. ${remainingTime}초 후에 다시 시도해주세요.`
+      );
       return;
     }
-    
+
     // 광고 상태 추가 확인
-    if (adLoadStatus === 'loading') {
-      alert('광고 로딩 중입니다. 잠시 기다려주세요.');
+    if (adLoadStatus === "loading") {
+      alert("광고 로딩 중입니다. 잠시 기다려주세요.");
       return;
     }
 
     try {
       setIsAdWatching(true); // 광고 시청 시작
       // console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
-      
+
       // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== 'loaded') {
+      if (adLoadStatus !== "loaded") {
         // console.log('광고 로드 시작...');
-        await loadAd('RANDOM_BOX'); 
+        await loadAd("RANDOM_BOX");
         // console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
       // console.log('광고 표시 시작...');
-      
+
       // 광고 표시 및 보상 결과 대기
       // console.log('showAd() Promise 대기 시작...');
-      const rewardData: RandomBoxAdRewardResponse = await showAd('RANDOM_BOX');
+      const rewardData: RandomBoxAdRewardResponse = await showAd("RANDOM_BOX");
       // console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
-      
+
       if (rewardData) {
         // console.log('보상 결과 처리 시작...');
         // console.log('원본 rewardData:', rewardData);
-        
+
         // rewardData 구조 확인 및 안전한 매핑
         if (!rewardData.type) {
-          console.error('rewardData.type이 없습니다:', rewardData);
-          alert('보상 데이터 형식이 올바르지 않습니다.');
+          console.error("rewardData.type이 없습니다:", rewardData);
+          alert("보상 데이터 형식이 올바르지 않습니다.");
           return;
         }
-        
+
         // 보상 결과를 상태에 저장
         const newBoxResult: RandomBoxResult = {
-          type: rewardData.type,  // type → type으로 매핑
-          equipment: rewardData.equipment || undefined
+          type: rewardData.type, // type → type으로 매핑
+          equipment: rewardData.equipment || undefined,
         };
-        
+
         // console.log('새로운 boxResult 설정:', newBoxResult);
         // console.log('boxResult.type 확인:', newBoxResult.type);
         // console.log('boxResult.equipment 확인:', newBoxResult.equipment);
-        
+
         setBoxResult(newBoxResult);
-        
+
         // console.log('결과 모달 표시 설정...');
         // 결과 모달 표시
         setShowResult(true);
         setShowRaffleBoxOpenModal(true);
-        
+
         // console.log('진동 효과 시작...');
         // 진동 효과 (선택사항)
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
-        
+
         // console.log('사용자 데이터 새로고침 시작...');
         // 사용자 데이터 새로고침 (보상 반영)
         try {
           await fetchUserData();
         } catch (error: any) {
-          console.error('[DiceEvent] 광고 보상 후 사용자 데이터 새로고침 실패:', error);
-          
+          console.error(
+            "[DiceEvent] 광고 보상 후 사용자 데이터 새로고침 실패:",
+            error
+          );
+
           // "Full authentication is required" 에러인 경우 특별 처리
-          if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-            console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+          if (
+            error.message &&
+            error.message.includes(
+              "Full authentication is required to access this resource"
+            )
+          ) {
+            console.log(
+              "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
+            );
             // window.location.href = "/";
             return;
           }
-          
+
           // 기타 에러는 콘솔에만 기록하고 계속 진행
-          console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
+          console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
         }
-        
+
         // console.log('광고보고 랜덤박스 완료!');
-        
+
         // 마지막 광고 시청 시간 업데이트
         setLastAdWatchTime(now);
-        
+
         // 🔥 핵심 수정: 광고 시청 완료 후 강제 대기 시간 추가
         // console.log('광고 시청 완료 후 2초 대기 시작...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         // console.log('대기 완료 - 다음 광고 시청 준비됨');
-        
+
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
           reloadAd();
@@ -559,15 +615,14 @@ const DiceEventPage: React.FC = () => {
       } else {
         // console.log('보상 결과가 없습니다.');
       }
-      
     } catch (error: any) {
-      console.error('광고 표시 중 오류:', error);
-      console.error('에러 상세 정보:', {
+      console.error("광고 표시 중 오류:", error);
+      console.error("에러 상세 정보:", {
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
-      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
-      
+      alert("광고 시청에 실패했습니다. 다시 시도해주세요.");
+
       // 오류 발생 시 광고 재로드
       setTimeout(() => {
         reloadAd();
@@ -586,58 +641,67 @@ const DiceEventPage: React.FC = () => {
 
     try {
       // console.log('주사위 리필 광고 시작 - 광고 상태:', adLoadStatus);
-      
+
       // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== 'loaded') {
+      if (adLoadStatus !== "loaded") {
         // console.log('광고 로드 시작...');
-        await loadAd('DICE_REFILL'); // 광고 타입 지정
+        await loadAd("DICE_REFILL"); // 광고 타입 지정
         // console.log('광고 로드 완료 후 상태:', adLoadStatus);
         return;
       }
 
       // console.log('광고 표시 시작...');
-      
+
       // 광고 표시 및 보상 결과 대기 (광고 타입 지정)
-      const rewardData = await showAd('DICE_REFILL');
+      const rewardData = await showAd("DICE_REFILL");
       // console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
-      
+
       if (rewardData) {
         // console.log('주사위 리필 보상 처리 완료');
-        
+
         // 사용자 데이터 새로고침
         try {
           await fetchUserData();
         } catch (error: any) {
-          console.error('[DiceEvent] 주사위 리필 후 사용자 데이터 새로고침 실패:', error);
-          
+          console.error(
+            "[DiceEvent] 주사위 리필 후 사용자 데이터 새로고침 실패:",
+            error
+          );
+
           // "Full authentication is required" 에러인 경우 특별 처리
-          if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-            console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+          if (
+            error.message &&
+            error.message.includes(
+              "Full authentication is required to access this resource"
+            )
+          ) {
+            console.log(
+              "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
+            );
             // window.location.href = "/";
             return;
           }
-          
+
           // 기타 에러는 콘솔에만 기록하고 계속 진행
-          console.log('[DiceEvent] 에러를 던지지 않고 콘솔에만 기록');
+          console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
         }
-        
+
         // 성공 메시지 표시
-        alert('주사위가 성공적으로 리필되었습니다!');
-        
+        alert("주사위가 성공적으로 리필되었습니다!");
+
         // 모달 닫기
         setShowAdModal(false);
         setRefillTimeInfo(null);
-        
+
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
           reloadAd();
         }, 1000);
       }
-      
     } catch (error: any) {
-      console.error('주사위 리필 광고 중 오류:', error);
-      alert('광고 시청에 실패했습니다. 다시 시도해주세요.');
-      
+      console.error("주사위 리필 광고 중 오류:", error);
+      alert("광고 시청에 실패했습니다. 다시 시도해주세요.");
+
       // 오류 발생 시 광고 재로드
       setTimeout(() => {
         reloadAd();
@@ -653,7 +717,7 @@ const DiceEventPage: React.FC = () => {
       autoLoadAd();
       // 주사위 리필 모달이 열릴 때는 DICE_REFILL 타입으로 광고 로드
       if (refillTimeInfo) {
-        loadAd('DICE_REFILL');
+        loadAd("DICE_REFILL");
       }
     }
   }, [showAdModal, autoLoadAd, refillTimeInfo]);
@@ -665,7 +729,7 @@ const DiceEventPage: React.FC = () => {
     }
   }, [showRaffleBoxModal, autoLoadAd]);
 
-  const isAdButtonDisabled = adLoadStatus === 'loading';
+  const isAdButtonDisabled = adLoadStatus === "loading";
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
@@ -679,9 +743,9 @@ const DiceEventPage: React.FC = () => {
         // console.log("장비 타입:", boxResult.equipment.type);
         // console.log("장비 희귀도:", boxResult.equipment.rarity);
         // console.log(
-      //     "이미지 경로:",
-      //     getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
-      //   );
+        //     "이미지 경로:",
+        //     getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
+        //   );
       }
     }
   }, [boxResult]);
@@ -696,7 +760,7 @@ const DiceEventPage: React.FC = () => {
   // }, [showResult, showRaffleBoxOpenModal, boxResult]);
 
   // 사용자 데이터 초기 로딩 (중복 제거됨)
-  
+
   useEffect(() => {
     if (showAdModal) {
       autoLoadAd();
@@ -719,7 +783,7 @@ const DiceEventPage: React.FC = () => {
         // window.location.href = "/choose-character";
         navigate("/choose-character");
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [error]);
@@ -765,85 +829,93 @@ const DiceEventPage: React.FC = () => {
 
   if (error) {
     // "Full authentication is required" 에러인 경우 로그인 페이지로 리다이렉트
-    if (error.includes("Full authentication is required to access this resource")) {
-      console.log('[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트');
+    if (
+      error.includes("Full authentication is required to access this resource")
+    ) {
+      console.log(
+        "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
+      );
       // 약간의 지연 후 리다이렉트 (무한 리프레시 방지)
       setTimeout(() => {
         // window.location.href = "/";
       }, 1000);
       return (
-        <div style={{ 
-          padding: "20px", 
-          textAlign: "center",
-          color: "#666"
-        }}>
+        <div
+          style={{
+            padding: "20px",
+            textAlign: "center",
+            color: "#666",
+          }}
+        >
           인증이 필요합니다. 로그인 페이지로 이동합니다...
         </div>
       );
     }
-    
+
     // "Please choose your character first." 메시지인 경우 /choose-character로 리다이렉트
     if (error && error.includes("Please choose your character first")) {
       return (
-        <div style={{ 
-          padding: "20px", 
-          textAlign: "center",
-          color: "#666"
-        }}>
+        <div
+          style={{
+            padding: "20px",
+            textAlign: "center",
+            color: "#666",
+          }}
+        >
           캐릭터 선택이 필요합니다. 캐릭터 선택 페이지로 이동합니다...
         </div>
       );
     }
-    
+
     return (
-      <div style={{ 
-        padding: "20px", 
-        textAlign: "center",
-        color: "#666"
-      }}>
+      <div
+        style={{
+          padding: "20px",
+          textAlign: "center",
+          color: "#666",
+        }}
+      >
         데이터 로딩 중 오류가 발생했습니다: {error}
       </div>
     );
   }
 
+  // 장비 타입별 이름 가져오기 함수
+  const getEquipmentName = (type: string): string => {
+    const itemNames: { [key: string]: string } = {
+      HEAD: "크라운",
+      EAR: "머리핀",
+      EYE: "선글라스",
+      NECK: "목도리",
+      BACK: "풍선",
+    };
+    return itemNames[type] || type;
+  };
 
+  // 아이템 효과 정보 가져오기 함수 (기획 피그마 기반)
+  const getEquipmentEffect = (type: string, rarity: number): string => {
+    // 희귀도에 따른 효과 배율 계산
+    const getRarityMultiplier = (rarity: number): number => {
+      if (rarity <= 1) return 1.0; // 보라색
+      if (rarity <= 3) return 1.2; // 하늘색
+      if (rarity <= 5) return 1.5; // 초록색
+      if (rarity <= 7) return 1.8; // 노란색
+      return 2.0; // 빨간색
+    };
 
-     // 장비 타입별 이름 가져오기 함수
-   const getEquipmentName = (type: string): string => {
-     const itemNames: { [key: string]: string } = {
-       HEAD: "크라운",
-       EAR: "머리핀",
-       EYE: "선글라스",
-       NECK: "목도리",
-       BACK: "풍선",
-     };
-     return itemNames[type] || type;
-   };
+    const multiplier = getRarityMultiplier(rarity);
 
-   // 아이템 효과 정보 가져오기 함수 (기획 피그마 기반)
-   const getEquipmentEffect = (type: string, rarity: number): string => {
-     // 희귀도에 따른 효과 배율 계산
-     const getRarityMultiplier = (rarity: number): number => {
-       if (rarity <= 1) return 1.0;      // 보라색
-       if (rarity <= 3) return 1.2;      // 하늘색
-       if (rarity <= 5) return 1.5;      // 초록색
-       if (rarity <= 7) return 1.8;      // 노란색
-       return 2.0;                        // 빨간색
-     };
+    // 아이템 타입별 기본 효과
+    const baseEffects: { [key: string]: string } = {
+      HEAD: `주사위 재충전 대기시간 -${Math.round(95 * multiplier)}%`,
+      EAR: `미니게임 스타포인트 ×${(1.86 * multiplier).toFixed(2)}`,
+      EYE: `주사위 획득 확률 +${Math.round(15 * multiplier)}%`,
+      NECK: `경험치 획득량 +${Math.round(25 * multiplier)}%`,
+      BACK: `이동 속도 +${Math.round(20 * multiplier)}%`,
+    };
 
-     const multiplier = getRarityMultiplier(rarity);
-     
-     // 아이템 타입별 기본 효과
-     const baseEffects: { [key: string]: string } = {
-       HEAD: `주사위 재충전 대기시간 -${Math.round(95 * multiplier)}%`,
-       EAR: `미니게임 스타포인트 ×${(1.86 * multiplier).toFixed(2)}`,
-       EYE: `주사위 획득 확률 +${Math.round(15 * multiplier)}%`,
-       NECK: `경험치 획득량 +${Math.round(25 * multiplier)}%`,
-       BACK: `이동 속도 +${Math.round(20 * multiplier)}%`,
-     };
-     
-     return baseEffects[type] || "효과 없음";
-   };
+    return baseEffects[type] || "효과 없음";
+  };
 
   // 랜덤박스 열기 함수
   const handleOpenRaffleBox = async () => {
@@ -892,12 +964,16 @@ const DiceEventPage: React.FC = () => {
     }
   };
 
-  const handleRPSGameEnd = (result: "win" | "lose", winnings: number, rpsId?: number, lastPlayerChoice?: number) => {
+  const handleRPSGameEnd = (
+    result: "win" | "lose",
+    winnings: number,
+    rpsId?: number,
+    lastPlayerChoice?: number
+  ) => {
     // // console.log(`RPS Game Ended: ${result}, Winnings: ${winnings}`);
     fetchUserData();
     game.handleRPSGameEnd(result, winnings, rpsId, lastPlayerChoice);
   };
-
 
   return (
     <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
@@ -983,7 +1059,7 @@ const DiceEventPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* 오른쪽: 설정 아이콘 */}
               <div className="flex items-center gap-2">
                 <button
@@ -1070,7 +1146,7 @@ const DiceEventPage: React.FC = () => {
               rollDice={game.rollDice}
               isCardGameActive={game.isCardGameActive}
               handleCardGameEnd={game.handleCardGameEnd}
-              onRefillTimeClick={handleRefillTimeClick} 
+              onRefillTimeClick={handleRefillTimeClick}
             />
 
             {/* 카드게임 모달 - 한 번만 진행되는 게임 */}
@@ -1081,7 +1157,10 @@ const DiceEventPage: React.FC = () => {
             {game.selectingTile && !isAuto && (
               <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
-                <div className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl" style={{ marginTop: '80px' }}>
+                <div
+                  className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl"
+                  style={{ marginTop: "80px" }}
+                >
                   <img
                     src={Images.AirplaneIcon}
                     alt="airplane"
@@ -1091,17 +1170,17 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </div>
             )}
-                         {/* 카드게임이 활성화되지 않았을 때만 Board(캐릭터) 표시 */}
-             {!game.isCardGameActive && (
-               <Board
-                 position={position}
-                 initialX={initialX}
-                 initialY={initialY}
-                 delta={delta}
-                 equippedItems={getEquippedItemsForUserLevel()}
-                 characterType={characterType || "cat"}
-               />
-             )}
+            {/* 카드게임이 활성화되지 않았을 때만 Board(캐릭터) 표시 */}
+            {!game.isCardGameActive && (
+              <Board
+                position={position}
+                initialX={initialX}
+                initialY={initialY}
+                delta={delta}
+                equippedItems={getEquippedItemsForUserLevel()}
+                characterType={characterType || "cat"}
+              />
+            )}
             <br />
 
             {/* 랜덤박스 아이콘 */}
@@ -1324,7 +1403,7 @@ const DiceEventPage: React.FC = () => {
                           }}
                         >
                           <img
-                            src={Images.Dice}
+                            src={Images.DiceIcon}
                             alt="dice"
                             className="w-10 h-10"
                           />
@@ -1622,7 +1701,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="mt-3 mb-5 w-full flex justify-center">
                       <button
                         onClick={handleAdRandomBox}
-                        disabled={adLoadStatus !== 'loaded'}
+                        disabled={adLoadStatus !== "loaded"}
                         className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
                         style={{
                           background:
@@ -1661,14 +1740,14 @@ const DiceEventPage: React.FC = () => {
                         />
 
                         <span>
-                          {adLoadStatus === 'loading' && '로딩 중...'}
-                          {adLoadStatus === 'loaded' && '광고보고 램덤박스 열기'}
-                          {adLoadStatus === 'failed' && '로드 실패'}
-                          {adLoadStatus === 'not_loaded' && '준비 중...'}
+                          {adLoadStatus === "loading" && "로딩 중..."}
+                          {adLoadStatus === "loaded" &&
+                            "광고보고 램덤박스 열기"}
+                          {adLoadStatus === "failed" && "로드 실패"}
+                          {adLoadStatus === "not_loaded" && "준비 중..."}
                         </span>
                       </button>
                     </div>
-                    
                   </div>
                 </div>
               </DialogContent>
@@ -1758,9 +1837,13 @@ const DiceEventPage: React.FC = () => {
                   {/* 결과 표시 */}
                   {showResult && boxResult && (
                     <div className="flex flex-col items-center mb-4">
-                      {boxResult.type && ['EQUIPMENT', 'DICE', 'SL', 'NONE'].includes(boxResult.type) ? (
+                      {boxResult.type &&
+                      ["EQUIPMENT", "DICE", "SL", "NONE"].includes(
+                        boxResult.type
+                      ) ? (
                         <>
-                          {boxResult.type === "EQUIPMENT" && boxResult.equipment ? (
+                          {boxResult.type === "EQUIPMENT" &&
+                          boxResult.equipment ? (
                             <div className="flex items-center gap-3 mb-2">
                               <img
                                 src={getEquipmentIcon(
@@ -1791,7 +1874,8 @@ const DiceEventPage: React.FC = () => {
                                   WebkitTextStroke: "1px #000000",
                                 }}
                               >
-                                {getEquipmentName(boxResult.equipment.type)} 장비
+                                {getEquipmentName(boxResult.equipment.type)}{" "}
+                                장비
                               </span>
                             </div>
                           ) : boxResult.type === "DICE" ? (
@@ -1956,211 +2040,231 @@ const DiceEventPage: React.FC = () => {
                   </DialogClose>
                 </div>
                 <div className="flex flex-col items-center justify-around">
-                                     <div className=" flex flex-col items-center gap-2 mb-[30px]">
-                     <h1
-                       className="text-center"
-                       style={{
-                         fontFamily: "'ONE Mobile POP', sans-serif",
-                         fontSize: "30px",
-                         fontWeight: 400,
-                         color: "#FDE047",
-                         WebkitTextStroke: "2px #000000",
-                       }}
-                     >
-                       장착된 아이템
-                     </h1>
-                     <div className="relative flex items-center justify-center w-[150px] h-[150px] mb-5 mt-4">
-                                               {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
-                        {getEquippedItem("BACK") && (
-                          <img
-                            src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
-                            alt="BACK"
-                            className="absolute -top-6 left-1/2 transform -translate-x-[60%] w-20 h-20 opacity-90"
-                            style={{ zIndex: 0 }}
-                          />
-                        )}
-                       
-                       {/* 기본 캐릭터 이미지 */}
-                       <img
-                         src={getCharacterImageSrc()}
-                         alt="Character"
-                         className="w-[150px] h-[150px] relative z-10"
-                       />
-                       
-                       {/* 장착된 아이템들을 캐릭터 위에 겹쳐서 표시 (BACK 제외) */}
-                       {getEquippedItem("HEAD") && (
-                         <img
-                           src={getEquipmentIcon("HEAD", getEquippedItem("HEAD")!.rarity)}
-                           alt="HEAD"
-                           className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-12 opacity-90"
-                           style={{ zIndex: 15 }}
-                         />
-                       )}
-                       
-                       {getEquippedItem("EYE") && (
-                         <img
-                           src={getEquipmentIcon("EYE", getEquippedItem("EYE")!.rarity)}
-                           alt="EYE"
-                           className="absolute top-[36px] left-[36%] transform -translate-x-1/2 w-12 h-12 opacity-90"
-                           style={{ zIndex: 15, transform: "rotate(-2deg)" }}
-                         />
-                       )}
-                       
-                       {getEquippedItem("EAR") && (
-                         <img
-                           src={getEquipmentIcon("EAR", getEquippedItem("EAR")!.rarity)}
-                           alt="EAR"
-                           className="absolute top-2 right-8 w-10 h-10 opacity-90"
-                           style={{ zIndex: 15, transform: "rotate(45deg)" }}
-                         />
-                       )}
-                       
-                       {getEquippedItem("NECK") && (
-                         <img
-                           src={getEquipmentIcon("NECK", getEquippedItem("NECK")!.rarity)}
-                           alt="NECK"
-                           className="absolute top-[80px] left-[51%] transform -translate-x-1/2 w-14 h-14 opacity-90"
-                           style={{ zIndex: 15 }}
-                         />
-                       )}
-                     </div>
-                   </div>
-                                     <div className="flex flex-col gap-6">
-                                            {equippedItems?.slot && equippedItems.slot.length > 0 ? (
-                         // 장착된 아이템이 있는 경우
-                         <div className="flex flex-col gap-4">
-                           {equippedItems.slot.map((item, index) => (
-                             <div
-                               key={`${item.type}-${index}`}
-                               className="flex flex-row items-center justify-center gap-4"
-                               style={{
-                                 width: "70vw",
-                                 height: "100px",
-                                 background: "rgba(194, 213, 232, 0.1)",
-                                 border: "2px solid #B4CADA",
-                                 borderRadius: "20px",
-                                 padding: "16px",
-                                 boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-                                 backdropFilter: "blur(15px)",
-                                 WebkitBackdropFilter: "blur(15px)",
-                               }}
-                             >
-                               {/* 아이템 이미지 */}
-                               <div className="relative">
-                                 <img
-                                   src={getEquipmentIcon(item.type, item.rarity)}
-                                   alt={item.type}
-                                   className="w-16 h-16"
-                                 />
-                                 {/* 희귀도 표시 (우측 하단) */}
-                                 <div
-                                   className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
-                                   style={{
-                                     background: item.rarity <= 1 ? "#9B59B6" :      // 보라색
-                                                item.rarity <= 3 ? "#3498DB" :      // 하늘색
-                                                item.rarity <= 5 ? "#2ECC71" :      // 초록색
-                                                item.rarity <= 7 ? "#F1C40F" :      // 노란색
-                                                "#E74C3C",                         // 빨간색
-                                     border: "2px solid #FFFFFF",
-                                     boxShadow: "0px 2px 4px rgba(0,0,0,0.3)"
-                                   }}
-                                 >
-                                   <span
-                                     style={{
-                                       fontFamily: "'ONE Mobile POP', sans-serif",
-                                       fontSize: "10px",
-                                       fontWeight: "bold",
-                                       color: "#FFFFFF",
-                                       WebkitTextStroke: "0.5px #000000",
-                                     }}
-                                   >
-                                     {item.rarity}
-                                   </span>
-                                 </div>
-                               </div>
-                               
-                               {/* 아이템 정보 */}
-                               <div className="flex flex-col items-start flex-1">
-                                 <p
-                                   style={{
-                                     fontFamily: "'ONE Mobile POP', sans-serif",
-                                     fontSize: "18px",
-                                     fontWeight: "bold",
-                                     color: "#FFFFFF",
-                                     WebkitTextStroke: "1px #000000",
-                                     marginBottom: "4px"
-                                   }}
-                                 >
-                                   {getEquipmentName(item.type)}
-                                 </p>
-                                 <p
-                                   style={{
-                                     fontFamily: "'ONE Mobile POP', sans-serif",
-                                     fontSize: "14px",
-                                     fontWeight: "400",
-                                     color: "#FDE047",
-                                     WebkitTextStroke: "0.5px #000000",
-                                     lineHeight: "1.3"
-                                   }}
-                                 >
-                                   {getEquipmentEffect(item.type, item.rarity)}
-                                 </p>
-                               </div>
-                               
-                               {/* 게임 컨트롤러 아이콘 (피그마 기획과 동일) */}
-                               <div className="flex items-center justify-center w-8 h-8">
-                                 <svg
-                                   width="24"
-                                   height="24"
-                                   viewBox="0 0 24 24"
-                                   fill="none"
-                                   xmlns="http://www.w3.org/2000/svg"
-                                 >
-                                   <path
-                                     d="M21 6H3C1.9 6 1 6.9 1 8V16C1 17.1 1.9 18 3 18H21C22.1 18 23 17.1 23 16V8C23 6.9 22.1 6 21 6ZM11 13H8V16H6V13H3V11H6V8H8V11H11M15.5 14C14.67 14 14 13.33 14 12.5C14 11.67 14.67 11 15.5 11C16.33 11 17 11.67 17 12.5C17 13.33 16.33 14 15.5 14ZM19.5 14C18.67 14 18 13.33 18 12.5C18 11.67 18.67 11 19.5 11C20.33 11 21 11.67 21 12.5C21 13.33 20.33 14 19.5 14Z"
-                                     fill="#B4CADA"
-                                   />
-                                 </svg>
-                               </div>
-                             </div>
-                           ))}
-                         </div>
-                     ) : (
-                       // 장착된 아이템이 없는 경우
-                       <div
-                         className="flex flex-row items-center justify-center gap-6"
-                         style={{
-                           width: "70vw",
-                           height: "120px",
-                           background: "rgba(194, 213, 232, 0.1)",
-                           border: "2px solid #B4CADA",
-                           borderRadius: "20px",
-                           padding: "16px",
-                           boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-                           backdropFilter: "blur(15px)",
-                           WebkitBackdropFilter: "blur(15px)",
-                         }}
-                       >
-                         <p
-                           className="text-center p-4"
-                           style={{
-                             fontFamily: "'ONE Mobile POP', sans-serif",
-                             fontSize: "24px",
-                             fontWeight: 400,
-                             color: "#FFFFFF",
-                             WebkitTextStroke: "1px #000000",
-                           }}
-                         >
-                           현재 장착 중인 아이템이 없습니다.
-                         </p>
-                       </div>
-                     )}
-                   </div>
+                  <div className=" flex flex-col items-center gap-2 mb-[30px]">
+                    <h1
+                      className="text-center"
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: 400,
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                      }}
+                    >
+                      장착된 아이템
+                    </h1>
+                    <div className="relative flex items-center justify-center w-[150px] h-[150px] mb-5 mt-4">
+                      {/* BACK 아이템(풍선)을 캐릭터 뒤에 표시 */}
+                      {getEquippedItem("BACK") && (
+                        <img
+                          src={getEquipmentIcon(
+                            "BACK",
+                            getEquippedItem("BACK")!.rarity
+                          )}
+                          alt="BACK"
+                          className="absolute -top-6 left-1/2 transform -translate-x-[60%] w-20 h-20 opacity-90"
+                          style={{ zIndex: 0 }}
+                        />
+                      )}
+
+                      {/* 기본 캐릭터 이미지 */}
+                      <img
+                        src={getCharacterImageSrc()}
+                        alt="Character"
+                        className="w-[150px] h-[150px] relative z-10"
+                      />
+
+                      {/* 장착된 아이템들을 캐릭터 위에 겹쳐서 표시 (BACK 제외) */}
+                      {getEquippedItem("HEAD") && (
+                        <img
+                          src={getEquipmentIcon(
+                            "HEAD",
+                            getEquippedItem("HEAD")!.rarity
+                          )}
+                          alt="HEAD"
+                          className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-12 opacity-90"
+                          style={{ zIndex: 15 }}
+                        />
+                      )}
+
+                      {getEquippedItem("EYE") && (
+                        <img
+                          src={getEquipmentIcon(
+                            "EYE",
+                            getEquippedItem("EYE")!.rarity
+                          )}
+                          alt="EYE"
+                          className="absolute top-[36px] left-[36%] transform -translate-x-1/2 w-12 h-12 opacity-90"
+                          style={{ zIndex: 15, transform: "rotate(-2deg)" }}
+                        />
+                      )}
+
+                      {getEquippedItem("EAR") && (
+                        <img
+                          src={getEquipmentIcon(
+                            "EAR",
+                            getEquippedItem("EAR")!.rarity
+                          )}
+                          alt="EAR"
+                          className="absolute top-2 right-8 w-10 h-10 opacity-90"
+                          style={{ zIndex: 15, transform: "rotate(45deg)" }}
+                        />
+                      )}
+
+                      {getEquippedItem("NECK") && (
+                        <img
+                          src={getEquipmentIcon(
+                            "NECK",
+                            getEquippedItem("NECK")!.rarity
+                          )}
+                          alt="NECK"
+                          className="absolute top-[80px] left-[51%] transform -translate-x-1/2 w-14 h-14 opacity-90"
+                          style={{ zIndex: 15 }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    {equippedItems?.slot && equippedItems.slot.length > 0 ? (
+                      // 장착된 아이템이 있는 경우
+                      <div className="flex flex-col gap-4">
+                        {equippedItems.slot.map((item, index) => (
+                          <div
+                            key={`${item.type}-${index}`}
+                            className="flex flex-row items-center justify-center gap-4"
+                            style={{
+                              width: "70vw",
+                              height: "100px",
+                              background: "rgba(194, 213, 232, 0.1)",
+                              border: "2px solid #B4CADA",
+                              borderRadius: "20px",
+                              padding: "16px",
+                              boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                              backdropFilter: "blur(15px)",
+                              WebkitBackdropFilter: "blur(15px)",
+                            }}
+                          >
+                            {/* 아이템 이미지 */}
+                            <div className="relative">
+                              <img
+                                src={getEquipmentIcon(item.type, item.rarity)}
+                                alt={item.type}
+                                className="w-16 h-16"
+                              />
+                              {/* 희귀도 표시 (우측 하단) */}
+                              <div
+                                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                                style={{
+                                  background:
+                                    item.rarity <= 1
+                                      ? "#9B59B6" // 보라색
+                                      : item.rarity <= 3
+                                      ? "#3498DB" // 하늘색
+                                      : item.rarity <= 5
+                                      ? "#2ECC71" // 초록색
+                                      : item.rarity <= 7
+                                      ? "#F1C40F" // 노란색
+                                      : "#E74C3C", // 빨간색
+                                  border: "2px solid #FFFFFF",
+                                  boxShadow: "0px 2px 4px rgba(0,0,0,0.3)",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontFamily: "'ONE Mobile POP', sans-serif",
+                                    fontSize: "10px",
+                                    fontWeight: "bold",
+                                    color: "#FFFFFF",
+                                    WebkitTextStroke: "0.5px #000000",
+                                  }}
+                                >
+                                  {item.rarity}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* 아이템 정보 */}
+                            <div className="flex flex-col items-start flex-1">
+                              <p
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "18px",
+                                  fontWeight: "bold",
+                                  color: "#FFFFFF",
+                                  WebkitTextStroke: "1px #000000",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                {getEquipmentName(item.type)}
+                              </p>
+                              <p
+                                style={{
+                                  fontFamily: "'ONE Mobile POP', sans-serif",
+                                  fontSize: "14px",
+                                  fontWeight: "400",
+                                  color: "#FDE047",
+                                  WebkitTextStroke: "0.5px #000000",
+                                  lineHeight: "1.3",
+                                }}
+                              >
+                                {getEquipmentEffect(item.type, item.rarity)}
+                              </p>
+                            </div>
+
+                            {/* 게임 컨트롤러 아이콘 (피그마 기획과 동일) */}
+                            <div className="flex items-center justify-center w-8 h-8">
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M21 6H3C1.9 6 1 6.9 1 8V16C1 17.1 1.9 18 3 18H21C22.1 18 23 17.1 23 16V8C23 6.9 22.1 6 21 6ZM11 13H8V16H6V13H3V11H6V8H8V11H11M15.5 14C14.67 14 14 13.33 14 12.5C14 11.67 14.67 11 15.5 11C16.33 11 17 11.67 17 12.5C17 13.33 16.33 14 15.5 14ZM19.5 14C18.67 14 18 13.33 18 12.5C18 11.67 18.67 11 19.5 11C20.33 11 21 11.67 21 12.5C21 13.33 20.33 14 19.5 14Z"
+                                  fill="#B4CADA"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // 장착된 아이템이 없는 경우
+                      <div
+                        className="flex flex-row items-center justify-center gap-6"
+                        style={{
+                          width: "70vw",
+                          height: "120px",
+                          background: "rgba(194, 213, 232, 0.1)",
+                          border: "2px solid #B4CADA",
+                          borderRadius: "20px",
+                          padding: "16px",
+                          boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                          backdropFilter: "blur(15px)",
+                          WebkitBackdropFilter: "blur(15px)",
+                        }}
+                      >
+                        <p
+                          className="text-center p-4"
+                          style={{
+                            fontFamily: "'ONE Mobile POP', sans-serif",
+                            fontSize: "24px",
+                            fontWeight: 400,
+                            color: "#FFFFFF",
+                            WebkitTextStroke: "1px #000000",
+                          }}
+                        >
+                          현재 장착 중인 아이템이 없습니다.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
 
-            {/* 리필 시간 및 광고 버튼 모달 */} 
+            {/* 리필 시간 및 광고 버튼 모달 */}
             <Dialog open={showAdModal}>
               <DialogTitle></DialogTitle>
               <DialogContent
@@ -2198,7 +2302,9 @@ const DiceEventPage: React.FC = () => {
                         WebkitTextStroke: "2px #000000",
                       }}
                     >
-                      {refillTimeInfo?.hasRemainingDice ? "주사위 확인" : "주사위 리필"}
+                      {refillTimeInfo?.hasRemainingDice
+                        ? "주사위 확인"
+                        : "주사위 리필"}
                     </h1>
                     <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
                       {refillTimeInfo?.hasRemainingDice ? (
@@ -2270,7 +2376,7 @@ const DiceEventPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* 광고 상태 및 플랫폼 정보 표시 */}
                   <div className="flex flex-col items-center gap-2 mb-4">
                     <div className="text-center">
@@ -2294,19 +2400,26 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "0.5px #000000",
                         }}
                       >
-                        광고 상태: {adLoadStatus === 'not_loaded' ? '대기 중' : 
-                                  adLoadStatus === 'loading' ? '로딩 중' : 
-                                  adLoadStatus === 'loaded' ? '로드 완료' : '로드 실패'}
+                        광고 상태:{" "}
+                        {adLoadStatus === "not_loaded"
+                          ? "대기 중"
+                          : adLoadStatus === "loading"
+                          ? "로딩 중"
+                          : adLoadStatus === "loaded"
+                          ? "로드 완료"
+                          : "로드 실패"}
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* 광고 버튼은 주사위가 0개일 때만 표시 */}
                   {!refillTimeInfo?.hasRemainingDice && (
                     <div className="flex flex-col gap-6">
                       <button
                         className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                          isAdButtonDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                          isAdButtonDisabled
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:scale-105"
                         }`}
                         style={{
                           background:
@@ -2346,10 +2459,11 @@ const DiceEventPage: React.FC = () => {
                           }}
                         />
                         <span>
-                          {adLoadStatus === 'loading' && '로딩 중...'}
-                          {adLoadStatus === 'loaded' && '광고 시청 후 주사위 리필'}
-                          {adLoadStatus === 'failed' && '로드 실패 - 다시 시도'}
-                          {adLoadStatus === 'not_loaded' && '준비 중...'}
+                          {adLoadStatus === "loading" && "로딩 중..."}
+                          {adLoadStatus === "loaded" &&
+                            "광고 시청 후 주사위 리필"}
+                          {adLoadStatus === "failed" && "로드 실패 - 다시 시도"}
+                          {adLoadStatus === "not_loaded" && "준비 중..."}
                         </span>
                       </button>
                     </div>
@@ -2366,7 +2480,6 @@ const DiceEventPage: React.FC = () => {
             <div className="hidden md:block md:mb-40"> &nbsp;</div>
           </>
         )}
-
 
         {/* BottomNav - 게임이 활성화되지 않을 때만 표시 */}
         {!game.isSpinGameActive &&

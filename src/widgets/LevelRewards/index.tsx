@@ -29,7 +29,6 @@ interface LevelRewardsProps {
 }
 
 const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
-
   // 다음 레벨 보상 찾기
   const getNextLevelReward = () => {
     // 현재 레벨보다 큰 보상 중 가장 가까운 것 찾기
@@ -83,7 +82,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
                   <img
-                    src={Images.Star}
+                    src={Images.StarIcon}
                     className="w-8 h-8"
                     alt="Points Reward"
                   />
@@ -132,15 +131,13 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 className="w-6 h-6 rounded-full"
                 style={{ backgroundColor: reward.bgColor }}
               ></div>
-              <p>
-                  레벨 {reward.level}
-              </p>
+              <p>레벨 {reward.level}</p>
             </div>
             <div className="flex flex-row justify-center items-center gap-2 w-full">
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
                   <img
-                    src={Images.Dice}
+                    src={Images.DiceIcon}
                     className="w-8 h-8"
                     alt="Dice Reward"
                   />
@@ -150,7 +147,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
                   <img
-                    src={Images.Star}
+                    src={Images.StarIcon}
                     className="w-8 h-8"
                     alt="Points Reward"
                   />
