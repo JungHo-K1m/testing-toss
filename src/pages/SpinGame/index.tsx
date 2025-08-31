@@ -16,7 +16,7 @@ import Audios from "@/shared/assets/audio";
 
 // 10개 아이템으로 구성된 스핀 게임 데이터
 // 룰렛 보상 확률에 맞춰 구성 (3 Keys: 35%, 10 Keys: 25%, 20 Keys: 15%, 50 Keys: 5%, SL Points: 15%, 꽝: 5%)
-// 10개 칸에 맞추기 위해 키 아이템들을 중복 배치
+// 10개 칸에 맞추기 위해 키 아이템들을 중복 배치하고, 순서를 섞어서 다채롭게 구성
 const data = [
   {
     option: "3 Keys",
@@ -31,28 +31,16 @@ const data = [
     rotationOffset: 0,
   },
   {
-    option: "3 Keys",
+    option: "SL Points",
     image: {
-      uri: `${Images.KeyIcon}`,
+      uri: `${Images.TokenReward}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치 (중복)
-    style: { backgroundColor: "#FFD700" },
+    prize: { type: "SL", amount: 100 }, // baseAmount: 100과 정확히 일치
+    style: { backgroundColor: "#3498DB" },
     angleOffset: 0,
     rotationOffset: 36,
-  },
-  {
-    option: "3 Keys",
-    image: {
-      uri: `${Images.KeyIcon}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치 (중복)
-    style: { backgroundColor: "#FFD700" },
-    angleOffset: 0,
-    rotationOffset: 72,
   },
   {
     option: "10 Keys",
@@ -64,19 +52,19 @@ const data = [
     prize: { type: "KEY", amount: 10 }, // baseAmount: 10과 정확히 일치
     style: { backgroundColor: "#FF6B6B" },
     angleOffset: 0,
-    rotationOffset: 108,
+    rotationOffset: 72,
   },
   {
-    option: "10 Keys",
+    option: "3 Keys",
     image: {
       uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "KEY", amount: 10 }, // baseAmount: 10과 정확히 일치 (중복)
-    style: { backgroundColor: "#FF6B6B" },
+    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치 (중복)
+    style: { backgroundColor: "#FFD700" },
     angleOffset: 0,
-    rotationOffset: 144,
+    rotationOffset: 108,
   },
   {
     option: "20 Keys",
@@ -88,31 +76,7 @@ const data = [
     prize: { type: "KEY", amount: 20 }, // baseAmount: 20과 정확히 일치
     style: { backgroundColor: "#4ECDC4" },
     angleOffset: 0,
-    rotationOffset: 180,
-  },
-  {
-    option: "SL Points",
-    image: {
-      uri: `${Images.TokenReward}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "SL", amount: 100 }, // baseAmount: 100과 정확히 일치
-    style: { backgroundColor: "#3498DB" },
-    angleOffset: 0,
-    rotationOffset: 216,
-  },
-  {
-    option: "50 Keys",
-    image: {
-      uri: `${Images.KeyIcon}`,
-      sizeMultiplier: 0.7,
-      offsetY: 150,
-    },
-    prize: { type: "KEY", amount: 50 }, // baseAmount: 50과 정확히 일치
-    style: { backgroundColor: "#9B59B6" },
-    angleOffset: 0,
-    rotationOffset: 252,
+    rotationOffset: 144,
   },
   {
     option: "SL Points",
@@ -123,6 +87,42 @@ const data = [
     },
     prize: { type: "SL", amount: 100 }, // baseAmount: 100과 정확히 일치 (중복)
     style: { backgroundColor: "#3498DB" },
+    angleOffset: 0,
+    rotationOffset: 180,
+  },
+  {
+    option: "3 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치 (중복)
+    style: { backgroundColor: "#FFD700" },
+    angleOffset: 0,
+    rotationOffset: 216,
+  },
+  {
+    option: "10 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 10 }, // baseAmount: 10과 정확히 일치 (중복)
+    style: { backgroundColor: "#FF6B6B" },
+    angleOffset: 0,
+    rotationOffset: 252,
+  },
+  {
+    option: "50 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 50 }, // baseAmount: 50과 정확히 일치
+    style: { backgroundColor: "#4ECDC4" },
     angleOffset: 0,
     rotationOffset: 288,
   },
