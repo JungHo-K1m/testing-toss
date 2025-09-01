@@ -1,16 +1,15 @@
 import api from '@/shared/api/axiosInstance';
 import Cookies from 'js-cookie';
 
-// API 응답 타입 정의 - Postman 응답 기준으로 수정
+// API 응답 타입 정의 - API 문서 기준으로 수정
 interface TossLoginResponse {
   code: string;
   message: string;
   data: {
-    userId: number; // Postman에서 number로 확인
+    userId: string; // API 문서에 따르면 string
     userName: string;
-    referrerId: string | null; // null 허용
+    referrerId: string;
     isInitial: boolean;
-    refreshToken: string; // 추가된 필드
   };
 }
 
@@ -29,91 +28,91 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
     }
 
     try {
+        console.log('[loginToss] tossLogin 시작:', { authorizationCode: authorizationCode.substring(0, 10) + '...', referrer });
+        
         const response = await api.post('/auth/login/toss', userInfo);
+        console.log('[loginToss] tossLogin 응답 수신:', response);
         
-        // 타입 가드를 사용한 안전한 응답 처리
+        // 응답 데이터 구조 확인 및 로깅
+        console.log('[loginToss] 응답 데이터 구조:', {
+            hasData: !!response.data,
+            dataType: typeof response.data,
+            dataKeys: response.data ? Object.keys(response.data) : [],
+            fullData: response.data
+        });
+        
+        // 응답 데이터 타입 가드
         if (!response.data || typeof response.data !== 'object') {
-            throw new Error('Invalid response format');
+            throw new Error('Invalid response data');
         }
 
-        const responseData = response.data as TossLoginResponse | TossLoginErrorResponse;
+        // API 문서에 따르면 액세스 토큰은 헤더에 있음
+        let accessToken = null;
         
-        // 성공 응답인지 확인
-        if (responseData.code === "OK" && 'data' in responseData) {
-            const { data } = responseData as TossLoginResponse;
-            
-            // 액세스 토큰 저장 (헤더 대소문자 고려)
-            const authorizationHeader = response.headers['authorization'] || response.headers['Authorization'];
-            if (authorizationHeader) {
-                const accessToken = authorizationHeader.replace('Bearer ', '');
-                
-                // 액세스 토큰 형식 검증
-                if (accessToken.length < 10) {
-                    console.warn('⚠️ 액세스 토큰이 너무 짧습니다:', accessToken);
-                }
-                
-                localStorage.setItem('accessToken', accessToken);
-                console.log('✅ 액세스 토큰이 localStorage에 저장되었습니다');
-            } else {
-                console.warn('⚠️ Authorization 헤더를 찾을 수 없습니다');
-                console.log('응답 헤더:', response.headers);
-            }
-            // 리프레시 토큰 확인 (HttpOnly 쿠키로 자동 설정됨)
-            const setCookieHeader = response.headers['set-cookie'] || response.headers['Set-Cookie'];
-            if (setCookieHeader) {
-                // HttpOnly 쿠키는 자동으로 브라우저에서 관리되므로 별도 저장 불필요
-                console.log('✅ 리프레시 토큰이 HttpOnly 쿠키로 설정되었습니다');
-                console.log('Set-Cookie 헤더:', setCookieHeader);
-            } else {
-                console.warn('⚠️ Set-Cookie 헤더에서 리프레시 토큰을 찾을 수 없습니다');
-            }
-
-            return data;
+        // 1. Authorization 헤더에서 accessToken 확인 (API 문서 기준)
+        if (response.headers['authorization'] || response.headers['Authorization']) {
+            const authHeader = response.headers['authorization'] || response.headers['Authorization'];
+            accessToken = authHeader.replace('Bearer ', '');
+            console.log('[loginToss] Authorization 헤더에서 accessToken 발견');
         } else {
-            // 에러 응답 처리
-            const errorData = responseData as TossLoginErrorResponse;
-            throw new Error(`Login failed: ${errorData.message}`); // 에러를 다시 던지지 않고 예외 발생
+            console.warn('[loginToss] Authorization 헤더에서 accessToken을 찾을 수 없습니다');
         }
+        
+        // accessToken 저장
+        if (accessToken) {
+            localStorage.setItem('accessToken', accessToken);
+            console.log('[loginToss] accessToken 저장 완료');
+        } else {
+            console.error('[loginToss] accessToken이 없어서 저장할 수 없습니다');
+        }
+
+        // 서버 응답 구조에 따라 사용자 데이터 추출
+        let userData: TossLoginResponse['data'];
+        
+        // 1. response.data.data 형태인지 확인 (일반적인 API 응답 구조)
+        if (response.data.data && typeof response.data.data === 'object') {
+            console.log('[loginToss] response.data.data 구조 사용');
+            userData = response.data.data as TossLoginResponse['data'];
+        } 
+        // 2. response.data가 직접 userData인지 확인
+        else if (response.data.userId !== undefined) {
+            console.log('[loginToss] response.data 직접 사용');
+            userData = response.data as TossLoginResponse['data'];
+        } 
+        // 3. 그 외의 경우
+        else {
+            console.error('[loginToss] 알 수 없는 응답 데이터 구조:', response.data);
+            throw new Error('Unknown response data structure');
+        }
+        
+        console.log('[loginToss] 추출된 사용자 데이터:', userData);
+
+        // Set-Cookie 헤더 확인 (HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없음)
+        const setCookieHeader = response.headers['set-cookie'];
+        console.log('[loginToss] Set-Cookie 헤더 확인:', setCookieHeader ? '존재함' : '없음');
+
+        // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로 확인하지 않음
+        console.log('[loginToss] ✅ HttpOnly 쿠키는 서버에서 자동으로 관리됩니다');
+        
+        console.log('[loginToss] ✅ tossLogin 성공:', { 
+            userId: userData.userId, 
+            userName: userData.userName, 
+            isInitial: userData.isInitial,
+            hasAccessToken: !!localStorage.getItem('accessToken'),
+            hasSetCookieHeader: !!setCookieHeader
+        });
+        
+        return userData;
     } catch (error: any) {
-        console.error('[tossLogin] 에러 발생:', error);
+        console.error('[loginToss] ❌ tossLogin 실패:', error);
         
-        // HTTP 에러 응답 처리
         if (error.response) {
-            const { status, data } = error.response;
-            console.error('[tossLogin] HTTP 에러:', { status, data });
-            
-            // 서버에서 반환한 에러 메시지가 있는 경우
-            if (data && data.message) {
-                throw new Error(data.message);
-            }
-            
-            // 상태 코드별 기본 메시지
-            switch (status) {
-                case 400:
-                    throw new Error('잘못된 요청입니다. 입력값을 확인해주세요.');
-                case 401:
-                    throw new Error('인증이 필요합니다. 다시 로그인해주세요.');
-                case 403:
-                    throw new Error('접근 권한이 없습니다.');
-                case 404:
-                    throw new Error('로그인 서비스를 찾을 수 없습니다.');
-                case 500:
-                    throw new Error('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-                case 502:
-                    throw new Error('서버 게이트웨이 오류가 발생했습니다.');
-                case 503:
-                    throw new Error('서비스가 일시적으로 사용할 수 없습니다.');
-                default:
-                    throw new Error(`서버 오류 (${status})`);
-            }
-        } else if (error.request) {
-            // 요청은 보냈지만 응답을 받지 못한 경우
-            console.error('[tossLogin] 네트워크 에러:', error.request);
-            throw new Error('네트워크 연결을 확인해주세요.');
-        } else {
-            // 요청 자체를 보내지 못한 경우
-            throw new Error(error.message || '로그인 요청을 처리할 수 없습니다.');
+            console.error('[loginToss] 에러 응답 상태:', error.response.status);
+            console.error('[loginToss] 에러 응답 데이터:', error.response.data);
+            console.error('[loginToss] 에러 응답 헤더:', error.response.headers);
         }
+        
+        throw error;
     }
 };
 

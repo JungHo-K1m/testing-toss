@@ -604,23 +604,36 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 토큰 갱신 함수
   refreshToken: async (): Promise<boolean> => {
-    // // console.log('Step: refreshToken 시작');
+    console.log('[userModel] refreshToken 시작');
     try {
+      // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로
+      // 서버에 직접 리프레시 요청을 보내고, 서버에서 쿠키를 확인하도록 함
+      console.log('[userModel] 서버에 토큰 갱신 요청 전송');
+      
       const response = await api.get('/auth/refresh');
-      // // console.log('Step: refreshToken 응답:', response);
-  
-      const newAccessToken = response.headers['authorization'];
+      console.log('[userModel] refreshToken 응답:', response);
+
+      const newAccessToken = response.headers['authorization'] || response.headers['Authorization'];
       if (newAccessToken) {
-        localStorage.setItem('accessToken', newAccessToken.replace('Bearer ', ''));
-        // // console.log('Step: 새로운 accessToken 저장 완료');
+        const cleanToken = newAccessToken.replace('Bearer ', '');
+        localStorage.setItem('accessToken', cleanToken);
+        console.log('[userModel] 새로운 accessToken 저장 완료');
+        
+        sessionStorage.removeItem('refreshAttempted');
         return true;
       } else {
-        // console.warn('Step: Authorization 헤더가 없습니다.');
+        console.warn('[userModel] Authorization 헤더가 없습니다.');
+        console.log('[userModel] 응답 헤더:', response.headers);
         throw new Error('Token refresh failed: Authorization header is missing');
       }
     } catch (error: any) {
-      // console.error('Step: refreshToken 실패:', error);
-      // Refresh 실패 시 로그아웃 처리
+      console.error('[userModel] refreshToken 실패:', error);
+      
+      if (error.response) {
+        console.error('[userModel] 에러 응답 상태:', error.response.status);
+        console.error('[userModel] 에러 응답 데이터:', error.response.data);
+      }
+      
       get().logout();
       set({ error: 'Token refresh failed. Please log in again.' });
       return false;

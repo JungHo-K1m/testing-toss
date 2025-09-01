@@ -41,10 +41,36 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
   // 페이지 최초 진입 시 자동 초기화 활성화
   useEffect(() => {
+    console.log("[AppInitializer] 페이지 진입 - 플래그 정리 및 초기화 시작");
+
     // 무한 리프레시 방지를 위한 플래그 정리
     if (sessionStorage.getItem("redirectingToLogin")) {
       sessionStorage.removeItem("redirectingToLogin");
       console.log("[AppInitializer] 리다이렉트 플래그 정리 완료");
+    }
+
+    // 리프레시 시도 플래그도 정리 (새로운 세션 시작)
+    if (sessionStorage.getItem("refreshAttempted")) {
+      sessionStorage.removeItem("refreshAttempted");
+      console.log("[AppInitializer] 리프레시 시도 플래그 정리 완료");
+    }
+
+    // AppInitializer 재실행 플래그 확인
+    if (sessionStorage.getItem("restartAppInitializer")) {
+      sessionStorage.removeItem("restartAppInitializer");
+      console.log(
+        "[AppInitializer] 재실행 플래그 감지 - AppInitializer 로직 재실행"
+      );
+
+      // 액세스 토큰이 있다면 삭제 (리프레시 실패로 인한 재실행이므로)
+      if (localStorage.getItem("accessToken")) {
+        localStorage.removeItem("accessToken");
+        console.log("[AppInitializer] 리프레시 실패로 인한 액세스 토큰 삭제");
+      }
+
+      // 초기화 플래그도 삭제 (새로운 로그인 시도이므로)
+      localStorage.removeItem("isInitialized");
+      console.log("[AppInitializer] 초기화 플래그 삭제 - 새로운 로그인 시도");
     }
 
     // 페이지 진입 시 바로 appLogin 실행
@@ -69,6 +95,13 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     try {
       setIsInitializing(true);
       setError(null);
+
+      // 환경 정보 로깅
+      console.log("[AppInitializer] 환경 정보:", {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        hasReactNativeWebView: !!window.ReactNativeWebView,
+      });
 
       // 토스 앱 환경 확인
       if (!window.ReactNativeWebView) {
@@ -284,17 +317,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 리프레시 시도 플래그 설정
       sessionStorage.setItem("refreshAttempted", "true");
 
-      // 쿠키에서 리프레시 토큰 확인
-      const refreshToken = Cookies.get("refreshToken");
-
-      if (!refreshToken) {
-        console.log("[AppInitializer] 리프레시 토큰이 쿠키에 없음");
-        return false;
-      }
-
-      console.log(
-        "[AppInitializer] 리프레시 토큰 발견, 액세스 토큰 재발급 요청"
-      );
+      console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 요청");
 
       // useUserStore의 refreshToken 함수 호출하여 액세스 토큰 재발급
       const refreshSuccessful = await useUserStore.getState().refreshToken();
@@ -427,14 +450,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도
   const handleRefreshTokenAndRetry = async () => {
     try {
-      // 쿠키에서 리프레시 토큰 확인
-      const refreshToken = Cookies.get("refreshToken");
-
-      if (!refreshToken) {
-        console.error("[AppInitializer] 리프레시 토큰이 쿠키에 없습니다.");
-        setError("리프레시 토큰을 찾을 수 없습니다.");
-        return;
-      }
+      console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시도");
 
       // 재발급된 토큰으로 fetchUserData 재시도
       await handleFetchUserDataWithRetry();
@@ -562,24 +578,60 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       const currentRefCode = refCode || referrer;
 
       if (!currentAuthCode || !currentRefCode) {
+        console.error(
+          "[AppInitializer] handleServerLogin: authorizationCode 또는 referrer가 없음"
+        );
+        setError("로그인 정보가 올바르지 않습니다.");
         return;
       }
+
+      console.log("[AppInitializer] handleServerLogin 시작:", {
+        currentAuthCode: currentAuthCode.substring(0, 10) + "...",
+        currentRefCode,
+      });
 
       const result = await tossLogin(currentAuthCode, currentRefCode);
 
       if (!result) {
+        console.error(
+          "[AppInitializer] handleServerLogin: tossLogin 결과가 없음"
+        );
+        setError("로그인 응답이 올바르지 않습니다.");
         return;
       }
+
+      console.log(
+        "[AppInitializer] handleServerLogin: tossLogin 성공, 결과 확인:",
+        result
+      );
+
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = Cookies.get("refreshToken");
 
-      // userId를 문자열로 변환 (API 응답에서 number로 오는 경우)
-      const userIdStr = userId?.toString();
+      console.log(
+        "[AppInitializer] handleServerLogin: 토큰 및 사용자 정보 확인:",
+        {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          userId,
+          userName,
+          isInitial,
+        }
+      );
+
+      // userId는 API 문서에 따라 이미 string 타입
+      const userIdStr = userId;
 
       // 토큰이 제대로 저장되었는지 확인
       if (!accessToken) {
+        console.error(
+          "[AppInitializer] handleServerLogin: accessToken이 없음 - tossLogin은 성공했지만 토큰이 저장되지 않음"
+        );
+        setError(
+          "로그인은 성공했지만 인증 토큰을 받지 못했습니다. 다시 시도해주세요."
+        );
         return;
       }
 
@@ -590,20 +642,38 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         isInitial,
       });
 
+      console.log(
+        "[AppInitializer] handleServerLogin: 서버 로그인 결과 설정 완료, 페이지 이동 로직 시작"
+      );
+
       // isInitial에 따른 페이지 이동 로직
       if (isInitial === true) {
+        console.log(
+          "[AppInitializer] handleServerLogin: 신규 사용자 (isInitial: true) - fetchUserData 호출"
+        );
         // 신규 사용자: fetchUserData 호출
         try {
           await fetchUserData();
+          console.log(
+            "[AppInitializer] handleServerLogin: 신규 사용자 fetchUserData 성공"
+          );
 
           // fetchUserData 성공 시 적절한 페이지로 이동
           await handleNavigationAfterLogin();
         } catch (error: any) {
+          console.error(
+            "[AppInitializer] handleServerLogin: 신규 사용자 fetchUserData 실패:",
+            error
+          );
+
           // "Please choose your character first." 메시지 확인 (에러로 던져진 경우)
           if (
             error.message &&
             error.message.includes("Please choose your character first")
           ) {
+            console.log(
+              "[AppInitializer] handleServerLogin: 캐릭터 선택 페이지로 이동"
+            );
             safeNavigate("/choose-character");
             onInitialized();
           } else {
@@ -619,6 +689,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         );
         try {
           await fetchUserData();
+          console.log(
+            "[AppInitializer] handleServerLogin: 기존 사용자 fetchUserData 성공"
+          );
+
           // fetchUserData 성공 시 적절한 페이지로 이동
           await handleNavigationAfterLogin();
         } catch (error: any) {
@@ -632,6 +706,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             error.message &&
             error.message.includes("Please choose your character first")
           ) {
+            console.log(
+              "[AppInitializer] handleServerLogin: 기존 사용자 캐릭터 선택 페이지로 이동"
+            );
             safeNavigate("/choose-character");
             onInitialized();
           } else {
@@ -672,6 +749,49 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         <div style={{ color: "#666" }}>
           자동으로 로그인을 진행하고 있습니다.
         </div>
+      </div>
+    );
+  }
+
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div
+        style={{
+          padding: "20px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          maxWidth: "400px",
+          margin: "20px auto",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ marginBottom: "20px", color: "#e74c3c" }}>
+          ❌ 로그인 오류
+        </h2>
+        <div style={{ color: "#666", marginBottom: "20px" }}>{error}</div>
+        <div style={{ fontSize: "14px", color: "#999", marginBottom: "20px" }}>
+          <p>• 토스 앱이 최신 버전인지 확인해주세요</p>
+          <p>• 네트워크 연결을 확인해주세요</p>
+          <p>• 토스 앱에서 다시 시도해주세요</p>
+        </div>
+        <button
+          onClick={() => {
+            setError(null);
+            handleAppLoginOnEntry();
+          }}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          다시 시도
+        </button>
       </div>
     );
   }
