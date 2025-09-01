@@ -131,7 +131,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
             WebkitTextStroke: "1px #000000",
           }}
         >
-          이번 주 보상
+          이번 달 보상
         </p>
       </div>
 
@@ -164,7 +164,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
             color: "#2A294E",
           }}
         >
-          (총 100만원 상당)
+          (약 1,000만원 상당의 리워드)
         </p>
       </div>
     </div>

@@ -756,7 +756,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                 />
               </div>
             </div>
-            <div className="flex flex-col w-full mt-4">
+            {/* <div className="flex flex-col w-full mt-4">
               <p
                 className="text-center"
                 style={{
@@ -818,7 +818,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className="space-y-3 w-[300px] h-14 mt-4">
               <button
                 className="w-full h-14 rounded-[10px] relative"
