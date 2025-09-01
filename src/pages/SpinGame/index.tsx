@@ -756,7 +756,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                 />
               </div>
             </div>
-            {/* <div className="flex flex-col w-full mt-4">
+            <div className="flex flex-col w-full mt-4">
               <p
                 className="text-center"
                 style={{
@@ -811,14 +811,13 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
                   >
                     {prizeData?.spinType === "BOOM"
                       ? "Boom! Try Again"
-                      : `${getPrizeDisplayName(
-                          prizeData?.spinType,
-                          prizeData?.baseAmount
-                        )}: ${prizeData?.amount || 0}`}
+                      : `아이템 효과로 인한 아이템 갯수: ${
+                          prizeData?.amount || 0
+                        }`}
                   </p>
                 </div>
               </div>
-            </div> */}
+            </div>
             <div className="space-y-3 w-[300px] h-14 mt-4">
               <button
                 className="w-full h-14 rounded-[10px] relative"
