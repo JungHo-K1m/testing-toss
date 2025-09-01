@@ -569,12 +569,15 @@ const DiceEventPage: React.FC = () => {
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
 
-        // 약간의 지연 후 결과 모달 표시 (사용자 경험 개선)
+        // 광고 시청 후 랜덤박스 열기 모달을 먼저 열고, 그 다음에 결과 표시
         setTimeout(() => {
-          setShowResult(true);
           setShowRaffleBoxOpenModal(true);
-          // 사운드 효과 추가
-          playSfx(Audios.button_click);
+          // 추가 지연 후 결과 표시
+          setTimeout(() => {
+            setShowResult(true);
+            // 사운드 효과 추가
+            playSfx(Audios.button_click);
+          }, 1000); // 랜덤박스 열기 모달이 열린 후 1초 뒤에 결과 표시
         }, 500);
 
         // console.log('사용자 데이터 새로고침 시작...');

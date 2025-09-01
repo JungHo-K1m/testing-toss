@@ -86,8 +86,6 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 <div
                   className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
                   style={{
-                    width: "70vw",
-                    height: "120px",
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
                     borderRadius: "20px",
@@ -163,8 +161,6 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 <div
                   className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
                   style={{
-                    width: "70vw",
-                    height: "120px",
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
                     borderRadius: "20px",
@@ -186,8 +182,6 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 <div
                   className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
                   style={{
-                    width: "70vw",
-                    height: "120px",
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
                     borderRadius: "20px",
@@ -210,8 +204,6 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                   <div
                     className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
                     style={{
-                      width: "70vw",
-                      height: "120px",
                       background: "rgba(194, 213, 232, 0.1)",
                       border: "2px solid #B4CADA",
                       borderRadius: "20px",

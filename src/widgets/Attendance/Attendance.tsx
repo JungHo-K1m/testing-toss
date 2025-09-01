@@ -2,11 +2,19 @@
 import React, { useState } from "react";
 import AttendanceDay from "@/features/AttendanceDay/components/AttendanceDay";
 import { useUserStore } from "@/entities/User/model/userModel";
-import { requestAttendance, AttendanceResponse } from "@/entities/User/api/requestAttendance";
+import {
+  requestAttendance,
+  AttendanceResponse,
+} from "@/entities/User/api/requestAttendance";
 import Images from "@/shared/assets/images";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
-import { Dialog, DialogContent, DialogHeader, DialogClose } from "@/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogClose,
+} from "@/shared/components/ui/dialog";
 import { HiX } from "react-icons/hi";
 
 // 진동 애니메이션 CSS - index.tsx와 동일
@@ -23,40 +31,40 @@ const vibrateAnimation = `
 
 // 등급별 색상 매핑 함수
 const getRarityImageIndex = (rarity: number): number => {
-  if (rarity <= 1) return 1;      // 보라색
-  if (rarity <= 3) return 2;      // 하늘색
-  if (rarity <= 5) return 3;      // 초록색
-  if (rarity <= 7) return 4;      // 노란색
-  return 5;                        // 빨간색
+  if (rarity <= 1) return 1; // 보라색
+  if (rarity <= 3) return 2; // 하늘색
+  if (rarity <= 5) return 3; // 초록색
+  if (rarity <= 7) return 4; // 노란색
+  return 5; // 빨간색
 };
 
 // 장비 타입별 이미지 가져오기 함수
 const getEquipmentIcon = (type: string, rarity: number) => {
   const imageIndex = getRarityImageIndex(rarity);
-  
+
   // console.log('getEquipmentIcon called:', { type, rarity, imageIndex });
-  
+
   let result;
   switch (type.toUpperCase()) {
-    case 'HEAD': 
+    case "HEAD":
       result = Images[`Crown${imageIndex}` as keyof typeof Images];
       break;
-    case 'EAR': 
+    case "EAR":
       result = Images[`Hairpin${imageIndex}` as keyof typeof Images];
       break;
-    case 'EYE': 
+    case "EYE":
       result = Images[`Sunglass${imageIndex}` as keyof typeof Images];
       break;
-    case 'NECK': 
+    case "NECK":
       result = Images[`Muffler${imageIndex}` as keyof typeof Images];
       break;
-    case 'BACK': 
+    case "BACK":
       result = Images[`Ballon${imageIndex}` as keyof typeof Images];
       break;
-    default: 
+    default:
       result = Images.Ballon1; // 기본값
   }
-  
+
   // console.log('Selected image:', result);
   return result;
 };
@@ -78,7 +86,7 @@ type DayKeys = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 interface AttendanceProps {
   /** Tailwind width 클래스를 지정해 너비를 커스터마이징 */
   customWidth?: string;
-};
+}
 
 const getTodayDay = (): DayKeys => {
   const days: DayKeys[] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -87,19 +95,22 @@ const getTodayDay = (): DayKeys => {
 };
 
 const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
-   const { weekAttendance, setWeekAttendance } = useUserStore();
-   const [today] = useState<DayKeys>(getTodayDay());
-   const { playSfx } = useSound();
-   const [isConnecting, setIsConnecting] = useState(false);
-   const [showModal, setShowModal] = useState(false);
-   const [message, setMessage] = useState("");
+  const { weekAttendance, setWeekAttendance } = useUserStore();
+  const [today] = useState<DayKeys>(getTodayDay());
+  const { playSfx } = useSound();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [message, setMessage] = useState("");
 
-   // 출석 보상 모달 상태
-   const [showAttendanceRewardModal, setShowAttendanceRewardModal] = useState(false);
-   const [showAttendanceBoxOpenModal, setShowAttendanceBoxOpenModal] = useState(false);
-   const [isVibrating, setIsVibrating] = useState(false);
-   const [showResult, setShowResult] = useState(false);
-   const [attendanceResult, setAttendanceResult] = useState<AttendanceResponse | null>(null);
+  // 출석 보상 모달 상태
+  const [showAttendanceRewardModal, setShowAttendanceRewardModal] =
+    useState(false);
+  const [showAttendanceBoxOpenModal, setShowAttendanceBoxOpenModal] =
+    useState(false);
+  const [isVibrating, setIsVibrating] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [attendanceResult, setAttendanceResult] =
+    useState<AttendanceResponse | null>(null);
 
   // 출석 상태 결정 로직
   const getStatus = (day: DayKeys) => {
@@ -110,13 +121,21 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
       WED: weekAttendance.wed,
       THU: weekAttendance.thu,
       FRI: weekAttendance.fri,
-      SAT: weekAttendance.sat
+      SAT: weekAttendance.sat,
     };
 
     if (attendanceData[day]) return "checked";
     if (day === today) return "today";
 
-    const daysOfWeek: DayKeys[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+    const daysOfWeek: DayKeys[] = [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN",
+    ];
     const todayIndex = daysOfWeek.indexOf(today);
     const dayIndex = daysOfWeek.indexOf(day);
 
@@ -129,32 +148,31 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
   // 출석 체크 핸들러
   const handleAttendanceClick = async () => {
     if (isConnecting) return;
-    
+
     setIsConnecting(true);
     try {
       const result = await requestAttendance();
       setAttendanceResult(result);
-      
+
       // 주간 출석 데이터 업데이트
       setWeekAttendance(result.weekly);
-      
+
       // 출석 보상 모달 표시
       setShowAttendanceRewardModal(true);
       setIsVibrating(false);
       setShowResult(false);
-      
+
       // 2초 후 진동 시작
       setTimeout(() => {
         setIsVibrating(true);
         playSfx(Audios.button_click);
-        
+
         // 2초 진동 후 결과 표시
         setTimeout(() => {
           setIsVibrating(false);
           setShowResult(true);
         }, 2000);
       }, 500);
-      
     } catch (error: any) {
       setMessage(error.message || "출석 체크에 실패했습니다.");
       setShowModal(true);
@@ -166,26 +184,38 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
   // 보상 결과 렌더링
   const renderRewardResult = () => {
     if (!attendanceResult) return null;
-    
-    // API 응답 구조에 맞게 randomBox 배열에서 첫 번째 아이템 가져오기
-    const randomBoxItem = attendanceResult.randomBox?.[0];
-    
-    // console.log('renderRewardResult called:', { attendanceResult, randomBoxItem });
-    
-    if (!randomBoxItem) {
-      // console.log('No random box item found');
-      return null;
+
+    // 7일 연속 출석 여부 확인 (모든 요일이 true인지 체크)
+    const isSevenDayAttendance = Object.values(attendanceResult.weekly).every(
+      (day) => day === true
+    );
+
+    // console.log('renderRewardResult called:', { attendanceResult, isSevenDayAttendance });
+
+    if (isSevenDayAttendance) {
+      // 7일 연속 출석 시 3개 아이템 모두 표시
+      return renderMultipleRewards();
+    } else {
+      // 1-6일차 출석 시 첫 번째 아이템만 표시
+      const randomBoxItem = attendanceResult.randomBox?.[0];
+
+      if (!randomBoxItem) {
+        // console.log('No random box item found');
+        return null;
+      }
+
+      return renderSingleReward(randomBoxItem);
     }
-    
-    // randomBoxItem.type으로 변경
+  };
+
+  // 단일 보상 렌더링 (1-6일차)
+  const renderSingleReward = (randomBoxItem: any) => {
     switch (randomBoxItem.type) {
-      case 'EQUIPMENT':
+      case "EQUIPMENT":
         if (randomBoxItem.equipment) {
           const { type, rarity } = randomBoxItem.equipment;
           const equipmentIcon = getEquipmentIcon(type, rarity);
-          
-          // console.log('Equipment details:', { type, rarity, equipmentIcon });
-          
+
           return (
             <div className="flex items-center gap-3 mb-2">
               <img
@@ -208,8 +238,8 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
           );
         }
         break;
-        
-      case 'DICE':
+
+      case "DICE":
         return (
           <div className="flex items-center gap-3 mb-2">
             <img
@@ -230,8 +260,8 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
             </span>
           </div>
         );
-        
-      case 'SL':
+
+      case "SL":
         return (
           <div className="flex items-center gap-3 mb-2">
             <img
@@ -252,8 +282,8 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
             </span>
           </div>
         );
-        
-      case 'NONE':
+
+      case "NONE":
         return (
           <div className="flex items-center gap-3 mb-2">
             <span
@@ -269,30 +299,156 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
             </span>
           </div>
         );
-        
+
       default:
-        // console.log('Unknown result type:', randomBoxItem.type);
         return null;
     }
+  };
+
+  // 다중 보상 렌더링 (7일 연속 출석)
+  const renderMultipleRewards = () => {
+    if (
+      !attendanceResult?.randomBox ||
+      attendanceResult.randomBox.length === 0
+    ) {
+      return null;
+    }
+
+    return (
+      <div className="flex flex-col items-center mb-4">
+        <span
+          style={{
+            fontFamily: "'ONE Mobile POP', sans-serif",
+            fontSize: "18px",
+            fontWeight: 400,
+            color: "#FFFFFF",
+            WebkitTextStroke: "1px #000000",
+            marginBottom: "16px",
+          }}
+        >
+          7일 연속 출석 보상!
+        </span>
+
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          {attendanceResult.randomBox.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 p-2 bg-white/10 rounded-lg"
+            >
+              {item.type === "EQUIPMENT" && item.equipment ? (
+                <>
+                  <img
+                    src={getEquipmentIcon(
+                      item.equipment.type,
+                      item.equipment.rarity
+                    )}
+                    style={{ width: 35, height: 35 }}
+                    alt={`${item.equipment.type} equipment`}
+                  />
+                  <div className="flex flex-col">
+                    <span
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "16px",
+                        fontWeight: 400,
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "0.5px #000000",
+                      }}
+                    >
+                      {getEquipmentName(item.equipment.type)} 장비
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "12px",
+                        fontWeight: 400,
+                        color: "#FFD700",
+                        WebkitTextStroke: "0.5px #000000",
+                      }}
+                    >
+                      희귀도: {item.equipment.rarity}
+                    </span>
+                  </div>
+                </>
+              ) : item.type === "DICE" ? (
+                <>
+                  <img
+                    src={Images.Dice}
+                    style={{ width: 35, height: 35 }}
+                    alt="Dice"
+                  />
+                  <span
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "0.5px #000000",
+                    }}
+                  >
+                    주사위 보상
+                  </span>
+                </>
+              ) : item.type === "SL" ? (
+                <>
+                  <img
+                    src={Images.SLToken}
+                    style={{ width: 35, height: 35 }}
+                    alt="SL Token"
+                  />
+                  <span
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      color: "#FFFFFF",
+                      WebkitTextStroke: "0.5px #000000",
+                    }}
+                  >
+                    SL 토큰 보상
+                  </span>
+                </>
+              ) : item.type === "NONE" ? (
+                <span
+                  style={{
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "16px",
+                    fontWeight: 400,
+                    color: "#FFFFFF",
+                    WebkitTextStroke: "0.5px #000000",
+                  }}
+                >
+                  꽝!
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="mt-4">
       {/* 진동 애니메이션 CSS 주입 */}
       <style>{vibrateAnimation}</style>
-      
+
       <div
         id="attendance"
         onClick={isTodayUnattended ? handleAttendanceClick : undefined}
         className={`relative grid grid-cols-7 gap-2 bg-box min-h-24 md:h-32 text-white text-xs ${
           customWidth ? customWidth : "w-full md:w-[552px]"
-        } ${isTodayUnattended ? "border-2 border-yellow-400 animate-pulse rounded-lg" : ""}`}
+        } ${
+          isTodayUnattended
+            ? "border-2 border-yellow-400 animate-pulse rounded-lg"
+            : ""
+        }`}
         style={{
-            fontFamily: "'ONE Mobile POP', sans-serif",
-            fontSize: "14px",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            WebkitTextStroke: "1px #000000",
+          fontFamily: "'ONE Mobile POP', sans-serif",
+          fontSize: "14px",
+          fontWeight: 400,
+          color: "#FFFFFF",
+          WebkitTextStroke: "1px #000000",
         }}
       >
         {days.map((day) => {
@@ -318,14 +474,13 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
       {/* <p className="flex items-start justify-start w-full font-medium text-xs md:text-sm mt-2 text-white">
         * 별 보상 <br/> * 7일 연속 출석 시 보상
       </p> */}
-      
+
       {/* 출첵 성공 여부 알림 모달창 */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent
           className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
           style={{
-            background:
-              "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+            background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
             boxShadow:
               "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
             position: "fixed",
@@ -375,36 +530,23 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                     height: "100%",
                     position: "relative",
                     zIndex: 1,
-                    animation: isVibrating
-                      ? "vibrate 0.1s infinite"
-                      : "none",
+                    animation: isVibrating ? "vibrate 0.1s infinite" : "none",
                   }}
                   alt="attendance-check"
                 />
               </div>
             )}
 
-                          {/* 결과 표시 */}
-              {showResult && attendanceResult && (
-                <div className="flex flex-col items-center mb-4">
-                  {/* 보상 결과 렌더링 함수 사용 */}
-                  {renderRewardResult()}
-                  
-                  {/* 장비인 경우 희귀도 표시 */}
-                  {attendanceResult.randomBox?.[0]?.type === 'EQUIPMENT' && attendanceResult.randomBox?.[0]?.equipment && (
-                    <p
-                      style={{
-                        fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "16px",
-                        fontWeight: 400,
-                        color: "#FFFFFF",
-                        WebkitTextStroke: "0.5px #000000",
-                      }}
-                    >
-                      희귀도: {attendanceResult.randomBox[0].equipment.rarity}
-                    </p>
-                  )}
-                  
+            {/* 결과 표시 */}
+            {showResult && attendanceResult && (
+              <div className="flex flex-col items-center mb-4">
+                {/* 보상 결과 렌더링 함수 사용 */}
+                {renderRewardResult()}
+
+                {/* 7일 연속 출석이 아닌 경우에만 하단 메시지 표시 */}
+                {!Object.values(attendanceResult.weekly).every(
+                  (day) => day === true
+                ) && (
                   <p
                     style={{
                       fontFamily: "'ONE Mobile POP', sans-serif",
@@ -414,10 +556,13 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                       WebkitTextStroke: "0.5px #000000",
                     }}
                   >
-                    {attendanceResult.randomBox?.[0]?.type === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
+                    {attendanceResult.randomBox?.[0]?.type === "NONE"
+                      ? "다음에 다시 시도해보세요!"
+                      : "획득하셨습니다!"}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
+            )}
 
             {/* 받기 버튼 - 결과가 표시될 때만 보임 */}
             {showResult && (
@@ -458,8 +603,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
           <DialogContent
             className="rounded-[24px] max-w-[80%] sm:max-w-[70%] md:max-w-md p-6 border-none mx-auto relative"
             style={{
-              background:
-                "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+              background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
               boxShadow:
                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
               position: "fixed",
@@ -474,7 +618,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                 <HiX className="w-5 h-5 text-white" />
               </DialogClose>
             </DialogHeader>
-            
+
             <div className="flex flex-col items-center w-full">
               <h2
                 className="font-bold text-lg mb-6"
@@ -521,9 +665,7 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                       height: "100%",
                       position: "relative",
                       zIndex: 1,
-                      animation: isVibrating
-                        ? "vibrate 0.1s infinite"
-                        : "none",
+                      animation: isVibrating ? "vibrate 0.1s infinite" : "none",
                     }}
                     alt="attendance-check"
                   />
@@ -535,9 +677,11 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                 <div className="flex flex-col items-center mb-4">
                   {/* 보상 결과 렌더링 함수 사용 */}
                   {renderRewardResult()}
-                  
-                  {/* 장비인 경우 희귀도 표시 */}
-                  {attendanceResult.randomBox?.[0]?.type === 'EQUIPMENT' && attendanceResult.randomBox?.[0]?.equipment && (
+
+                  {/* 7일 연속 출석이 아닌 경우에만 하단 메시지 표시 */}
+                  {!Object.values(attendanceResult.weekly).every(
+                    (day) => day === true
+                  ) && (
                     <p
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -547,21 +691,11 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                         WebkitTextStroke: "0.5px #000000",
                       }}
                     >
-                      희귀도: {attendanceResult.randomBox[0].equipment.rarity}
+                      {attendanceResult.randomBox?.[0]?.type === "NONE"
+                        ? "다음에 다시 시도해보세요!"
+                        : "획득하셨습니다!"}
                     </p>
                   )}
-                  
-                  <p
-                    style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      WebkitTextStroke: "0.5px #000000",
-                    }}
-                  >
-                    {attendanceResult.randomBox?.[0]?.type === 'NONE' ? '다음에 다시 시도해보세요!' : '획득하셨습니다!'}
-                  </p>
                 </div>
               )}
 
