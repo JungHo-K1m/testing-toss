@@ -45,10 +45,11 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
       <h1
         className="text-center font-bold text-xl font-one-mobile-pop"
         style={{
-          fontSize: "24px",
+          fontFamily: "'ONE Mobile POP', sans-serif",
+          fontSize: "30px",
           fontWeight: 400,
           color: "#FDE047",
-          WebkitTextStroke: "1px #000000",
+          WebkitTextStroke: "2px #000000",
         }}
       >
         레벨 보상
@@ -59,8 +60,10 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
         <h2
           className="text-white font-bold text-center font-one-mobile-pop"
           style={{
+            fontFamily: "'ONE Mobile POP', sans-serif",
             fontSize: "18px",
             fontWeight: 400,
+            color: "#FFFFFF",
             WebkitTextStroke: "1px #000000",
           }}
         >
@@ -80,7 +83,20 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
           {nextLevelReward ? (
             <div className="flex flex-row justify-center items-center">
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
-                <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
+                <div
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  style={{
+                    width: "70vw",
+                    height: "120px",
+                    background: "rgba(194, 213, 232, 0.1)",
+                    border: "2px solid #B4CADA",
+                    borderRadius: "20px",
+                    padding: "16px",
+                    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                    backdropFilter: "blur(15px)",
+                    WebkitBackdropFilter: "blur(15px)",
+                  }}
+                >
                   <img
                     src={Images.StarIcon}
                     className="w-8 h-8"
@@ -104,8 +120,10 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
       <h2
         className="text-white font-bold text-center font-one-mobile-pop"
         style={{
+          fontFamily: "'ONE Mobile POP', sans-serif",
           fontSize: "18px",
           fontWeight: 400,
+          color: "#FFFFFF",
           WebkitTextStroke: "1px #000000",
         }}
       >
@@ -129,13 +147,33 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
             <div className="flex flex-row items-center gap-2 ">
               <div
                 className="w-6 h-6 rounded-full"
-                style={{ backgroundColor: reward.bgColor }}
+                style={{
+                  backgroundColor: reward.bgColor,
+                  fontFamily: "'ONE Mobile POP', sans-serif",
+                  fontSize: "12px",
+                  fontWeight: 400,
+                  color: "#FFFFFF",
+                  WebkitTextStroke: "1px #000000",
+                }}
               ></div>
-              <p>레벨 {reward.level}</p>
+              <p>Level {reward.level}</p>
             </div>
             <div className="flex flex-row justify-center items-center gap-2 w-full">
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
-                <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
+                <div
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  style={{
+                    width: "70vw",
+                    height: "120px",
+                    background: "rgba(194, 213, 232, 0.1)",
+                    border: "2px solid #B4CADA",
+                    borderRadius: "20px",
+                    padding: "16px",
+                    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                    backdropFilter: "blur(15px)",
+                    WebkitBackdropFilter: "blur(15px)",
+                  }}
+                >
                   <img
                     src={Images.DiceIcon}
                     className="w-8 h-8"
@@ -145,7 +183,20 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
                 </div>
               </div>
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
-                <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
+                <div
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  style={{
+                    width: "70vw",
+                    height: "120px",
+                    background: "rgba(194, 213, 232, 0.1)",
+                    border: "2px solid #B4CADA",
+                    borderRadius: "20px",
+                    padding: "16px",
+                    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                    backdropFilter: "blur(15px)",
+                    WebkitBackdropFilter: "blur(15px)",
+                  }}
+                >
                   <img
                     src={Images.StarIcon}
                     className="w-8 h-8"
@@ -156,7 +207,20 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
               </div>
               {reward.tickets && (
                 <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
-                  <div className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center">
+                  <div
+                    className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                    style={{
+                      width: "70vw",
+                      height: "120px",
+                      background: "rgba(194, 213, 232, 0.1)",
+                      border: "2px solid #B4CADA",
+                      borderRadius: "20px",
+                      padding: "16px",
+                      boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+                      backdropFilter: "blur(15px)",
+                      WebkitBackdropFilter: "blur(15px)",
+                    }}
+                  >
                     <img
                       src={Images.KeyIcon}
                       className="w-8 h-8"
