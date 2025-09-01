@@ -632,6 +632,19 @@ export const useUserStore = create<UserState>((set, get) => ({
       if (error.response) {
         console.error('[userModel] 에러 응답 상태:', error.response.status);
         console.error('[userModel] 에러 응답 데이터:', error.response.data);
+        
+        // 리프레시 토큰 만료 감지
+        if (error.response.data?.message?.includes("Invalid or expired Refresh Token")) {
+          console.log('[userModel] 리프레시 토큰 만료 - 새 로그인 플로우 필요');
+          
+          // 기존 토큰들 정리
+          get().logout();
+          
+          // 새 로그인 플로우 시작을 위한 플래그 설정
+          sessionStorage.setItem('restartAppInitializer', 'true');
+          
+          return false;
+        }
       }
       
       get().logout();

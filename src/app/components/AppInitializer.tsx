@@ -71,6 +71,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 초기화 플래그도 삭제 (새로운 로그인 시도이므로)
       localStorage.removeItem("isInitialized");
       console.log("[AppInitializer] 초기화 플래그 삭제 - 새로운 로그인 시도");
+      
+      // 새 로그인 플로우 시작
+      handleNewTokenLogin();
+      return;
     }
 
     // 페이지 진입 시 바로 appLogin 실행
