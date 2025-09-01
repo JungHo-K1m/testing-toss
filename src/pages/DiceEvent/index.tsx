@@ -561,14 +561,21 @@ const DiceEventPage: React.FC = () => {
         setBoxResult(newBoxResult);
 
         // console.log('결과 모달 표시 설정...');
-        // 결과 모달 표시
-        setShowResult(true);
-        setShowRaffleBoxOpenModal(true);
+        // 기존 랜덤박스 모달 닫기
+        setShowRaffleBoxModal(false);
 
         // console.log('진동 효과 시작...');
         // 진동 효과 (선택사항)
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
+
+        // 약간의 지연 후 결과 모달 표시 (사용자 경험 개선)
+        setTimeout(() => {
+          setShowResult(true);
+          setShowRaffleBoxOpenModal(true);
+          // 사운드 효과 추가
+          playSfx(Audios.button_click);
+        }, 500);
 
         // console.log('사용자 데이터 새로고침 시작...');
         // 사용자 데이터 새로고침 (보상 반영)
@@ -1666,11 +1673,21 @@ const DiceEventPage: React.FC = () => {
                       </div>
                       <button
                         onClick={handleOpenRaffleBox}
-                        className="w-[80px] h-14 rounded-[10px] flex items-center justify-center relative whitespace-nowrap"
+                        disabled={lotteryCount < 100}
+                        className={`w-[80px] h-14 rounded-[10px] flex items-center justify-center relative whitespace-nowrap transition-all ${
+                          lotteryCount < 100
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:scale-105 active:scale-95"
+                        }`}
                         style={{
                           background:
-                            "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
-                          border: "2px solid #76C1FF",
+                            lotteryCount < 100
+                              ? "linear-gradient(180deg, #666666 0%, #666666 50%, #444444 50%, #444444 100%)"
+                              : "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                          border:
+                            lotteryCount < 100
+                              ? "2px solid #888888"
+                              : "2px solid #76C1FF",
                           outline: "2px solid #000000",
                           boxShadow:
                             "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
@@ -1679,21 +1696,23 @@ const DiceEventPage: React.FC = () => {
                           fontSize: "18px",
                           fontWeight: "400",
                           WebkitTextStroke: "1px #000000",
-                          opacity: 1,
+                          opacity: lotteryCount < 100 ? 0.5 : 1,
                         }}
                       >
-                        <img
-                          src={Images.ButtonPointBlue}
-                          alt="button-point-blue"
-                          style={{
-                            position: "absolute",
-                            top: "3px",
-                            left: "3px",
-                            width: "8.47px",
-                            height: "6.3px",
-                            pointerEvents: "none",
-                          }}
-                        />
+                        {lotteryCount >= 100 && (
+                          <img
+                            src={Images.ButtonPointBlue}
+                            alt="button-point-blue"
+                            style={{
+                              position: "absolute",
+                              top: "3px",
+                              left: "3px",
+                              width: "8.47px",
+                              height: "6.3px",
+                              pointerEvents: "none",
+                            }}
+                          />
+                        )}
                         열기
                       </button>
                     </div>
@@ -1989,6 +2008,7 @@ const DiceEventPage: React.FC = () => {
                     <button
                       onClick={() => {
                         setShowRaffleBoxOpenModal(false);
+                        setShowRaffleBoxModal(false); // 랜덤박스 모달도 함께 닫기
                         setShowResult(false);
                         setBoxResult(null);
                       }}
