@@ -84,7 +84,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
             <div className="flex flex-row justify-center items-center">
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div
-                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-[20px] flex items-center justify-center"
                   style={{
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
@@ -159,7 +159,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
             <div className="flex flex-row justify-center items-center gap-2 w-full">
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div
-                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-[20px] flex items-center justify-center"
                   style={{
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
@@ -180,7 +180,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
               </div>
               <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                 <div
-                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                  className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-[20px] flex items-center justify-center"
                   style={{
                     background: "rgba(194, 213, 232, 0.1)",
                     border: "2px solid #B4CADA",
@@ -202,7 +202,7 @@ const LevelRewards: React.FC<LevelRewardsProps> = ({ currentLevel = 1 }) => {
               {reward.tickets && (
                 <div className="w-20 h-20 bg-gradient-to-b from-[#2660f4] to-[#3937a3] rounded-2xl flex items-center justify-center">
                   <div
-                    className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-2xl flex items-center justify-center"
+                    className="flex-col gap-1 w-[76px] h-[76px] logo-bg rounded-[20px] flex items-center justify-center"
                     style={{
                       background: "rgba(194, 213, 232, 0.1)",
                       border: "2px solid #B4CADA",
