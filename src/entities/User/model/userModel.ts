@@ -627,6 +627,15 @@ export const useUserStore = create<UserState>((set, get) => ({
       localStorage.setItem(logKey, JSON.stringify(startLog));
       console.log('[userModel] refreshToken 시작 - 로그 저장됨');
       
+      // 쿠키 상태 확인 (디버깅용)
+      const cookieInfo = {
+        totalCookies: document.cookie.length,
+        cookieString: document.cookie,
+        hasRefreshToken: document.cookie.includes('refreshToken') || document.cookie.includes('RefreshToken'),
+        domain: window.location.hostname
+      };
+      console.log('[userModel] 리프레시 요청 전 쿠키 상태:', cookieInfo);
+      
       const response = await api.get('/auth/refresh');
       
       // 응답 로그

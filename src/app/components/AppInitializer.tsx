@@ -705,16 +705,22 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
       const accessToken = localStorage.getItem("accessToken");
-      const refreshToken = Cookies.get("refreshToken");
+
+      // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로 확인하지 않음
+      console.log("[AppInitializer] handleServerLogin: 토큰 상태 확인:", {
+        hasAccessToken: !!accessToken,
+        accessTokenLength: accessToken ? accessToken.length : 0,
+        note: "리프레시 토큰은 HttpOnly 쿠키로 서버에서 관리됨",
+      });
 
       console.log(
         "[AppInitializer] handleServerLogin: 토큰 및 사용자 정보 확인:",
         {
           hasAccessToken: !!accessToken,
-          hasRefreshToken: !!refreshToken,
           userId,
           userName,
           isInitial,
+          note: "리프레시 토큰은 HttpOnly 쿠키로 서버에서 관리됨",
         }
       );
 

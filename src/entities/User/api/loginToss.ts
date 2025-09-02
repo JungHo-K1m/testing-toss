@@ -90,6 +90,16 @@ export const tossLogin = async (authorizationCode: string, referrer: string): Pr
         // Set-Cookie 헤더 확인 (HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없음)
         const setCookieHeader = response.headers['set-cookie'];
         console.log('[loginToss] Set-Cookie 헤더 확인:', setCookieHeader ? '존재함' : '없음');
+        
+        // Set-Cookie 헤더 상세 로깅
+        if (setCookieHeader) {
+          console.log('[loginToss] Set-Cookie 헤더 상세:', setCookieHeader);
+          // refreshToken 쿠키가 포함되어 있는지 확인
+          const hasRefreshToken = setCookieHeader.some(cookie => 
+            cookie.includes('refreshToken') || cookie.includes('RefreshToken')
+          );
+          console.log('[loginToss] refreshToken 쿠키 포함 여부:', hasRefreshToken);
+        }
 
         // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로 확인하지 않음
         console.log('[loginToss] ✅ HttpOnly 쿠키는 서버에서 자동으로 관리됩니다');
