@@ -4,6 +4,7 @@ import { appLogin, isMinVersionSupported } from "@apps-in-toss/web-framework";
 import { tossLogin } from "@/entities/User/api/loginToss";
 import { useUserStore } from "@/entities/User/model/userModel";
 import Cookies from "js-cookie";
+import api from "@/shared/api/axiosInstance";
 
 // ReactNativeWebView 타입 선언
 declare global {
@@ -53,6 +54,105 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         console.log(`[AppInitializer] ${flag} 플래그 정리 완료`);
       }
     });
+  };
+
+  // tossLogin 전에 모든 토큰 정리 함수 (Redis 충돌 방지)
+  const clearAllTokensBeforeNewLogin = async () => {
+    try {
+      console.log("[AppInitializer] tossLogin 전 토큰 정리 시작");
+      
+      // 1. 로컬스토리지의 액세스 토큰 삭제
+      if (localStorage.getItem("accessToken")) {
+        localStorage.removeItem("accessToken");
+        console.log("[AppInitializer] 액세스 토큰 삭제 완료");
+      }
+      
+      // 2. 초기화 플래그 삭제
+      if (localStorage.getItem("isInitialized")) {
+        localStorage.removeItem("isInitialized");
+        console.log("[AppInitializer] 초기화 플래그 삭제 완료");
+      }
+      
+      // 3. 리프레시 토큰 쿠키 삭제 (서버에 로그아웃 요청)
+      try {
+        await api.post('/auth/logout');
+        console.log("[AppInitializer] 서버 로그아웃 요청 완료");
+      } catch (logoutError) {
+        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (무시됨):", logoutError);
+      }
+      
+      // 4. 모든 세션 스토리지 플래그 정리
+      clearSessionStorageFlags();
+      
+      // 5. 잠시 대기 (서버 처리 시간 확보)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log("[AppInitializer] 토큰 정리 완료");
+    } catch (error) {
+      console.error("[AppInitializer] 토큰 정리 중 오류:", error);
+      // 토큰 정리 실패해도 계속 진행
+    }
+  };
+
+  // 만료된 토큰 정리 함수 (리프레시 토큰 만료 시 사용)
+  const clearExpiredTokens = async () => {
+    try {
+      console.log("[AppInitializer] 만료된 토큰 정리 시작");
+      
+      // 1. 로컬스토리지의 액세스 토큰 삭제
+      if (localStorage.getItem("accessToken")) {
+        localStorage.removeItem("accessToken");
+        console.log("[AppInitializer] 만료된 액세스 토큰 삭제 완료");
+      }
+      
+      // 2. 초기화 플래그 삭제
+      if (localStorage.getItem("isInitialized")) {
+        localStorage.removeItem("isInitialized");
+        console.log("[AppInitializer] 초기화 플래그 삭제 완료");
+      }
+      
+      // 3. 리프레시 토큰 쿠키 삭제 (서버에 로그아웃 요청)
+      try {
+        await api.post('/auth/logout');
+        console.log("[AppInitializer] 만료된 리프레시 토큰 서버 정리 완료");
+      } catch (logoutError) {
+        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (무시됨):", logoutError);
+      }
+      
+      // 4. 모든 세션 스토리지 플래그 정리
+      clearSessionStorageFlags();
+      
+      console.log("[AppInitializer] 만료된 토큰 정리 완료");
+    } catch (error) {
+      console.error("[AppInitializer] 만료된 토큰 정리 중 오류:", error);
+      // 토큰 정리 실패해도 계속 진행
+    }
+  };
+
+  // 토큰 충돌 시 재시도 로직
+  const handleTokenConflictRetry = async (authCode?: string, refCode?: string) => {
+    try {
+      console.log("[AppInitializer] 토큰 충돌 재시도 로직 시작");
+      
+      // 1. 더 강력한 토큰 정리
+      await clearAllTokensBeforeNewLogin();
+      
+      // 2. 추가 대기 시간 (Redis 정리 시간 확보)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 3. 새로운 appLogin으로 authorizationCode 재획득
+      console.log("[AppInitializer] 새로운 appLogin으로 authorizationCode 재획득");
+      const newLoginResult = await appLogin();
+      const { authorizationCode: newAuthCode, referrer: newRefCode } = newLoginResult;
+      
+      // 4. 새로운 authorizationCode로 tossLogin 재시도
+      console.log("[AppInitializer] 새로운 authorizationCode로 tossLogin 재시도");
+      await handleServerLogin(newAuthCode, newRefCode);
+      
+    } catch (retryError: any) {
+      console.error("[AppInitializer] 토큰 충돌 재시도 실패:", retryError);
+      setError(`로그인 재시도 실패: ${retryError.message || "알 수 없는 오류"}`);
+    }
   };
 
   // 페이지 최초 진입 시 자동 초기화 활성화
@@ -317,6 +417,15 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // 2-2. 리프레시 실패 시 tossLogin 시도
       console.log("[AppInitializer] 리프레시 토큰 실패, tossLogin 시도");
+      
+      // 리프레시 토큰이 만료된 경우 추가 정리 작업
+      const hasRefreshAttempted = sessionStorage.getItem("refreshAttempted");
+      if (hasRefreshAttempted) {
+        console.log("[AppInitializer] 리프레시 토큰 만료로 인한 tossLogin 시도");
+        // 만료된 토큰 정리 (이미 handleRefreshTokenOnce에서 처리되었지만 확실히 하기 위해)
+        await clearExpiredTokens();
+      }
+      
       // 매개변수로 받은 값 우선 사용, 없으면 상태값 사용
       const currentAuthCode = authCode || authorizationCode;
       const currentRefCode = refCode || referrer;
@@ -388,14 +497,23 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     } catch (error: any) {
       console.error("[AppInitializer] 리프레시 토큰 처리 중 오류:", error);
 
-      // 에러 메시지에서 리프레시 토큰 만료 확인
-      if (
-        error.message &&
-        error.message.includes("Invalid or expired Refresh Token")
-      ) {
+      // 다양한 리프레시 토큰 만료 에러 메시지 확인
+      const errorMessage = error.message || '';
+      const isRefreshTokenExpired = 
+        errorMessage.includes("Invalid or expired Refresh Token") ||
+        errorMessage.includes("Token not found in Redis") ||
+        errorMessage.includes("Refresh token not found") ||
+        errorMessage.includes("Refresh token expired") ||
+        error.response?.status === 401 ||
+        error.response?.status === 404;
+
+      if (isRefreshTokenExpired) {
         console.log(
-          "[AppInitializer] 리프레시 토큰 만료 에러 감지 - 새 로그인 플로우로 전환"
+          "[AppInitializer] 리프레시 토큰 만료/삭제 에러 감지 - 새 로그인 플로우로 전환"
         );
+        
+        // 리프레시 토큰이 만료된 경우 모든 토큰 정리
+        await clearExpiredTokens();
         clearSessionStorageFlags();
       }
 
@@ -433,11 +551,21 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         return;
       }
 
+      // tossLogin 전에 기존 토큰 완전 정리 (Redis 충돌 방지)
+      await clearAllTokensBeforeNewLogin();
+
       // 서버 로그인 처리
       await handleServerLogin(currentAuthCode, currentRefCode);
     } catch (error: any) {
       console.error("[AppInitializer] tossLogin 실패:", error);
-      setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      
+      // 특정 에러 타입에 따른 처리
+      if (error.response?.status === 409 || error.message?.includes('conflict')) {
+        console.log("[AppInitializer] 토큰 충돌 감지, 재시도 로직 실행");
+        await handleTokenConflictRetry(authCode, refCode);
+      } else {
+        setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      }
     }
   };
 
