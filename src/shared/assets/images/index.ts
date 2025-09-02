@@ -305,6 +305,7 @@ import VolumeOff from "./volume-off.png"
 import VolumeOn from "./volume-on.png"
 import CheckIcon from "./check-icon.png"
 import CloseIcon from "./close-icon.png"
+import JamIcon from "./jam-icon.png"
 
 // Equipment Icons - Ballon (BACK)
 import Ballon1 from "./ballon-1.png";
@@ -674,6 +675,7 @@ const Images = {
   Crown3,
   Crown4,
   Crown5,
+  JamIcon,
 };
 
 export default Images;

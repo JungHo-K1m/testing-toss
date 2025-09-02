@@ -327,13 +327,16 @@ const DiceEventPage: React.FC = () => {
   //  모달 스케줄링 로직
   // ===============================
   const scheduledSlots = [16];
-  const itemGuideSlots = [0, 9, 18];
+  const itemGuideSlots = [8, 18];
+  const eventGuideSlots = [8, 18]; // 이벤트 안내 모달 스케줄 (0시 추가로 테스트)
 
   const [abuseModal, setabuseModal] = useState<boolean>(false);
   // 랭킹 보상 팝업 표시를 위한 상태
   const [showRankingModal, setShowRankingModal] = useState<boolean>(false);
   const [showItemGuideModal, setShowItemGuideModal] = useState(false);
   const [showItemDialog, setShowItemDialog] = useState(false);
+  // 이벤트 안내 모달 표시를 위한 상태
+  const [showEventGuideModal, setShowEventGuideModal] = useState(false);
 
   useEffect(() => {
     const checkAndShowModals = () => {
@@ -370,6 +373,19 @@ const DiceEventPage: React.FC = () => {
         const key = `${dateKey}-${currentItemSlot}-itemGuide`;
         if (!localStorage.getItem(key)) {
           setShowItemGuideModal(true);
+        }
+      }
+
+      // ——————————————
+      // 3) 이벤트 안내 모달
+      // ——————————————
+      const currentEventSlot = eventGuideSlots
+        .filter((slot) => hour >= slot)
+        .pop();
+      if (currentEventSlot != null) {
+        const key = `${dateKey}-${currentEventSlot}-eventGuide`;
+        if (!localStorage.getItem(key)) {
+          setShowEventGuideModal(true);
         }
       }
     };
@@ -421,6 +437,19 @@ const DiceEventPage: React.FC = () => {
       localStorage.setItem("abuseModalDismissed", slotId);
     }
     setShowRankingModal(false);
+  };
+
+  const handleCloseEventGuideModal = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const dateKey = `${now.getFullYear()}-${
+      now.getMonth() + 1
+    }-${now.getDate()}`;
+    const slot = eventGuideSlots.filter((s) => hour >= s).pop();
+    if (slot != null) {
+      localStorage.setItem(`${dateKey}-${slot}-eventGuide`, "shown");
+    }
+    setShowEventGuideModal(false);
   };
   // ===============================
 
@@ -2732,6 +2761,198 @@ const DiceEventPage: React.FC = () => {
                       </button>
                     </div>
                   )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+                        {/* 이벤트 안내 모달 */}
+            <Dialog
+              open={showEventGuideModal}
+              onOpenChange={setShowEventGuideModal}
+            >
+              <DialogTitle className="sr-only">이벤트 안내</DialogTitle>
+              <DialogContent
+                className="rounded-[24px] max-w-[90%] sm:max-w-[80%] md:max-w-lg p-6 border-none mx-auto relative"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={handleCloseEventGuideModal}
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center z-10"
+                >
+                  <HiX className="w-5 h-5 text-white" />
+                </button>
+
+                <div className="flex flex-col items-center w-full">
+                  {/* 메인 타이틀 */}
+                  <div className="text-center mb-6">
+                    <h1
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: "400",
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      주사위를 던지고,
+                    </h1>
+                    <h1
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: "400",
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      리워드를 잡아라!
+                    </h1>
+                  </div>
+
+                  {/* 서브타이틀 */}
+                  <div className="text-center mb-2">
+                    <h2
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "12px",
+                        fontWeight: "400",
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                    >
+                      랭킹 리워드 :
+                    </h2>
+                  </div>
+
+                  {/* 보상 정보 박스 */}
+                  <div
+                    className="w-full mb-6 p-5 rounded-[20px]"
+                    style={{
+                      background: "rgba(0, 94, 170, 0.5)",
+                      backdropFilter: "blur(10px)",
+                      boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
+                    }}
+                  >
+                    {/* 1~3등 보상 */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
+                      >
+                        <img
+                          src={Images.JamIcon}
+                          alt="gold-medal"
+                          className="w-[20px] h-[20px]"
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          color: "#FFFFFF",
+                          WebkitTextStroke: "1px #000000",
+                        }}
+                      >
+                        1~3등 : 100만원 상당의 상금 수여
+                      </span>
+                    </div>
+
+                    {/* 4~100등 보상 */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
+                      >
+                        <img
+                          src={Images.LotteryTicket}
+                          alt="lottery-ticket"
+                          className="w-[20px] h-[20px]"
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          color: "#FFFFFF",
+                          WebkitTextStroke: "1px #000000",
+                        }}
+                      >
+                        4~100등 : 5만원 상당의 상품권 증정
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 안내 메시지 */}
+                  <div className="text-center mb-8">
+                    <p
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "12px",
+                        fontWeight: "400",
+                        color: "#FFFFFF",
+                        WebkitTextStroke: "1px #000000",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      * 자세한 내용은 트위터를 확인해주세요!
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "#008DFF",
+                        WebkitTextStroke: "1px #000000",
+                      }}
+                    >
+                      @savethelife_SL
+                    </p>
+                  </div>
+
+                  {/* 게임하러 가기 버튼 */}
+                  <button
+                    onClick={() => {
+                      playSfx(Audios.button_click);
+                      handleCloseEventGuideModal();
+                    }}
+                    className="w-full h-14 rounded-[12px] flex items-center justify-center relative"
+                    style={{
+                      background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                      border: "2px solid #76C1FF",
+                      outline: "2px solid #000000",
+                      boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                      color: "#FFFFFF",
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "18px",
+                      fontWeight: "400",
+                      WebkitTextStroke: "1px #000000",
+                      opacity: 1,
+                    }}
+                  >
+                    <img
+                      src={Images.ButtonPointBlue}
+                      alt="button-point-blue"
+                      style={{
+                        position: "absolute",
+                        top: "3px",
+                        left: "3px",
+                        width: "8.47px",
+                        height: "6.3px",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    게임하러 가기
+                  </button>
                 </div>
               </DialogContent>
             </Dialog>
