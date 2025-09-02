@@ -133,7 +133,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   const { playSfx } = useSound();
   
   // 광고 관련 훅 추가
-  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
+  const { getAdStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd } = useAdMob();
   const [platform] = useState(getPlatform());
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [hasUsedAdForGame, setHasUsedAdForGame] = useState(false);
@@ -141,18 +141,18 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   // 자동 광고 로딩 useEffect 수정
   useEffect(() => {
     // 🔥 핵심 수정: 중복 실행 방지
-    if (isSupported && !hasUsedAdForGame && adLoadStatus === 'not_loaded') {
+    if (isSupported && !hasUsedAdForGame && getAdStatus("RPS_RETRY") === 'not_loaded') {
       // console.log('RPS 결과 모달 열림 - 자동 광고 로딩 시작');
       // console.log('현재 rpsId:', rpsId, 'lastPlayerChoice:', lastPlayerChoice);
-      autoLoadAd();
+      autoLoadAd("RPS_RETRY");
     } else {
       // console.log('광고 자동 로딩 건너뜀:', { 
       //   isSupported, 
       //   hasUsedAdForGame, 
-      //   adLoadStatus 
+      //   adLoadStatus: getAdStatus("RPS_RETRY")
       // });
     }
-  }, [isSupported, hasUsedAdForGame, autoLoadAd, rpsId, lastPlayerChoice, adLoadStatus]);
+  }, [isSupported, hasUsedAdForGame, autoLoadAd, rpsId, lastPlayerChoice, getAdStatus]);
 
   
   // 이미 광고를 사용한 게임인지 확인
@@ -188,7 +188,8 @@ const ResultLose: React.FC<ResultLoseProps> = ({
       // console.log('RPS 재시도 광고 시작');
 
       // 핵심 수정: 광고 타입을 명시적으로 'RPS_RETRY'로 설정
-      if (adLoadStatus !== 'loaded') {
+      const rpsRetryStatus = getAdStatus("RPS_RETRY");
+      if (rpsRetryStatus !== 'loaded') {
         // console.log('광고 로드 시작...');
         await loadAd('RPS_RETRY');
         return;
@@ -274,7 +275,8 @@ const ResultLose: React.FC<ResultLoseProps> = ({
 
   // 광고 상태에 따른 버튼 텍스트
   const getAdButtonText = () => {
-    switch (adLoadStatus) {
+    const rpsRetryStatus = getAdStatus("RPS_RETRY");
+    switch (rpsRetryStatus) {
       case 'not_loaded':
         return '준비 중...';
       case 'loading':
@@ -304,7 +306,7 @@ const ResultLose: React.FC<ResultLoseProps> = ({
   };
 
   // 광고 버튼 비활성화 여부
-  const isAdButtonDisabled = adLoadStatus === 'loading' || isAdLoading;
+  const isAdButtonDisabled = getAdStatus("RPS_RETRY") === 'loading' || isAdLoading;
 
   // 패배 효과음 재생
   useEffect(() => {

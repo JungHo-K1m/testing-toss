@@ -337,6 +337,8 @@ const DiceEventPage: React.FC = () => {
   const [showItemDialog, setShowItemDialog] = useState(false);
   // 이벤트 안내 모달 표시를 위한 상태
   const [showEventGuideModal, setShowEventGuideModal] = useState(false);
+  // UID 복사 완료 모달 표시를 위한 상태
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   useEffect(() => {
     const checkAndShowModals = () => {
@@ -474,7 +476,7 @@ const DiceEventPage: React.FC = () => {
 
   // 광고 관련 상태 및 훅
   const {
-    adLoadStatus,
+    getAdStatus,
     loadAd,
     showAd,
     isSupported,
@@ -501,21 +503,23 @@ const DiceEventPage: React.FC = () => {
 
   // 광고 버튼 클릭 핸들러
   const handleAdButtonClick = async () => {
-    if (adLoadStatus === "not_loaded") {
+    const randomBoxStatus = getAdStatus("RANDOM_BOX");
+    if (randomBoxStatus === "not_loaded") {
       // 광고가 로드되지 않은 경우 로드 시작
       await loadAd("RANDOM_BOX");
-    } else if (adLoadStatus === "loaded") {
+    } else if (randomBoxStatus === "loaded") {
       // 광고가 로드된 경우 표시
       await showAd("RANDOM_BOX");
-    } else if (adLoadStatus === "failed") {
+    } else if (randomBoxStatus === "failed") {
       // 광고 로드 실패 시 재로드
-      await reloadAd();
+      await reloadAd("RANDOM_BOX");
     }
   };
 
   // 광고 상태에 따른 버튼 텍스트 및 비활성화 여부
   const getAdButtonText = () => {
-    switch (adLoadStatus) {
+    const randomBoxStatus = getAdStatus("RANDOM_BOX");
+    switch (randomBoxStatus) {
       case "not_loaded":
         return "광고 로드하기";
       case "loading":
@@ -554,20 +558,21 @@ const DiceEventPage: React.FC = () => {
     }
 
     // 광고 상태 추가 확인
-    if (adLoadStatus === "loading") {
+    const randomBoxStatus = getAdStatus("RANDOM_BOX");
+    if (randomBoxStatus === "loading") {
       alert("광고 로딩 중입니다. 잠시 기다려주세요.");
       return;
     }
 
     try {
       setIsAdWatching(true); // 광고 시청 시작
-      // console.log('광고보고 랜덤박스 시작 - 광고 상태:', adLoadStatus);
+      console.log('광고보고 랜덤박스 시작 - 광고 상태:', randomBoxStatus);
 
       // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== "loaded") {
-        // console.log('광고 로드 시작...');
+      if (randomBoxStatus !== "loaded") {
+        console.log('광고 로드 시작...');
         await loadAd("RANDOM_BOX");
-        // console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        console.log('광고 로드 완료 후 상태:', getAdStatus("RANDOM_BOX"));
         return;
       }
 
@@ -673,7 +678,7 @@ const DiceEventPage: React.FC = () => {
 
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
-          reloadAd();
+          reloadAd("RANDOM_BOX");
         }, 1000);
       } else {
         // console.log('보상 결과가 없습니다.');
@@ -688,7 +693,7 @@ const DiceEventPage: React.FC = () => {
 
       // 오류 발생 시 광고 재로드
       setTimeout(() => {
-        reloadAd();
+        reloadAd("RANDOM_BOX");
       }, 1000);
     } finally {
       setIsAdWatching(false); // 광고 시청 완료
@@ -703,13 +708,14 @@ const DiceEventPage: React.FC = () => {
     }
 
     try {
-      // console.log('주사위 리필 광고 시작 - 광고 상태:', adLoadStatus);
+      const diceRefillStatus = getAdStatus("DICE_REFILL");
+      console.log('주사위 리필 광고 시작 - 광고 상태:', diceRefillStatus);
 
       // 광고가 로드되지 않은 경우 먼저 로드
-      if (adLoadStatus !== "loaded") {
-        // console.log('광고 로드 시작...');
+      if (diceRefillStatus !== "loaded") {
+        console.log('광고 로드 시작...');
         await loadAd("DICE_REFILL"); // 광고 타입 지정
-        // console.log('광고 로드 완료 후 상태:', adLoadStatus);
+        console.log('광고 로드 완료 후 상태:', getAdStatus("DICE_REFILL"));
         return;
       }
 
@@ -758,7 +764,7 @@ const DiceEventPage: React.FC = () => {
 
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
-          reloadAd();
+          reloadAd("DICE_REFILL");
         }, 1000);
       }
     } catch (error: any) {
@@ -767,7 +773,7 @@ const DiceEventPage: React.FC = () => {
 
       // 오류 발생 시 광고 재로드
       setTimeout(() => {
-        reloadAd();
+        reloadAd("DICE_REFILL");
       }, 1000);
     } finally {
       setIsAdWatching(false); // 광고 시청 완료
@@ -777,22 +783,22 @@ const DiceEventPage: React.FC = () => {
   // 광고 모달이 열릴 때 자동으로 광고 로드 (주사위 리필 타입)
   useEffect(() => {
     if (showAdModal) {
-      autoLoadAd();
+      autoLoadAd("DICE_REFILL");
       // 주사위 리필 모달이 열릴 때는 DICE_REFILL 타입으로 광고 로드
       if (refillTimeInfo) {
         loadAd("DICE_REFILL");
       }
     }
-  }, [showAdModal, autoLoadAd, refillTimeInfo]);
+  }, [showAdModal, autoLoadAd, refillTimeInfo, loadAd]);
 
   // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
   useEffect(() => {
     if (showRaffleBoxModal) {
-      autoLoadAd();
+      autoLoadAd("RANDOM_BOX");
     }
   }, [showRaffleBoxModal, autoLoadAd]);
 
-  const isAdButtonDisabled = adLoadStatus === "loading";
+  const isAdButtonDisabled = getAdStatus("RANDOM_BOX") === "loading";
 
   // 보유 열쇠 개수는 lotteryCount를 직접 사용
 
@@ -836,7 +842,7 @@ const DiceEventPage: React.FC = () => {
 
   useEffect(() => {
     if (showAdModal) {
-      autoLoadAd();
+      autoLoadAd("DICE_REFILL");
     }
   }, [showAdModal, autoLoadAd]);
 
@@ -1120,10 +1126,19 @@ const DiceEventPage: React.FC = () => {
                         color: "#FFFFFF",
                         WebkitTextStroke: "1px #000000",
                       }}
-                      onClick={() => {
+                      onClick={async () => {
                         playSfx(Audios.button_click);
-                        if (navigator.clipboard) {
-                          navigator.clipboard.writeText(String(uid));
+                        try {
+                          if (navigator.clipboard) {
+                            await navigator.clipboard.writeText(String(uid));
+                            setShowCopyModal(true);
+                            // 2초 후 자동으로 모달 닫기
+                            setTimeout(() => {
+                              setShowCopyModal(false);
+                            }, 2000);
+                          }
+                        } catch (error) {
+                          console.error('클립보드 복사 실패:', error);
                         }
                       }}
                     >
@@ -1786,7 +1801,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="mt-3 mb-5 w-full flex justify-center">
                       <button
                         onClick={handleAdRandomBox}
-                        disabled={adLoadStatus !== "loaded"}
+                        disabled={getAdStatus("RANDOM_BOX") !== "loaded"}
                         className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
                         style={{
                           background:
@@ -1825,11 +1840,11 @@ const DiceEventPage: React.FC = () => {
                         />
 
                         <span>
-                          {adLoadStatus === "loading" && "로딩 중..."}
-                          {adLoadStatus === "loaded" &&
+                          {getAdStatus("RANDOM_BOX") === "loading" && "로딩 중..."}
+                          {getAdStatus("RANDOM_BOX") === "loaded" &&
                             "광고보고 램덤박스 열기"}
-                          {adLoadStatus === "failed" && "로드 실패"}
-                          {adLoadStatus === "not_loaded" && "준비 중..."}
+                          {getAdStatus("RANDOM_BOX") === "failed" && "로드 실패"}
+                          {getAdStatus("RANDOM_BOX") === "not_loaded" && "준비 중..."}
                         </span>
                       </button>
                     </div>
@@ -2694,11 +2709,11 @@ const DiceEventPage: React.FC = () => {
                         }}
                       >
                         광고 상태:{" "}
-                        {adLoadStatus === "not_loaded"
+                        {getAdStatus("DICE_REFILL") === "not_loaded"
                           ? "대기 중"
-                          : adLoadStatus === "loading"
+                          : getAdStatus("DICE_REFILL") === "loading"
                           ? "로딩 중"
-                          : adLoadStatus === "loaded"
+                          : getAdStatus("DICE_REFILL") === "loaded"
                           ? "로드 완료"
                           : "로드 실패"}
                       </p>
@@ -2752,11 +2767,11 @@ const DiceEventPage: React.FC = () => {
                           }}
                         />
                         <span>
-                          {adLoadStatus === "loading" && "로딩 중..."}
-                          {adLoadStatus === "loaded" &&
+                          {getAdStatus("DICE_REFILL") === "loading" && "로딩 중..."}
+                          {getAdStatus("DICE_REFILL") === "loaded" &&
                             "광고 시청 후 주사위 리필"}
-                          {adLoadStatus === "failed" && "로드 실패 - 다시 시도"}
-                          {adLoadStatus === "not_loaded" && "준비 중..."}
+                          {getAdStatus("DICE_REFILL") === "failed" && "로드 실패 - 다시 시도"}
+                          {getAdStatus("DICE_REFILL") === "not_loaded" && "준비 중..."}
                         </span>
                       </button>
                     </div>
@@ -2956,6 +2971,33 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* UID 복사 완료 모달 */}
+            {showCopyModal && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 w-full z-50">
+                <div 
+                  className="bg-white text-black p-6 rounded-lg text-center w-[70%] max-w-[300px]"
+                  style={{
+                    fontFamily: "'ONE Mobile POP', sans-serif",
+                    fontSize: "16px",
+                    fontWeight: "400",
+                  }}
+                >
+                  <p>UID가 복사되었습니다!</p>
+                  <button
+                    className="mt-4 px-4 py-2 bg-[#0147E5] text-white rounded-lg"
+                    style={{
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: "400",
+                    }}
+                    onClick={() => setShowCopyModal(false)}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
 
             <br />
             <br />

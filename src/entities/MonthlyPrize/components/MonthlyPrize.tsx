@@ -156,7 +156,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
           Toss Point
         </p> */}
         <p
-          className="text-center"
+          className="text-center mt-2"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
             fontSize: "12px",

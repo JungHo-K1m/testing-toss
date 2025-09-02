@@ -879,7 +879,7 @@ const CardGameResultDialog = ({
   selectedSuit,       // 선택된 카드 문양
 }: any) => {
   // CardGameResultDialog에서 광고 로드
-  const { adLoadStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
+  const { getAdStatus, loadAd, showAd, isSupported, autoLoadAd, reloadAd, resetAdInstance } = useAdMob();
 
   const [platform] = useState(getPlatform());
   const [isAdLoading, setIsAdLoading] = useState(false);
@@ -900,7 +900,8 @@ const CardGameResultDialog = ({
       // // console.log('게임 패배 시 자동 광고 로드 시작');
       
       // 🔥 핵심 수정: 이미 로딩 중이거나 로드된 상태면 건너뛰기
-      if (adLoadStatus === 'loading' || adLoadStatus === 'loaded') {
+      const cardFlipRetryStatus = getAdStatus("CARD_FLIP_RETRY");
+      if (cardFlipRetryStatus === 'loading' || cardFlipRetryStatus === 'loaded') {
         // // console.log('이미 광고 로딩 중이거나 로드됨 - 자동 로드 건너뛰기');
         return;
       }
@@ -948,7 +949,8 @@ const CardGameResultDialog = ({
       while (retryCount < maxRetries) {
         try {
           // 광고가 로드되지 않은 경우 먼저 로드
-          if (adLoadStatus !== 'loaded') {
+          const cardFlipRetryStatus = getAdStatus("CARD_FLIP_RETRY");
+          if (cardFlipRetryStatus !== 'loaded') {
             // // console.log(`광고 로드 시도 ${retryCount + 1}/${maxRetries}...`);
             await loadAd('CARD_FLIP_RETRY');
             
@@ -957,12 +959,12 @@ const CardGameResultDialog = ({
             while (waitCount < 30) {
               await new Promise(resolve => setTimeout(resolve, 100));
               waitCount++;
-              if ((adLoadStatus as any) === 'loaded') {
+              if (getAdStatus("CARD_FLIP_RETRY") === 'loaded') {
                 break;
               }
             }
             
-            if ((adLoadStatus as any) !== 'loaded') {
+            if (getAdStatus("CARD_FLIP_RETRY") !== 'loaded') {
               throw new Error('광고 로드에 실패했습니다');
             }
           }
@@ -1061,7 +1063,7 @@ const CardGameResultDialog = ({
       
       // 🔥 핵심 수정: 에러 발생 시 광고 상태 리셋
       setTimeout(() => {
-        resetAdInstance();
+        resetAdInstance("CARD_FLIP_RETRY");
       }, 1000);
     } finally {
       setIsAdLoading(false);
@@ -1071,11 +1073,12 @@ const CardGameResultDialog = ({
   // 광고 버튼 비활성화 여부 수정
   const isAdButtonDisabled = () => {
     // 🔥 핵심 수정: 게임 ID별 광고 사용 여부 확인
+    const cardFlipRetryStatus = getAdStatus("CARD_FLIP_RETRY");
     if (hasUsedAdForGame) return true;
     if (isAdLoading) return true;
-    if (adLoadStatus === 'loading') return true;
-    if (adLoadStatus === 'failed') return false; // 실패 시에는 재시도 가능
-    return adLoadStatus !== 'loaded';
+    if (cardFlipRetryStatus === 'loading') return true;
+    if (cardFlipRetryStatus === 'failed') return false; // 실패 시에는 재시도 가능
+    return cardFlipRetryStatus !== 'loaded';
   };
 
   // 광고 상태에 따른 버튼 텍스트 개선
@@ -1088,7 +1091,8 @@ const CardGameResultDialog = ({
       return '광고 시청 중...';
     }
     
-    switch (adLoadStatus) {
+    const cardFlipRetryStatus = getAdStatus("CARD_FLIP_RETRY");
+    switch (cardFlipRetryStatus) {
       case 'not_loaded':
         return '광고 로드 중...';
       case 'loading':
