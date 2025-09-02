@@ -612,18 +612,75 @@ export const useUserStore = create<UserState>((set, get) => ({
     });
   },
 
-  // 토큰 갱신 함수 (기존 방식 그대로)
+  // 토큰 갱신 함수 (기존 방식 그대로 + 로깅 추가)
   refreshToken: async (): Promise<boolean> => {
+    const logKey = 'refreshToken_logs';
+    const timestamp = new Date().toISOString();
+    
     try {
+      // 시작 로그
+      const startLog = {
+        timestamp,
+        action: 'refreshToken_start',
+        message: '리프레시 토큰 요청 시작'
+      };
+      localStorage.setItem(logKey, JSON.stringify(startLog));
+      console.log('[userModel] refreshToken 시작 - 로그 저장됨');
+      
       const response = await api.get('/auth/refresh');
+      
+      // 응답 로그
+      const responseLog = {
+        timestamp: new Date().toISOString(),
+        action: 'refreshToken_response',
+        status: response.status,
+        statusText: response.statusText,
+        hasAuthHeader: !!response.headers['authorization'],
+        message: '리프레시 토큰 응답 수신'
+      };
+      localStorage.setItem(logKey, JSON.stringify(responseLog));
+      console.log('[userModel] refreshToken 응답 - 로그 저장됨');
+      
       const newAccessToken = response.headers['authorization'];
       if (newAccessToken) {
         localStorage.setItem('accessToken', newAccessToken.replace('Bearer ', ''));
+        
+        // 성공 로그
+        const successLog = {
+          timestamp: new Date().toISOString(),
+          action: 'refreshToken_success',
+          message: '새 액세스 토큰 저장 완료',
+          tokenLength: newAccessToken.length
+        };
+        localStorage.setItem(logKey, JSON.stringify(successLog));
+        console.log('[userModel] refreshToken 성공 - 로그 저장됨');
+        
         return true;
       } else {
+        // 실패 로그 (헤더 없음)
+        const failLog = {
+          timestamp: new Date().toISOString(),
+          action: 'refreshToken_fail',
+          reason: 'Authorization header missing',
+          message: 'Authorization 헤더가 없음'
+        };
+        localStorage.setItem(logKey, JSON.stringify(failLog));
+        console.log('[userModel] refreshToken 실패 (헤더 없음) - 로그 저장됨');
+        
         throw new Error('Token refresh failed: Authorization header is missing');
       }
     } catch (error: any) {
+      // 에러 로그
+      const errorLog = {
+        timestamp: new Date().toISOString(),
+        action: 'refreshToken_error',
+        error: error.message || 'Unknown error',
+        status: error.response?.status,
+        message: '리프레시 토큰 실패'
+      };
+      localStorage.setItem(logKey, JSON.stringify(errorLog));
+      console.log('[userModel] refreshToken 에러 - 로그 저장됨');
+      
       get().logout();
       set({ error: 'Token refresh failed. Please log in again.' });
       return false;

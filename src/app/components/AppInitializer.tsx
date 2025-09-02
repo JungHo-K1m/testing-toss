@@ -743,6 +743,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         "[AppInitializer] handleServerLogin: 서버 로그인 결과 설정 완료, 페이지 이동 로직 시작"
       );
 
+      // 초기화 플래그 설정 (로그인 성공 후)
+      localStorage.setItem("isInitialized", "true");
+      console.log(
+        "[AppInitializer] handleServerLogin: isInitialized 플래그 설정 완료"
+      );
+
       // isInitial에 따른 페이지 이동 로직
       if (isInitial === true) {
         console.log(

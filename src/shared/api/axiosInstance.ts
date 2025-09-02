@@ -92,12 +92,35 @@ api.interceptors.response.use(
       )
     ) {
       originalRequest._retry = true;
+      
+      // 인터셉터 로깅
+      const interceptorLog = {
+        timestamp: new Date().toISOString(),
+        action: 'axios_interceptor_retry',
+        url: originalRequest.url,
+        status: error.response.status,
+        message: '토큰 만료 감지, 리프레시 토큰으로 재시도'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(interceptorLog));
+      console.log('[axiosInstance] 토큰 만료 감지 - 로그 저장됨');
+      
       try {
         const refreshSuccessful = await useUserStore.getState().refreshToken();
         if (refreshSuccessful) {
           const newAccessToken = localStorage.getItem("accessToken");
           if (newAccessToken) {
             originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+            
+            // 재시도 성공 로깅
+            const retrySuccessLog = {
+              timestamp: new Date().toISOString(),
+              action: 'axios_interceptor_retry_success',
+              url: originalRequest.url,
+              message: '리프레시 토큰으로 원래 요청 재시도 성공'
+            };
+            localStorage.setItem('refreshToken_logs', JSON.stringify(retrySuccessLog));
+            console.log('[axiosInstance] 재시도 성공 - 로그 저장됨');
+            
             return api(originalRequest);
           }
         }
