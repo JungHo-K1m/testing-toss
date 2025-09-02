@@ -46,7 +46,7 @@ const EditNickname: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center mx-6 relative min-h-screen pb-20">
+    <div className="flex flex-col items-center mx-6 relative min-h-screen pb-20 pt-20">
       <TopTitle title="닉네임 수정" back={true} />
 
       {/* 이름 입력란 */}

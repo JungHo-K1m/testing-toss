@@ -75,7 +75,8 @@ const Reward: React.FC = () => {
   const slOthers = (slDrawAwards || []).slice(3);
 
   // 에어드랍 회차
-  const slRound = (slDrawAwards || []).length > 0 ? slDrawAwards[0].round : null;
+  const slRound =
+    (slDrawAwards || []).length > 0 ? slDrawAwards[0].round : null;
 
   const handleShowMoreRanking = () => {
     playSfx(Audios.button_click);
@@ -110,10 +111,7 @@ const Reward: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col text-white mb-44 w-full min-h-screen">
-
-      
-
+    <div className="flex flex-col text-white mb-44 w-full min-h-screen pt-20">
       {/* my-rank 위젯 표시 */}
       <Dialog>
         <DialogTrigger
@@ -162,16 +160,13 @@ const Reward: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-      
 
       {/* 월간 보상 영역 */}
-      <div
-        className="w-full max-w-md rounded-3xl p-6 mb-6 mx-auto"
-      >
+      <div className="w-full max-w-md rounded-3xl p-6 mb-6 mx-auto">
         {/* 제목 영역 */}
         <div className="flex items-center justify-center gap-3 mb-4">
           <img
-            src={Images.GoldMedalIcon} 
+            src={Images.GoldMedalIcon}
             alt="monthly-reward"
             className="w-[60px] h-[60px]"
           />
@@ -191,65 +186,78 @@ const Reward: React.FC = () => {
 
         {/* 보상 목록 */}
         <div className="space-y-3">
-                     {/* 1-3위 보상 */}
-           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
-             style={{
-               fontFamily: "'ONE Mobile POP', sans-serif",
-               fontSize: "18px",
-               fontWeight: 400,
-               color: "#FFFFFF",
-               WebkitTextStroke: "1px #000000",
-               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-               boxShadow:
-                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-             }}>
-             <span className="ml-3">1</span>
-             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
-           </div>
-           
-           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
-             style={{
-               fontFamily: "'ONE Mobile POP', sans-serif",
-               fontSize: "18px",
-               fontWeight: 400,
-               color: "#FFFFFF",
-               WebkitTextStroke: "1px #000000",
-               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-               boxShadow:
-                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-             }}>
-             <span className="ml-3">2</span>
-             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
-           </div>
-           
-           <div className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
-             style={{
-               fontFamily: "'ONE Mobile POP', sans-serif",
-               fontSize: "18px",
-               fontWeight: 400,
-               color: "#FFFFFF",
-               WebkitTextStroke: "1px #000000",
-               background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
-               boxShadow:
-                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
-             }}>
-             <span className="ml-3">3</span>
-             <span className="absolute left-1/2 transform -translate-x-1/2">1,000,000</span>
-           </div>
-          
-          
+          {/* 1-3위 보상 */}
+          <div
+            className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+            style={{
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontSize: "18px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              WebkitTextStroke: "1px #000000",
+              background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+              boxShadow:
+                "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+            }}
+          >
+            <span className="ml-3">1</span>
+            <span className="absolute left-1/2 transform -translate-x-1/2">
+              1,000,000
+            </span>
+          </div>
+
+          <div
+            className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+            style={{
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontSize: "18px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              WebkitTextStroke: "1px #000000",
+              background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+              boxShadow:
+                "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+            }}
+          >
+            <span className="ml-3">2</span>
+            <span className="absolute left-1/2 transform -translate-x-1/2">
+              1,000,000
+            </span>
+          </div>
+
+          <div
+            className="flex items-center p-3 rounded-[58px] bg-opacity-50 h-[64px] relative"
+            style={{
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontSize: "18px",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              WebkitTextStroke: "1px #000000",
+              background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+              boxShadow:
+                "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+            }}
+          >
+            <span className="ml-3">3</span>
+            <span className="absolute left-1/2 transform -translate-x-1/2">
+              1,000,000
+            </span>
+          </div>
+
           {/* 4-100위 보상 */}
-          <div className="flex justify-between items-center p-3"
-          style={{
-            fontFamily: "'ONE Mobile POP', sans-serif",
-            fontWeight: 400,
-            color: "#FFFFFF",
-            WebkitTextStroke: "1px #000000",
-          }}>
+          <div
+            className="flex justify-between items-center p-3"
+            style={{
+              fontFamily: "'ONE Mobile POP', sans-serif",
+              fontWeight: 400,
+              color: "#FFFFFF",
+              WebkitTextStroke: "1px #000000",
+            }}
+          >
             <span className="text-lg">4-100</span>
             <span className="text-sm">50,000</span>
           </div>
-          
+
           {/* 구분선 */}
           <div className="border-t border-[#E5E5E5] border-opacity-30 my-3"></div>
         </div>

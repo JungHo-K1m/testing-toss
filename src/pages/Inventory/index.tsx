@@ -422,10 +422,10 @@ function ItemModal({
                   if (item.isEquipped) {
                     // 장착된 아이템 해제
                     // console.log("🔍 장착된 아이템 해제 시도:", {
-                      //   item: item,
-                      //   hasSlotId: !!item.slotId,
-                      //   slotId: item.slotId,
-                      // });
+                    //   item: item,
+                    //   hasSlotId: !!item.slotId,
+                    //   slotId: item.slotId,
+                    // });
 
                     if (!item.slotId) {
                       console.error("❌ slotId가 없습니다:", item);
@@ -773,22 +773,22 @@ function ItemModal({
                   fontWeight: "400",
                   WebkitTextStroke: "1px #000000",
                 }}
-                                 onClick={async () => {
-                   setShowUpgradeResult(false);
-                   if (upgradeResult.success) {
-                     onClose(); // 성공 시 아이템 모달도 닫기
-                   } else {
-                     // 실패 시 아이템 모달도 닫고 인벤토리 목록 새로 조회
-                     onClose();
-                     // 인벤토리 데이터 새로 조회 (페이지 리프레시 대신)
-                     try {
-                       const newInventoryData = await getItemList();
-                       onEquipmentChange(newInventoryData);
-                     } catch (error) {
-                       console.error("인벤토리 새로 조회 실패:", error);
-                     }
-                   }
-                 }}
+                onClick={async () => {
+                  setShowUpgradeResult(false);
+                  if (upgradeResult.success) {
+                    onClose(); // 성공 시 아이템 모달도 닫기
+                  } else {
+                    // 실패 시 아이템 모달도 닫고 인벤토리 목록 새로 조회
+                    onClose();
+                    // 인벤토리 데이터 새로 조회 (페이지 리프레시 대신)
+                    try {
+                      const newInventoryData = await getItemList();
+                      onEquipmentChange(newInventoryData);
+                    } catch (error) {
+                      console.error("인벤토리 새로 조회 실패:", error);
+                    }
+                  }
+                }}
               >
                 <img
                   src={Images.ButtonPointBlue}
@@ -1215,7 +1215,7 @@ const Inventory: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center relative min-h-screen">
+    <div className="flex flex-col items-center relative min-h-screen pt-20">
       <div
         style={{
           backgroundImage: `url(${Images.BackgroundHome})`,

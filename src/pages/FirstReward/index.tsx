@@ -30,7 +30,7 @@ const FirstRewardPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen relative">
+    <div className="flex flex-col min-h-screen relative pt-20">
       {/* 스크롤 되는 상단 영역 */}
       <div className="flex-1 overflow-y-auto px-6 pt-10 text-white">
         {/* 상단 메시지 */}

@@ -1,10 +1,10 @@
 // SoundSetting.tsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { TopTitle } from '@/shared/components/ui';
-import { useSoundStore } from '@/shared/store/useSoundStore';
-import saveSoundSetting from '@/entities/User/api/saveSoundSetting';
-import { HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { TopTitle } from "@/shared/components/ui";
+import { useSoundStore } from "@/shared/store/useSoundStore";
+import saveSoundSetting from "@/entities/User/api/saveSoundSetting";
+import { HiVolumeOff, HiVolumeUp } from "react-icons/hi";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 
@@ -54,7 +54,7 @@ const SoundSetting: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center text-white px-6 min-h-screen">
+    <div className="flex flex-col items-center text-white px-6 min-h-screen pt-20">
       <TopTitle title="사운드 설정" back={true} />
 
       <div className="w-full">

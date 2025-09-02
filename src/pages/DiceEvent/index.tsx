@@ -1020,7 +1020,7 @@ const DiceEventPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
+    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen pt-20">
       {/* 배경화면 추가 */}
       <div
         className="fixed inset-0 z-0"

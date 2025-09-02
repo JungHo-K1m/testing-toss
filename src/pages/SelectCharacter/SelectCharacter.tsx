@@ -1,19 +1,21 @@
 // src/pages/SignUp/SelectCharacter.tsx
 
-import React from 'react';
-import Images from '@/shared/assets/images';
+import React from "react";
+import Images from "@/shared/assets/images";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 
-
 interface SelectCharacterProps {
-  selectedPet: 'DOG' | 'CAT';
-  setSelectedPet: (pet: 'DOG' | 'CAT') => void;
+  selectedPet: "DOG" | "CAT";
+  setSelectedPet: (pet: "DOG" | "CAT") => void;
 }
 
-const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelectedPet }) => {
+const SelectCharacter: React.FC<SelectCharacterProps> = ({
+  selectedPet,
+  setSelectedPet,
+}) => {
   const { playSfx } = useSound();
-  
+
   React.useEffect(() => {
     // // console.log('Step 5-0: SelectCharacter 컴포넌트 마운트됨.');
     return () => {
@@ -21,54 +23,57 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelec
     };
   }, []);
 
-  const handlePetSelection = (pet: 'DOG' | 'CAT') => {
+  const handlePetSelection = (pet: "DOG" | "CAT") => {
     playSfx(Audios.button_click);
     // // console.log(`Step 5-0: ${pet} 선택됨.`);
     setSelectedPet(pet);
   };
 
   return (
-    <div className="flex flex-col text-white items-center mx-6 min-h-screen">
+    <div className="flex flex-col text-white items-center mx-6 min-h-screen pt-8">
       <h2
         className="text-center mt-32"
         style={{
           fontFamily: "'ONE Mobile POP', sans-serif",
-          fontSize: '30px',
+          fontSize: "30px",
           fontWeight: 400,
-          lineHeight: '36px',
-          letterSpacing: '-2.5%',
-          color: '#FFFFFF',
-          WebkitTextStroke: '2px #000',
+          lineHeight: "36px",
+          letterSpacing: "-2.5%",
+          color: "#FFFFFF",
+          WebkitTextStroke: "2px #000",
         }}
       >
-        생명을 구해라!<br />주인공을 골라봐!
+        생명을 구해라!
+        <br />
+        주인공을 골라봐!
       </h2>
       <div className="flex flex-row mt-14 gap-3">
         {/* Dog */}
         <div
           className="flex flex-col items-center justify-center gap-3 cursor-pointer"
-          onClick={() => handlePetSelection('DOG')}
+          onClick={() => handlePetSelection("DOG")}
         >
           <div
             className="flex items-center justify-center relative"
             style={{
               width: 165,
               height: 194,
-              background: selectedPet === 'DOG'
-                ? 'rgba(255,255,255,0.65)'
-                : 'rgba(255,255,255,0.5)',
+              background:
+                selectedPet === "DOG"
+                  ? "rgba(255,255,255,0.65)"
+                  : "rgba(255,255,255,0.5)",
               borderRadius: 20,
-              boxShadow: '0px 2px 2px 0px rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: selectedPet === 'DOG' ? '3px solid #64FF56' : 'none',
+              boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              border: selectedPet === "DOG" ? "3px solid #64FF56" : "none",
             }}
           >
             <img
               src={
-                selectedPet === 'DOG'
+                selectedPet === "DOG"
                   ? Images.DogSmile
-                  : selectedPet === 'CAT'
+                  : selectedPet === "CAT"
                   ? Images.DogCrying
                   : Images.DogSmile
               }
@@ -82,8 +87,8 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelec
               fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: 24,
               fontWeight: 400,
-              color: selectedPet === 'DOG' ? '#64FF56' : '#FFFFFF',
-              WebkitTextStroke: '1px #000',
+              color: selectedPet === "DOG" ? "#64FF56" : "#FFFFFF",
+              WebkitTextStroke: "1px #000",
             }}
           >
             강아지
@@ -92,28 +97,29 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelec
         {/* Cat */}
         <div
           className="flex flex-col items-center justify-center gap-3 cursor-pointer"
-          onClick={() => handlePetSelection('CAT')}
+          onClick={() => handlePetSelection("CAT")}
         >
           <div
             className="flex items-center justify-center relative"
             style={{
               width: 165,
               height: 194,
-              background: selectedPet === 'CAT'
-                ? 'rgba(255,255,255,0.65)'
-                : 'rgba(255,255,255,0.5)',
+              background:
+                selectedPet === "CAT"
+                  ? "rgba(255,255,255,0.65)"
+                  : "rgba(255,255,255,0.5)",
               borderRadius: 20,
-              boxShadow: '0px 2px 2px 0px rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: selectedPet === 'CAT' ? '3px solid #64FF56' : 'none',
+              boxShadow: "0px 2px 2px 0px rgba(0,0,0,0.4)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              border: selectedPet === "CAT" ? "3px solid #64FF56" : "none",
             }}
           >
             <img
               src={
-                selectedPet === 'CAT'
+                selectedPet === "CAT"
                   ? Images.CatSmile
-                  : selectedPet === 'DOG'
+                  : selectedPet === "DOG"
                   ? Images.CatCrying
                   : Images.CatSmile
               }
@@ -127,8 +133,8 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({ selectedPet, setSelec
               fontFamily: "'ONE Mobile POP', sans-serif",
               fontSize: 24,
               fontWeight: 400,
-              color: selectedPet === 'CAT' ? '#64FF56' : '#FFFFFF',
-              WebkitTextStroke: '1px #000',
+              color: selectedPet === "CAT" ? "#64FF56" : "#FFFFFF",
+              WebkitTextStroke: "1px #000",
             }}
           >
             고양이

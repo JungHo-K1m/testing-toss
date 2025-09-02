@@ -483,7 +483,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     } catch (error: any) {
       // error.response.data.message가 있으면 그 값을 사용
       const errorMessage = error.response?.data?.message || error.message;
-      // console.error('fetchUserData 실패:', errorMessage);
+      console.error('[userModel] fetchUserData 실패:', {
+        errorMessage,
+        errorType: error.constructor.name,
+        hasResponse: !!error.response,
+        status: error.response?.status,
+        url: error.config?.url
+      });
       set({ isLoading: false, error: errorMessage });
       // 새로운 에러 객체를 던져서 error.message에 원하는 메시지가 포함되도록 함
       throw new Error(errorMessage);
@@ -493,36 +499,40 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그인 함수
   login: async (initData: string): Promise<void> => {
-    // // console.log('Step: login 시작, initData:', initData);
+    console.log('[userModel] login 시작, initData:', initData);
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/auth/login', { initData });
 
       if (response.data.code === 'OK') {
         const { userId, accessToken, refreshToken } = response.data.data;
-        // // console.log('Step: login 성공, userId:', userId);
+        console.log('[userModel] login 성공, userId:', userId);
         // 토큰 및 userId 저장
         localStorage.setItem('accessToken', accessToken);
-        // 리프레시 토큰을 쿠키에 저장 (7일 만료)
-        Cookies.set('refreshToken', refreshToken, { 
-          expires: 7, 
-          secure: true, 
-          sameSite: 'strict' 
-        });
+        
+        // 리프레시 토큰은 서버에서 HttpOnly 쿠키로 자동 설정됨
+        // 클라이언트에서 수동으로 설정할 필요 없음
+        console.log('[userModel] 리프레시 토큰은 서버에서 HttpOnly 쿠키로 자동 설정됩니다');
+        
+        // Set-Cookie 헤더 확인 (디버깅용)
+        const setCookieHeader = response.headers['set-cookie'];
+        if (setCookieHeader) {
+          console.log('[userModel] 서버에서 설정된 Set-Cookie 헤더:', setCookieHeader);
+        }
         set({  });
 
         // 사용자 데이터 가져오기
         await get().fetchUserData();
         set({ isLoading: false, error: null });
       } else if (response.data.code === 'ENTITY_NOT_FOUND') {
-        // console.warn('Step: login 응답 코드 ENTITY_NOT_FOUND:', response.data.message);
+        console.warn('[userModel] login 응답 코드 ENTITY_NOT_FOUND:', response.data.message);
         throw new Error(response.data.message || 'User not found');
       } else {
-        // console.warn('Step: login 응답 코드가 OK가 아님:', response.data.message);
+        console.warn('[userModel] login 응답 코드가 OK가 아님:', response.data.message);
         throw new Error(response.data.message || 'Login failed');
       }
     } catch (error: any) {
-      // console.error('Step: login 실패:', error);
+      console.error('[userModel] login 실패:', error);
       let errorMessage = 'Login failed. Please try again.';
       if (error.response) {
         // 서버가 응답을 했지만, 상태 코드가 2xx가 아닌 경우
@@ -541,7 +551,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 회원가입 함수
   signup: async (initData: string, petType: 'DOG' | 'CAT'): Promise<void> => {
-    // // console.log('Step: signup 시작, initData:', initData, 'petType:', petType);
+    console.log('[userModel] signup 시작, initData:', initData, 'petType:', petType);
     set({ isLoading: true, error: null });
     try {
       // 회원가입 요청 보내기
@@ -549,7 +559,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
       set({ isLoading: false, error: null });
     } catch (error: any) {
-      // console.error('Step: signup 실패:', error);
+      console.error('[userModel] signup 실패:', error);
       let errorMessage = 'Signup failed. Please try again.';
       if (error.response) {
         errorMessage = error.response.data.message || errorMessage;
@@ -565,9 +575,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그아웃 함수
   logout: () => {
-    // // console.log('Step: logout 실행. 토큰 및 userId 제거 및 상태 초기화.');
+    console.log('[userModel] logout 실행. 토큰 및 userId 제거 및 상태 초기화.');
     localStorage.removeItem('accessToken');
-    Cookies.remove('refreshToken'); // 쿠키에서 리프레시 토큰 제거
+    // refreshToken은 HttpOnly 쿠키이므로 서버에서 처리됨
     set({
       nickName: null,
       uid: null,
@@ -602,51 +612,18 @@ export const useUserStore = create<UserState>((set, get) => ({
     });
   },
 
-  // 토큰 갱신 함수
+  // 토큰 갱신 함수 (기존 방식 그대로)
   refreshToken: async (): Promise<boolean> => {
-    console.log('[userModel] refreshToken 시작');
     try {
-      // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로
-      // 서버에 직접 리프레시 요청을 보내고, 서버에서 쿠키를 확인하도록 함
-      console.log('[userModel] 서버에 토큰 갱신 요청 전송');
-      
       const response = await api.get('/auth/refresh');
-      console.log('[userModel] refreshToken 응답:', response);
-
-      const newAccessToken = response.headers['authorization'] || response.headers['Authorization'];
+      const newAccessToken = response.headers['authorization'];
       if (newAccessToken) {
-        const cleanToken = newAccessToken.replace('Bearer ', '');
-        localStorage.setItem('accessToken', cleanToken);
-        console.log('[userModel] 새로운 accessToken 저장 완료');
-        
-        sessionStorage.removeItem('refreshAttempted');
+        localStorage.setItem('accessToken', newAccessToken.replace('Bearer ', ''));
         return true;
       } else {
-        console.warn('[userModel] Authorization 헤더가 없습니다.');
-        console.log('[userModel] 응답 헤더:', response.headers);
         throw new Error('Token refresh failed: Authorization header is missing');
       }
     } catch (error: any) {
-      console.error('[userModel] refreshToken 실패:', error);
-      
-      if (error.response) {
-        console.error('[userModel] 에러 응답 상태:', error.response.status);
-        console.error('[userModel] 에러 응답 데이터:', error.response.data);
-        
-        // 리프레시 토큰 만료 감지
-        if (error.response.data?.message?.includes("Invalid or expired Refresh Token")) {
-          console.log('[userModel] 리프레시 토큰 만료 - 새 로그인 플로우 필요');
-          
-          // 기존 토큰들 정리
-          get().logout();
-          
-          // 새 로그인 플로우 시작을 위한 플래그 설정
-          sessionStorage.setItem('restartAppInitializer', 'true');
-          
-          return false;
-        }
-      }
-      
       get().logout();
       set({ error: 'Token refresh failed. Please log in again.' });
       return false;
@@ -668,7 +645,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         error: null,
       });
     } catch (error: any) {
-      // console.error('주사위 리필 중 에러 발생:', error);
+      console.error('[userModel] 주사위 리필 중 에러 발생:', error);
       set({ error: error.message || '주사위 리필에 실패했습니다.' });
       throw error; 
     }
@@ -686,9 +663,9 @@ export const useUserStore = create<UserState>((set, get) => ({
         isAuto
       });
   
-      // // console.log('스위치 변경 성공:', data);
+      console.log('[userModel] 스위치 변경 성공:', data);
     } catch (error: any) {
-      // console.error('스위치 변경 중 에러 발생:', error);
+      console.error('[userModel] 스위치 변경 중 에러 발생:', error);
       set({ error: error.message || '스위치 변경에 실패했습니다.' });
       throw error; 
     }
@@ -705,9 +682,9 @@ export const useUserStore = create<UserState>((set, get) => ({
         completeTutorial
       });
   
-      // // console.log('튜토리얼 완료:', data);
+      console.log('[userModel] 튜토리얼 완료:', data);
     } catch (error: any) {
-      // console.error('튜토리얼 중 에러 발생:', error);
+      console.error('[userModel] 튜토리얼 중 에러 발생:', error);
       set({ error: error.message || '튜토리얼에 실패했습니다.' });
       throw error; 
     }

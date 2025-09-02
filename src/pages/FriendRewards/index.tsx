@@ -56,9 +56,14 @@ const FriendRewards: React.FC = () => {
         // 서버에 최초 리워드 내역 요청
         const formattedStart = format(firstDayOfMonth, "yyyy-MM-dd");
         const formattedEnd = format(now, "yyyy-MM-dd");
-        
+
         // assetType = null 로, friendId = null 로 요청
-        const detail = await getReferralDetail(null, formattedStart, formattedEnd, null);
+        const detail = await getReferralDetail(
+          null,
+          formattedStart,
+          formattedEnd,
+          null
+        );
         setReferralDetails(detail);
       } catch (error) {
         // console.error(error);
@@ -91,7 +96,7 @@ const FriendRewards: React.FC = () => {
         const friendId = searchText ? searchText : null;
 
         const detail = await getReferralDetail(
-          assetTypeForServer,  // 여기서 "Point" -> "star" 처리
+          assetTypeForServer, // 여기서 "Point" -> "star" 처리
           formattedStart,
           formattedEnd,
           friendId
@@ -151,9 +156,8 @@ const FriendRewards: React.FC = () => {
   );
   CustomDateInput.displayName = "CustomDateInput";
 
-  
   return (
-    <div className="flex flex-col text-white mb-32 px-6 min-h-screen">
+    <div className="flex flex-col text-white mb-32 px-6 min-h-screen pt-20">
       <TopTitle title="친구 초대 리워드" back={true} />
 
       {/* 드롭다운 필터 */}
@@ -163,7 +167,8 @@ const FriendRewards: React.FC = () => {
           onClick={() => {
             playSfx(Audios.button_click);
             setIsOpen(!isOpen);
-          }}>
+          }}
+        >
           <div className="flex items-center">
             <p className="text-lg font-semibold">필터</p>
           </div>

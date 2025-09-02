@@ -39,21 +39,28 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const [error, setError] = useState<string | null>(null);
   const { fetchUserData } = useUserStore();
 
+  // 앱인토스 웹뷰 환경에서 세션 스토리지 정리 함수
+  const clearSessionStorageFlags = () => {
+    const flagsToRemove = [
+      "refreshAttempted",
+      "restartAppInitializer",
+      "redirectingToLogin",
+    ];
+
+    flagsToRemove.forEach((flag) => {
+      if (sessionStorage.getItem(flag)) {
+        sessionStorage.removeItem(flag);
+        console.log(`[AppInitializer] ${flag} 플래그 정리 완료`);
+      }
+    });
+  };
+
   // 페이지 최초 진입 시 자동 초기화 활성화
   useEffect(() => {
     console.log("[AppInitializer] 페이지 진입 - 플래그 정리 및 초기화 시작");
 
-    // 무한 리프레시 방지를 위한 플래그 정리
-    if (sessionStorage.getItem("redirectingToLogin")) {
-      sessionStorage.removeItem("redirectingToLogin");
-      console.log("[AppInitializer] 리다이렉트 플래그 정리 완료");
-    }
-
-    // 리프레시 시도 플래그도 정리 (새로운 세션 시작)
-    if (sessionStorage.getItem("refreshAttempted")) {
-      sessionStorage.removeItem("refreshAttempted");
-      console.log("[AppInitializer] 리프레시 시도 플래그 정리 완료");
-    }
+    // 앱인토스 웹뷰 환경에서 모든 세션 스토리지 플래그 정리
+    clearSessionStorageFlags();
 
     // AppInitializer 재실행 플래그 확인
     if (sessionStorage.getItem("restartAppInitializer")) {
@@ -71,7 +78,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 초기화 플래그도 삭제 (새로운 로그인 시도이므로)
       localStorage.removeItem("isInitialized");
       console.log("[AppInitializer] 초기화 플래그 삭제 - 새로운 로그인 시도");
-      
+
+      // 모든 세션 스토리지 플래그 정리 (무한 루프 방지)
+      clearSessionStorageFlags();
+
       // 새 로그인 플로우 시작
       handleNewTokenLogin();
       return;
@@ -83,7 +93,27 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
   // 웹뷰 환경에서의 라우팅 상태 모니터링
   useEffect(() => {
-    const checkRoutingStatus = () => {};
+    const checkRoutingStatus = () => {
+      // 현재 URL과 예상된 상태 확인
+      const currentPath = window.location.pathname;
+      const isInitialized = localStorage.getItem("isInitialized") === "true";
+      const hasAccessToken = !!localStorage.getItem("accessToken");
+
+      console.log("[AppInitializer] 라우팅 상태 체크:", {
+        currentPath,
+        isInitialized,
+        hasAccessToken,
+        timestamp: new Date().toISOString(),
+      });
+
+      // 초기화되지 않은 상태에서 루트가 아닌 페이지에 있는 경우
+      if (!isInitialized && currentPath !== "/" && currentPath !== "/login") {
+        console.log(
+          "[AppInitializer] 초기화되지 않은 상태에서 잘못된 페이지 감지, 루트로 리다이렉트"
+        );
+        window.location.href = "/";
+      }
+    };
 
     // 초기 체크
     checkRoutingStatus();
@@ -179,21 +209,33 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // authorizationCode와 referrer 획득 후 자동 초기화 진행
       await handleAutoInitialization(authCode, refCode);
     } catch (error: any) {
-      console.error("[AppInitializer] appLogin 실패:", error);
+      console.error("[AppInitializer] appLogin 실패:", {
+        error: error.message || error,
+        errorType: error.constructor.name,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      });
+
+      let errorMessage = "알 수 없는 오류";
 
       if (error.message && error.message.includes("appLogin")) {
         console.error("[AppInitializer] appLogin 함수 관련 에러:", error);
-        setError(`appLogin 함수 에러: ${error.message}`);
+        errorMessage = `appLogin 함수 에러: ${error.message}`;
+      } else if (error.message) {
+        errorMessage = `토스 로그인 실패: ${error.message}`;
       } else {
-        setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+        errorMessage = "토스 로그인 실패: 알 수 없는 오류";
       }
+
+      setError(errorMessage);
 
       // Native 앱에 에러 메시지 전송
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(
           JSON.stringify({
             type: "loginError",
-            error: error?.message || "알 수 없는 에러",
+            error: errorMessage,
+            originalError: error?.message || "알 수 없는 에러",
             timestamp: Date.now(),
           })
         );
@@ -331,14 +373,32 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
         if (newAccessToken) {
           console.log("[AppInitializer] 액세스 토큰 재발급 성공");
+          // 성공 시 플래그 정리
+          sessionStorage.removeItem("refreshAttempted");
           return true;
         }
       }
 
       console.log("[AppInitializer] 액세스 토큰 재발급 실패");
+
+      // 실패 시 리프레시 토큰 만료 여부 확인
+      // 실제 에러 메시지를 확인해야 함 (하드코딩된 문자열이 아님)
+      console.log("[AppInitializer] 리프레시 실패 - tossLogin으로 전환");
       return false;
     } catch (error: any) {
       console.error("[AppInitializer] 리프레시 토큰 처리 중 오류:", error);
+
+      // 에러 메시지에서 리프레시 토큰 만료 확인
+      if (
+        error.message &&
+        error.message.includes("Invalid or expired Refresh Token")
+      ) {
+        console.log(
+          "[AppInitializer] 리프레시 토큰 만료 에러 감지 - 새 로그인 플로우로 전환"
+        );
+        clearSessionStorageFlags();
+      }
+
       return false;
     }
   };
@@ -527,21 +587,39 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     fallbackToWindowLocation: boolean = true
   ) => {
     try {
+      console.log("[AppInitializer] safeNavigate 호출:", {
+        path,
+        hasReactNativeWebView: !!window.ReactNativeWebView,
+        currentPath: window.location.pathname,
+      });
+
       // React Native WebView 환경에서는 window.location을 직접 사용
       if (window.ReactNativeWebView) {
-        onInitialized();
-
         // localStorage 상태 확인
         const initializationFlag = localStorage.getItem("isInitialized");
         const accessToken = localStorage.getItem("accessToken");
 
+        console.log("[AppInitializer] WebView 환경에서 페이지 이동:", {
+          initializationFlag,
+          hasAccessToken: !!accessToken,
+          targetPath: path,
+        });
+
         // 상태가 제대로 설정되었는지 확인 후 페이지 이동
         if (initializationFlag === "true" && accessToken) {
+          // 초기화 완료 처리
+          onInitialized();
+
           // 약간의 지연 후 페이지 이동 (초기화 상태 업데이트를 위해)
           setTimeout(() => {
+            console.log("[AppInitializer] WebView에서 페이지 이동 실행:", path);
             window.location.href = path;
           }, 100);
         } else {
+          console.error("[AppInitializer] 초기화 상태 또는 토큰이 없음:", {
+            initializationFlag,
+            hasAccessToken: !!accessToken,
+          });
           setError("초기화 상태 설정에 실패했습니다. 다시 시도해주세요.");
         }
 
@@ -549,6 +627,10 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
 
       // 일반 브라우저 환경에서는 React Router navigate 시도
+      console.log(
+        "[AppInitializer] 일반 브라우저에서 React Router navigate 시도:",
+        path
+      );
       navigate(path);
 
       // 초기화 완료 처리
@@ -557,14 +639,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 약간의 지연 후 페이지 이동 상태 확인
       setTimeout(() => {
         if (window.location.pathname !== path) {
+          console.warn(
+            "[AppInitializer] React Router navigate 실패, window.location으로 fallback:",
+            path
+          );
           if (fallbackToWindowLocation) {
             window.location.href = path;
             onInitialized();
           }
+        } else {
+          console.log("[AppInitializer] React Router navigate 성공:", path);
         }
       }, 100);
     } catch (error) {
+      console.error("[AppInitializer] safeNavigate 에러:", error);
       if (fallbackToWindowLocation) {
+        console.log(
+          "[AppInitializer] 에러 발생으로 window.location fallback:",
+          path
+        );
         window.location.href = path;
         onInitialized();
       }
