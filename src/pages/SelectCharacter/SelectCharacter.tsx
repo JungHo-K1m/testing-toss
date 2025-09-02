@@ -43,9 +43,9 @@ const SelectCharacter: React.FC<SelectCharacterProps> = ({
           WebkitTextStroke: "2px #000",
         }}
       >
-        생명을 구해라!
+        행운을 불러올올
         <br />
-        주인공을 골라봐!
+        파트너를 골라보세요! ✨
       </h2>
       <div className="flex flex-row mt-14 gap-3">
         {/* Dog */}

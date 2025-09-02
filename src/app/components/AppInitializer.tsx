@@ -103,20 +103,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       if (localStorage.getItem("accessToken")) {
         localStorage.removeItem("accessToken");
         console.log("[AppInitializer] 만료된 액세스 토큰 삭제 완료");
+      } else {
+        console.log("[AppInitializer] 액세스 토큰이 이미 정리됨");
       }
       
       // 2. 초기화 플래그 삭제
       if (localStorage.getItem("isInitialized")) {
         localStorage.removeItem("isInitialized");
         console.log("[AppInitializer] 초기화 플래그 삭제 완료");
+      } else {
+        console.log("[AppInitializer] 초기화 플래그가 이미 정리됨");
       }
       
       // 3. 리프레시 토큰 쿠키 삭제 (서버에 로그아웃 요청)
+      // userModel의 logout()에서 이미 호출되었을 수 있으므로 에러 무시
       try {
         await api.post('/auth/logout');
         console.log("[AppInitializer] 만료된 리프레시 토큰 서버 정리 완료");
       } catch (logoutError) {
-        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (무시됨):", logoutError);
+        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (이미 정리되었을 수 있음):", logoutError);
       }
       
       // 4. 모든 세션 스토리지 플래그 정리
@@ -490,8 +495,14 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       console.log("[AppInitializer] 액세스 토큰 재발급 실패");
 
-      // 실패 시 리프레시 토큰 만료 여부 확인
-      // 실제 에러 메시지를 확인해야 함 (하드코딩된 문자열이 아님)
+      // refreshToken 함수가 false를 반환한 경우 (401 에러 등으로 인한 logout 호출됨)
+      // 이 경우 userModel에서 이미 logout()이 호출되어 토큰이 정리되었을 수 있음
+      console.log("[AppInitializer] refreshToken 함수가 false 반환 - 토큰 만료로 추정");
+      
+      // 리프레시 토큰이 만료된 경우로 간주하고 토큰 정리
+      await clearExpiredTokens();
+      clearSessionStorageFlags();
+      
       console.log("[AppInitializer] 리프레시 실패 - tossLogin으로 전환");
       return false;
     } catch (error: any) {
@@ -504,6 +515,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         errorMessage.includes("Token not found in Redis") ||
         errorMessage.includes("Refresh token not found") ||
         errorMessage.includes("Refresh token expired") ||
+        errorMessage.includes("Request failed with status code 401") ||
         error.response?.status === 401 ||
         error.response?.status === 404;
 
