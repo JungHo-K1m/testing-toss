@@ -200,9 +200,9 @@ const Reward: React.FC = () => {
                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
             }}
           >
-            <span className="ml-3">1</span>
+            <span className="ml-3">1등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000
+              1,000,000원
             </span>
           </div>
 
@@ -219,9 +219,9 @@ const Reward: React.FC = () => {
                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
             }}
           >
-            <span className="ml-3">2</span>
+            <span className="ml-3">2등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000
+              1,000,000원
             </span>
           </div>
 
@@ -238,9 +238,9 @@ const Reward: React.FC = () => {
                 "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
             }}
           >
-            <span className="ml-3">3</span>
+            <span className="ml-3">3등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000
+              1,000,000원
             </span>
           </div>
 
@@ -254,8 +254,8 @@ const Reward: React.FC = () => {
               WebkitTextStroke: "1px #000000",
             }}
           >
-            <span className="text-lg">4-100</span>
-            <span className="text-sm">50,000</span>
+            <span className="text-lg">4-100 등</span>
+            <span className="text-sm">50,000원</span>
           </div>
 
           {/* 구분선 */}

@@ -144,7 +144,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
 
       {/* 상품 정보 - 위치 조정 */}
       <div className="flex flex-col items-center text-center -mt-4">
-        <p
+        {/* <p
           className="text-center"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
@@ -154,7 +154,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
           }}
         >
           Toss Point
-        </p>
+        </p> */}
         <p
           className="text-center"
           style={{

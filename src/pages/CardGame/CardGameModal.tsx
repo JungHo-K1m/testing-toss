@@ -359,7 +359,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
                     <li>
                       오늘의 행운을 믿어보세요! 원하는 스타 수를 입력하세요.
                     </li>
-                    <li>최대 베팅은 보유 스타의 절반까지만 가능합니다.</li>
+                    <li>최대 베팅은 1,000포인트까지 가능합니다.</li>
                   </ul>
                 </li>
                 <li>

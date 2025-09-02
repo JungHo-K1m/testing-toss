@@ -347,7 +347,7 @@ const RPSGameStart: React.FC<RPSGameStartProps> = ({
                       <br />
                       원하는 포인트를 입력해주세요.
                       <br />
-                      베팅은 보유 포인트의 절반까지 가능합니다.
+                      베팅은 1,000포인트까지 가능합니다.
                     </li>
                   </ul>
                 </li>
