@@ -27,12 +27,12 @@ export const getDiceRefillAdReward = async (): Promise<DiceRefillAdRewardRespons
     // 응답 데이터 구조 확인
     const responseData = response.data;
     
-    // API 문서에 따른 응답 구조 검증
-    if (!responseData.nowDice || !responseData.rank) {
+    // API 응답 구조 검증 (data 객체 내부에 실제 데이터가 있음)
+    if (!responseData.data || !responseData.data.nowDice || !responseData.data.rank) {
       throw new Error('응답 데이터 구조가 올바르지 않습니다.');
     }
     
-    const { nowDice, rank } = responseData;
+    const { nowDice, rank } = responseData.data;
     
     // 필수 필드 검증
     if (typeof nowDice.dice !== 'number') {

@@ -236,18 +236,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
     const updateRefillTime = () => {
       if (diceRefilledAt) {
         const refillTime = dayjs.tz(diceRefilledAt, "Asia/Seoul");
-        const now = dayjs().tz("Asia/Seoul");
-        const diff = refillTime.diff(now);
+        // dayjs가 잘못된 시간을 반환하는 경우를 대비해 new Date() 사용
+        const now = dayjs(new Date()).tz("Asia/Seoul");
+        const diff = now.diff(refillTime); // 현재 시간에서 리필 시간을 뺌
 
-        if (diff <= 0 && diceCount === 0) {
-          setTimeUntilRefill("Refill dice");
-        } else if (diff > 0) {
-          const remainingDuration = dayjs.duration(diff);
+        if (diff >= 0) {
+          // 리필 시간이 지났을 때 (현재 시간이 리필 시간보다 늦음)
+          if (diceCount === 0) {
+            setTimeUntilRefill("Refill dice");
+          } else {
+            setTimeUntilRefill("Waiting");
+          }
+        } else {
+          // 리필 시간이 남아있을 때 (현재 시간이 리필 시간보다 이른 경우)
+          const remainingDuration = dayjs.duration(Math.abs(diff));
           const minutes = remainingDuration.minutes();
           const seconds = remainingDuration.seconds();
-          setTimeUntilRefill(`${minutes}m ${seconds}s`);
-        } else {
-          setTimeUntilRefill("Waiting");
+          const timeString = `${minutes}m ${seconds}s`;
+          setTimeUntilRefill(timeString);
         }
       } else {
         setTimeUntilRefill("Waiting");
@@ -605,7 +611,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                       color: "#2A294E",
                     }}
                   >
-                    : "리필"
+                    : 주사위 충전
                   </p>
                 </motion.div>
               ) : (

@@ -308,11 +308,11 @@ const DiceEventPage: React.FC = () => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setInitialX(250);
-        setInitialY(730 + 80);
+        setInitialY(730 + 80 + 80); // pt-20 (80px) 추가
         setDelta(100);
       } else {
         setInitialX(140);
-        setInitialY(474 + 80);
+        setInitialY(474 + 80 + 80); // pt-20 (80px) 추가
         setDelta(56);
       }
     };
@@ -716,12 +716,10 @@ const DiceEventPage: React.FC = () => {
         console.log('광고 로드 시작...');
         await loadAd("DICE_REFILL"); // 광고 타입 지정
         console.log('광고 로드 완료 후 상태:', getAdStatus("DICE_REFILL"));
-        return;
       }
 
-      // console.log('광고 표시 시작...');
-
       // 광고 표시 및 보상 결과 대기 (광고 타입 지정)
+      console.log('광고 표시 시작...');
       const rewardData = await showAd("DICE_REFILL");
       // console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
 
@@ -782,14 +780,11 @@ const DiceEventPage: React.FC = () => {
 
   // 광고 모달이 열릴 때 자동으로 광고 로드 (주사위 리필 타입)
   useEffect(() => {
-    if (showAdModal) {
+    if (showAdModal && refillTimeInfo) {
+      // 주사위 리필 모달이 열릴 때만 DICE_REFILL 타입으로 광고 로드
       autoLoadAd("DICE_REFILL");
-      // 주사위 리필 모달이 열릴 때는 DICE_REFILL 타입으로 광고 로드
-      if (refillTimeInfo) {
-        loadAd("DICE_REFILL");
-      }
     }
-  }, [showAdModal, autoLoadAd, refillTimeInfo, loadAd]);
+  }, [showAdModal, refillTimeInfo, autoLoadAd]);
 
   // 랜덤박스 모달이 열릴 때 자동으로 광고 로드
   useEffect(() => {
@@ -1055,7 +1050,7 @@ const DiceEventPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen pt-20">
+    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
       {/* 배경화면 추가 */}
       <div
         className="fixed inset-0 z-0"
@@ -1077,7 +1072,7 @@ const DiceEventPage: React.FC = () => {
         ) : (
           <>
             {/* 상단 캐릭터 정보 영역 */}
-            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4">
+            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4 pt-20">
               {/* 왼쪽: 캐릭터 정보 */}
               <div className="flex items-center">
                 <div className="flex items-center">
@@ -1359,11 +1354,11 @@ const DiceEventPage: React.FC = () => {
                     opacity: 0.6,
                   }}
                 />
-                <div className="relative z-10 flex flex-col h-full">
+                <div className="relative z-10 flex flex-col h-full pt-20">
                   <DialogHeader className="flex w-full items-end">
                     <DialogClose>
                       <HiX
-                        className="w-5 h-5"
+                        className="w-5 h-5 pt-4"
                         style={{
                           backgroundColor: "transparent",
                           outline: "none",
