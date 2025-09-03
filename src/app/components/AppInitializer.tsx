@@ -73,19 +73,31 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         console.log("[AppInitializer] 초기화 플래그 삭제 완료");
       }
       
-      // 3. 리프레시 토큰 쿠키 삭제 (서버에 로그아웃 요청)
+      // 3. ⭐ 중요: 서버에 명시적 로그아웃 요청으로 Redis 리프레시 토큰 정리
       try {
-        await api.post('/auth/logout');
-        console.log("[AppInitializer] 서버 로그아웃 요청 완료");
-      } catch (logoutError) {
-        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (무시됨):", logoutError);
+        console.log("[AppInitializer] 서버 로그아웃 요청으로 Redis 토큰 정리");
+        await api.post('/auth/logout', {}, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true, // HttpOnly 쿠키 전송
+          timeout: 10000 // 로그아웃은 빠르게 처리
+        });
+        console.log("[AppInitializer] 서버 로그아웃 요청 완료 - Redis 토큰 정리됨");
+      } catch (logoutError: any) {
+        console.warn("[AppInitializer] 서버 로그아웃 요청 실패:", {
+          status: logoutError.response?.status,
+          message: logoutError.message,
+          note: "무시하고 계속 진행"
+        });
       }
       
       // 4. 모든 세션 스토리지 플래그 정리
       clearSessionStorageFlags();
       
-      // 5. 잠시 대기 (서버 처리 시간 확보)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 5. ⭐ 서버 처리 완료를 위한 충분한 대기 시간
+      console.log("[AppInitializer] 서버 Redis 정리 완료 대기 중...");
+      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5초 대기
       
       console.log("[AppInitializer] 토큰 정리 완료");
     } catch (error) {
@@ -94,61 +106,24 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 만료된 토큰 정리 함수 (리프레시 토큰 만료 시 사용)
-  const clearExpiredTokens = async () => {
-    try {
-      console.log("[AppInitializer] 만료된 토큰 정리 시작");
-      
-      // 1. 로컬스토리지의 액세스 토큰 삭제
-      if (localStorage.getItem("accessToken")) {
-        localStorage.removeItem("accessToken");
-        console.log("[AppInitializer] 만료된 액세스 토큰 삭제 완료");
-      } else {
-        console.log("[AppInitializer] 액세스 토큰이 이미 정리됨");
-      }
-      
-      // 2. 초기화 플래그 삭제
-      if (localStorage.getItem("isInitialized")) {
-        localStorage.removeItem("isInitialized");
-        console.log("[AppInitializer] 초기화 플래그 삭제 완료");
-      } else {
-        console.log("[AppInitializer] 초기화 플래그가 이미 정리됨");
-      }
-      
-      // 3. 리프레시 토큰 쿠키 삭제 (서버에 로그아웃 요청)
-      // userModel의 logout()에서 이미 호출되었을 수 있으므로 에러 무시
-      try {
-        await api.post('/auth/logout');
-        console.log("[AppInitializer] 만료된 리프레시 토큰 서버 정리 완료");
-      } catch (logoutError) {
-        console.warn("[AppInitializer] 서버 로그아웃 요청 실패 (이미 정리되었을 수 있음):", logoutError);
-      }
-      
-      // 4. 모든 세션 스토리지 플래그 정리
-      clearSessionStorageFlags();
-      
-      console.log("[AppInitializer] 만료된 토큰 정리 완료");
-    } catch (error) {
-      console.error("[AppInitializer] 만료된 토큰 정리 중 오류:", error);
-      // 토큰 정리 실패해도 계속 진행
-    }
-  };
 
-  // 토큰 충돌 시 재시도 로직
+
+  // 토큰 충돌 시 재시도 로직 (개선)
   const handleTokenConflictRetry = async (authCode?: string, refCode?: string) => {
     try {
       console.log("[AppInitializer] 토큰 충돌 재시도 로직 시작");
       
-      // 1. 더 강력한 토큰 정리
+      // 1. 더 강력한 토큰 정리 (Redis 포함)
       await clearAllTokensBeforeNewLogin();
       
-      // 2. 추가 대기 시간 (Redis 정리 시간 확보)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 3. 새로운 appLogin으로 authorizationCode 재획득
+      // 2. 새로운 appLogin으로 authorizationCode 재획득
       console.log("[AppInitializer] 새로운 appLogin으로 authorizationCode 재획득");
       const newLoginResult = await appLogin();
       const { authorizationCode: newAuthCode, referrer: newRefCode } = newLoginResult;
+      
+      // 3. ⭐ 추가 대기 시간 (서버 Redis 상태 안정화)
+      console.log("[AppInitializer] 서버 상태 안정화 대기...");
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
       
       // 4. 새로운 authorizationCode로 tossLogin 재시도
       console.log("[AppInitializer] 새로운 authorizationCode로 tossLogin 재시도");
@@ -402,141 +377,152 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 액세스 토큰이 없는 경우의 처리 플로우
+  // 액세스 토큰이 없는 경우의 처리 플로우 (개선)
   const handleNoTokenFlow = async (authCode?: string, refCode?: string) => {
     try {
-      // 2-1. 토큰 리프레시 1회만 시도
-      console.log(
-        "[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시도 (1회 시도)"
-      );
-      const refreshSuccessful = await handleRefreshTokenOnce();
+      const accessToken = localStorage.getItem('accessToken');
+      
+      if (!accessToken) {
+        // 액세스 토큰이 없으면 리프레시 토큰으로 시도
+        console.log("[AppInitializer] 액세스 토큰 없음, 리프레시 토큰으로 시도");
+        
+        // 리프레시 시도 로깅
+        const noTokenLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_no_token_refresh_attempt'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(noTokenLog));
+        
+        try {
+          // 리프레시 토큰으로 fetchUserData 시도
+          await fetchUserData();
+          
+          // 리프레시 성공 로깅
+          const refreshSuccessLog = {
+            time: new Date().toLocaleTimeString(),
+            action: 'app_no_token_refresh_success'
+          };
+          localStorage.setItem('refreshToken_logs', JSON.stringify(refreshSuccessLog));
+          console.log("[AppInitializer] 액세스 토큰 없음 상태에서 리프레시 성공");
+          
+          await handleNavigationAfterLogin();
+          return;
+        } catch (refreshError: any) {
+          // 리프레시 실패 로깅
+          const refreshFailLog = {
+            time: new Date().toLocaleTimeString(),
+            action: 'app_no_token_refresh_failed',
+            error: refreshError.response?.status || 'No status'
+          };
+          localStorage.setItem('refreshToken_logs', JSON.stringify(refreshFailLog));
+          console.log("[AppInitializer] 액세스 토큰 없음 상태에서 리프레시 실패, tossLogin으로 진행:", refreshError.message);
+          
+          // 리프레시 실패 시 tossLogin으로 진행
+          const currentAuthCode = authCode || authorizationCode;
+          const currentRefCode = refCode || referrer;
 
-      if (refreshSuccessful) {
-        // 리프레시 성공 시 기존 토큰 로그인 플로우
-        console.log(
-          "[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 성공"
-        );
-        await handleExistingTokenLogin();
+          console.log("[AppInitializer] handleNoTokenFlow에서 사용할 값:", {
+            authCode,
+            refCode,
+            authorizationCode,
+            referrer,
+            currentAuthCode,
+            currentRefCode,
+          });
+
+          if (currentAuthCode && currentRefCode) {
+            console.log("[AppInitializer] handleTossLoginFlow 호출:", {
+              currentAuthCode,
+              currentRefCode,
+            });
+            await handleTossLoginFlow(currentAuthCode, currentRefCode);
+          } else {
+            console.error(
+              "[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음"
+            );
+            setError("로그인 정보가 올바르지 않습니다.");
+          }
+        }
         return;
       }
-
-      // 2-2. 리프레시 실패 시 tossLogin 시도
-      console.log("[AppInitializer] 리프레시 토큰 실패, tossLogin 시도");
       
-      // 리프레시 토큰이 만료된 경우 추가 정리 작업
-      const hasRefreshAttempted = sessionStorage.getItem("refreshAttempted");
-      if (hasRefreshAttempted) {
-        console.log("[AppInitializer] 리프레시 토큰 만료로 인한 tossLogin 시도");
-        // 만료된 토큰 정리 (이미 handleRefreshTokenOnce에서 처리되었지만 확실히 하기 위해)
-        await clearExpiredTokens();
-      }
+      // 액세스 토큰이 있으면 fetchUserData 시도 (axiosInstance에서 리프레시 처리)
+      console.log("[AppInitializer] 액세스 토큰 있음, fetchUserData 시도 (axiosInstance에서 리프레시 처리)");
       
-      // 매개변수로 받은 값 우선 사용, 없으면 상태값 사용
-      const currentAuthCode = authCode || authorizationCode;
-      const currentRefCode = refCode || referrer;
+      // 액세스 토큰 있음 로깅
+      const hasTokenLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_has_token_fetch_user_data'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(hasTokenLog));
+      
+      try {
+        await fetchUserData();
+        
+        // fetchUserData 성공 로깅
+        const fetchSuccessLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_fetch_user_data_success'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(fetchSuccessLog));
+        console.log("[AppInitializer] fetchUserData 성공");
+        
+        await handleNavigationAfterLogin();
+        return;
+      } catch (fetchError: any) {
+        // fetchUserData 실패 로깅
+        const fetchFailLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_fetch_user_data_failed',
+          error: fetchError.response?.status || 'No status'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(fetchFailLog));
+        console.log("[AppInitializer] fetchUserData 실패, tossLogin 시도:", fetchError.message);
+        
+        // fetchUserData 실패 시 tossLogin으로 새 토큰 발급
+        const currentAuthCode = authCode || authorizationCode;
+        const currentRefCode = refCode || referrer;
 
-      console.log("[AppInitializer] handleNoTokenFlow에서 사용할 값:", {
-        authCode,
-        refCode,
-        authorizationCode,
-        referrer,
-        currentAuthCode,
-        currentRefCode,
-      });
-
-      if (currentAuthCode && currentRefCode) {
-        console.log("[AppInitializer] handleTossLoginFlow 호출:", {
-          currentAuthCode,
-          currentRefCode,
-        });
-        await handleTossLoginFlow(currentAuthCode, currentRefCode);
-      } else {
-        console.error(
-          "[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음"
-        );
-        setError("로그인 정보가 올바르지 않습니다.");
+        if (currentAuthCode && currentRefCode) {
+          console.log("[AppInitializer] handleTossLoginFlow 호출:", {
+            currentAuthCode,
+            currentRefCode,
+          });
+          await handleTossLoginFlow(currentAuthCode, currentRefCode);
+        } else {
+          console.error(
+            "[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음"
+          );
+          setError("로그인 정보가 올바르지 않습니다.");
+        }
       }
     } catch (error: any) {
+      // 전체 에러 로깅
+      const generalErrorLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_handle_no_token_flow_error',
+        error: error.response?.status || 'No status'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(generalErrorLog));
       console.error("[AppInitializer] 액세스 토큰 없는 경우 처리 실패:", error);
       setError("로그인 처리 중 오류가 발생했습니다.");
     }
   };
 
-  // 리프레시 토큰으로 1회만 시도
-  const handleRefreshTokenOnce = async (): Promise<boolean> => {
-    try {
-      // 이미 리프레시를 시도했는지 확인 (sessionStorage 기반)
-      const hasAttemptedRefresh = sessionStorage.getItem("refreshAttempted");
-      if (hasAttemptedRefresh) {
-        console.log(
-          "[AppInitializer] 이미 리프레시를 시도했음 - 중복 시도 방지"
-        );
-        return false;
-      }
 
-      // 리프레시 시도 플래그 설정
-      sessionStorage.setItem("refreshAttempted", "true");
-
-      console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 요청");
-
-      // useUserStore의 refreshToken 함수 호출하여 액세스 토큰 재발급
-      const refreshSuccessful = await useUserStore.getState().refreshToken();
-
-      if (refreshSuccessful) {
-        const newAccessToken = localStorage.getItem("accessToken");
-
-        if (newAccessToken) {
-          console.log("[AppInitializer] 액세스 토큰 재발급 성공");
-          // 성공 시 플래그 정리
-          sessionStorage.removeItem("refreshAttempted");
-          return true;
-        }
-      }
-
-      console.log("[AppInitializer] 액세스 토큰 재발급 실패");
-
-      // refreshToken 함수가 false를 반환한 경우 (401 에러 등으로 인한 logout 호출됨)
-      // 이 경우 userModel에서 이미 logout()이 호출되어 토큰이 정리되었을 수 있음
-      console.log("[AppInitializer] refreshToken 함수가 false 반환 - 토큰 만료로 추정");
-      
-      // 리프레시 토큰이 만료된 경우로 간주하고 토큰 정리
-      await clearExpiredTokens();
-      clearSessionStorageFlags();
-      
-      console.log("[AppInitializer] 리프레시 실패 - tossLogin으로 전환");
-      return false;
-    } catch (error: any) {
-      console.error("[AppInitializer] 리프레시 토큰 처리 중 오류:", error);
-
-      // 다양한 리프레시 토큰 만료 에러 메시지 확인
-      const errorMessage = error.message || '';
-      const isRefreshTokenExpired = 
-        errorMessage.includes("Invalid or expired Refresh Token") ||
-        errorMessage.includes("Token not found in Redis") ||
-        errorMessage.includes("Refresh token not found") ||
-        errorMessage.includes("Refresh token expired") ||
-        errorMessage.includes("Request failed with status code 401") ||
-        error.response?.status === 401 ||
-        error.response?.status === 404;
-
-      if (isRefreshTokenExpired) {
-        console.log(
-          "[AppInitializer] 리프레시 토큰 만료/삭제 에러 감지 - 새 로그인 플로우로 전환"
-        );
-        
-        // 리프레시 토큰이 만료된 경우 모든 토큰 정리
-        await clearExpiredTokens();
-        clearSessionStorageFlags();
-      }
-
-      return false;
-    }
-  };
 
   // tossLogin 플로우 처리
   const handleTossLoginFlow = async (authCode?: string, refCode?: string) => {
     try {
       console.log("[AppInitializer] tossLogin 시작");
+      
+      // tossLogin 시작 로깅
+      const tossLoginStartLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_toss_login_start'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginStartLog));
+      
       console.log("[AppInitializer] handleTossLoginFlow 매개변수:", {
         authCode,
         refCode,
@@ -556,6 +542,13 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       });
 
       if (!currentAuthCode || !currentRefCode) {
+        // 매개변수 없음 에러 로깅
+        const noParamsLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_toss_login_no_params'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(noParamsLog));
+        
         console.error(
           "[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음"
         );
@@ -569,10 +562,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 서버 로그인 처리
       await handleServerLogin(currentAuthCode, currentRefCode);
     } catch (error: any) {
+      // tossLogin 실패 로깅
+      const tossLoginFailLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_toss_login_failed',
+        error: error.response?.status || 'No status'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginFailLog));
+      
       console.error("[AppInitializer] tossLogin 실패:", error);
       
       // 특정 에러 타입에 따른 처리
       if (error.response?.status === 409 || error.message?.includes('conflict')) {
+        // 토큰 충돌 로깅
+        const conflictLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_token_conflict_detected'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(conflictLog));
+        
         console.log("[AppInitializer] 토큰 충돌 감지, 재시도 로직 실행");
         await handleTokenConflictRetry(authCode, refCode);
       } else {
@@ -612,41 +620,36 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // fetchUserData 재시도 로직을 포함한 처리
+  // fetchUserData 재시도 로직 (개선)
   const handleFetchUserDataWithRetry = async (isRetry: boolean = false) => {
     try {
       await fetchUserData();
-
-      // fetchUserData 성공 시 적절한 페이지로 이동
       await handleNavigationAfterLogin();
     } catch (error: any) {
-      // "Please choose your character first." 메시지 처리 (에러로 던져진 경우)
-      if (
-        error.message &&
-        error.message.includes("Please choose your character first")
-      ) {
+      // "Please choose your character first." 메시지 처리
+      if (error.message && error.message.includes("Please choose your character first")) {
         safeNavigate("/choose-character");
         onInitialized();
-        return; // 재시도하지 않고 함수 종료
+        return;
       }
 
-      // 인증 관련 에러 특별 처리
-      if (
-        error.message &&
-        error.message.includes(
-          "Full authentication is required to access this resource"
-        )
-      ) {
-        setError("인증이 필요합니다. 다시 로그인해주세요.");
-        return; // 재시도하지 않고 함수 종료
+      // 인증 관련 에러 처리
+      if (error.message && error.message.includes("Full authentication is required to access this resource")) {
+        console.log("[AppInitializer] 인증 필요 - 새로운 로그인 시도");
+        
+        // ⭐ 토큰 정리 후 새 로그인 시도
+        await clearAllTokensBeforeNewLogin();
+        await handleNewTokenLogin();
+        return;
       }
 
       if (!isRetry) {
-        // 첫 번째 실패 시 1회 재시도
+        console.log("[AppInitializer] fetchUserData 재시도");
         await handleFetchUserDataWithRetry(true);
       } else {
-        // 재시도도 실패한 경우 리프레시 토큰으로 액세스 토큰 재발급
-        await handleRefreshTokenAndRetry();
+        console.log("[AppInitializer] fetchUserData 재시도도 실패 - 새 로그인 시도");
+        await clearAllTokensBeforeNewLogin();
+        await handleNewTokenLogin();
       }
     }
   };
@@ -804,20 +807,24 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 서버 로그인 처리
+  // 서버 로그인 처리 (개선)
   const handleServerLogin = async (authCode?: string, refCode?: string) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // authorizationCode와 referrer 확인 (매개변수 우선, 없으면 상태값 사용)
       const currentAuthCode = authCode || authorizationCode;
       const currentRefCode = refCode || referrer;
 
       if (!currentAuthCode || !currentRefCode) {
-        console.error(
-          "[AppInitializer] handleServerLogin: authorizationCode 또는 referrer가 없음"
-        );
+        // 서버 로그인 매개변수 없음 로깅
+        const noParamsLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_server_login_no_params'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(noParamsLog));
+        
+        console.error("[AppInitializer] handleServerLogin: authorizationCode 또는 referrer가 없음");
         setError("로그인 정보가 올바르지 않습니다.");
         return;
       }
@@ -827,152 +834,176 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         currentRefCode,
       });
 
+      // 서버 로그인 시작 로깅
+      const serverLoginStartLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_server_login_start'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(serverLoginStartLog));
+
+      // ⭐ tossLogin 전 토큰 정리 (Redis 동기화)
+      console.log("[AppInitializer] tossLogin 전 토큰 완전 정리");
+      await clearAllTokensBeforeNewLogin();
+
+      // tossLogin 호출
       const result = await tossLogin(currentAuthCode, currentRefCode);
 
       if (!result) {
-        console.error(
-          "[AppInitializer] handleServerLogin: tossLogin 결과가 없음"
-        );
+        // tossLogin 결과 없음 로깅
+        const noResultLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_toss_login_no_result'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(noResultLog));
+        
+        console.error("[AppInitializer] handleServerLogin: tossLogin 결과가 없음");
         setError("로그인 응답이 올바르지 않습니다.");
         return;
       }
 
-      console.log(
-        "[AppInitializer] handleServerLogin: tossLogin 성공, 결과 확인:",
-        result
-      );
+      console.log("[AppInitializer] handleServerLogin: tossLogin 성공");
+
+      // tossLogin 성공 로깅
+      const tossLoginSuccessLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_toss_login_success'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginSuccessLog));
 
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
       const accessToken = localStorage.getItem("accessToken");
 
-      // HttpOnly 쿠키는 JavaScript에서 직접 접근할 수 없으므로 확인하지 않음
-      console.log("[AppInitializer] handleServerLogin: 토큰 상태 확인:", {
+      console.log("[AppInitializer] 토큰 및 사용자 정보 확인:", {
         hasAccessToken: !!accessToken,
-        accessTokenLength: accessToken ? accessToken.length : 0,
-        note: "리프레시 토큰은 HttpOnly 쿠키로 서버에서 관리됨",
+        userId,
+        userName,
+        isInitial,
+        note: "새 리프레시 토큰이 HttpOnly 쿠키로 설정됨"
       });
 
-      console.log(
-        "[AppInitializer] handleServerLogin: 토큰 및 사용자 정보 확인:",
-        {
-          hasAccessToken: !!accessToken,
-          userId,
-          userName,
-          isInitial,
-          note: "리프레시 토큰은 HttpOnly 쿠키로 서버에서 관리됨",
-        }
-      );
+      // 토큰 및 사용자 정보 로깅
+      const tokenInfoLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_token_user_info',
+        hasAccessToken: !!accessToken,
+        isInitial: isInitial
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(tokenInfoLog));
 
-      // userId는 API 문서에 따라 이미 string 타입
-      const userIdStr = userId;
-
-      // 토큰이 제대로 저장되었는지 확인
       if (!accessToken) {
-        console.error(
-          "[AppInitializer] handleServerLogin: accessToken이 없음 - tossLogin은 성공했지만 토큰이 저장되지 않음"
-        );
-        setError(
-          "로그인은 성공했지만 인증 토큰을 받지 못했습니다. 다시 시도해주세요."
-        );
+        // 액세스 토큰 없음 로깅
+        const noAccessTokenLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_no_access_token_after_toss_login'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(noAccessTokenLog));
+        
+        console.error("[AppInitializer] accessToken이 없음");
+        setError("로그인은 성공했지만 인증 토큰을 받지 못했습니다. 다시 시도해주세요.");
         return;
       }
 
       setServerLoginResult({
-        userId: userIdStr,
+        userId: userId,
         userName: userName || undefined,
         referrerId: referrerId || undefined,
         isInitial,
       });
 
-      console.log(
-        "[AppInitializer] handleServerLogin: 서버 로그인 결과 설정 완료, 페이지 이동 로직 시작"
-      );
-
-      // 초기화 플래그 설정 (로그인 성공 후)
+      // 초기화 플래그 설정
       localStorage.setItem("isInitialized", "true");
-      console.log(
-        "[AppInitializer] handleServerLogin: isInitialized 플래그 설정 완료"
-      );
+      console.log("[AppInitializer] isInitialized 플래그 설정 완료");
 
-      // isInitial에 따른 페이지 이동 로직
+      // 초기화 플래그 설정 로깅
+      const initFlagLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_init_flag_set'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(initFlagLog));
+
+      // ⭐ 새로운 토큰 발급 완료 후 잠시 대기 (토큰 동기화)
+      console.log("[AppInitializer] 새 토큰 동기화 대기...");
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 사용자 타입에 따른 페이지 이동
       if (isInitial === true) {
-        console.log(
-          "[AppInitializer] handleServerLogin: 신규 사용자 (isInitial: true) - fetchUserData 호출"
-        );
-        // 신규 사용자: fetchUserData 호출
+        console.log("[AppInitializer] 신규 사용자 - fetchUserData 호출");
+        
+        // 신규 사용자 로깅
+        const newUserLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_new_user_fetch_user_data'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(newUserLog));
+        
         try {
           await fetchUserData();
-          console.log(
-            "[AppInitializer] handleServerLogin: 신규 사용자 fetchUserData 성공"
-          );
-
-          // fetchUserData 성공 시 적절한 페이지로 이동
           await handleNavigationAfterLogin();
         } catch (error: any) {
-          console.error(
-            "[AppInitializer] handleServerLogin: 신규 사용자 fetchUserData 실패:",
-            error
-          );
-
-          // "Please choose your character first." 메시지 확인 (에러로 던져진 경우)
-          if (
-            error.message &&
-            error.message.includes("Please choose your character first")
-          ) {
-            console.log(
-              "[AppInitializer] handleServerLogin: 캐릭터 선택 페이지로 이동"
-            );
+          if (error.message && error.message.includes("Please choose your character first")) {
+            console.log("[AppInitializer] 캐릭터 선택 페이지로 이동");
             safeNavigate("/choose-character");
             onInitialized();
           } else {
-            setError(
-              `fetchUserData 에러: ${error.message || "알 수 없는 오류"}`
-            );
+            setError(`fetchUserData 에러: ${error.message || "알 수 없는 오류"}`);
           }
         }
       } else {
-        // 기존 사용자: fetchUserData 호출하여 실제 캐릭터 상태 확인
-        console.log(
-          "[AppInitializer] 기존 사용자 (isInitial: false), fetchUserData 호출하여 캐릭터 상태 확인"
-        );
+        console.log("[AppInitializer] 기존 사용자 - fetchUserData 호출");
+        
+        // 기존 사용자 로깅
+        const existingUserLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_existing_user_fetch_user_data'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(existingUserLog));
+        
         try {
           await fetchUserData();
-          console.log(
-            "[AppInitializer] handleServerLogin: 기존 사용자 fetchUserData 성공"
-          );
-
-          // fetchUserData 성공 시 적절한 페이지로 이동
           await handleNavigationAfterLogin();
         } catch (error: any) {
-          console.error(
-            "[AppInitializer] 기존 사용자 fetchUserData 에러:",
-            error
-          );
-
-          // "Please choose your character first." 메시지 확인 (에러로 던져진 경우)
-          if (
-            error.message &&
-            error.message.includes("Please choose your character first")
-          ) {
-            console.log(
-              "[AppInitializer] handleServerLogin: 기존 사용자 캐릭터 선택 페이지로 이동"
-            );
+          if (error.message && error.message.includes("Please choose your character first")) {
+            console.log("[AppInitializer] 기존 사용자도 캐릭터 선택 필요");
             safeNavigate("/choose-character");
             onInitialized();
           } else {
-            // 다른 에러인 경우 에러 표시
-            setError(
-              `기존 사용자 fetchUserData 에러: ${
-                error.message || "알 수 없는 오류"
-              }`
-            );
+            setError(`기존 사용자 fetchUserData 에러: ${error.message || "알 수 없는 오류"}`);
           }
         }
       }
+
     } catch (error: any) {
+      // 서버 로그인 실패 로깅
+      const serverLoginFailLog = {
+        time: new Date().toLocaleTimeString(),
+        action: 'app_server_login_failed',
+        error: error.response?.status || 'No status'
+      };
+      localStorage.setItem('refreshToken_logs', JSON.stringify(serverLoginFailLog));
+      
       console.error("[AppInitializer] 서버 로그인 실패:", error);
-      setError(`서버 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      
+      // ⭐ 토큰 충돌 에러 감지 및 처리
+      if (
+        error.response?.status === 409 || 
+        error.message?.includes('conflict') ||
+        error.message?.includes('already exists') ||
+        error.response?.data?.message?.includes('Redis')
+      ) {
+        // 토큰 충돌 감지 로깅
+        const conflictDetectedLog = {
+          time: new Date().toLocaleTimeString(),
+          action: 'app_token_conflict_redis_sync_issue',
+          error: error.response?.status || 'No status'
+        };
+        localStorage.setItem('refreshToken_logs', JSON.stringify(conflictDetectedLog));
+        
+        console.log("[AppInitializer] 토큰 충돌/Redis 동기화 문제 감지, 재시도 로직 실행");
+        await handleTokenConflictRetry(authCode, refCode);
+      } else {
+        setError(`서버 로그인 실패: ${error.message || "알 수 없는 오류"}`);
+      }
     } finally {
       setIsLoading(false);
     }
