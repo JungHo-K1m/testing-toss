@@ -29,6 +29,7 @@ import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 import getRewardPoints from "@/entities/Mission/api/fromRewardPoint";
 import updateTimeZone from "@/entities/User/api/updateTimeZone";
+import { getPromotion } from "@/entities/User/api/getPromotion";
 import useWalletStore from "@/shared/store/useWalletStore";
 import { InlineRanking } from "@/widgets/MyRanking/InlineRanking";
 import { ModalRanking } from "@/widgets/MyRanking/ModalRanking";
@@ -881,6 +882,31 @@ const DiceEventPage: React.FC = () => {
         })
         .catch((error) => {
           // console.error("[DiceEventPage] Reward API error:", error);
+        });
+    }
+  }, []);
+
+  // 프로모션 링크를 통한 접근 여부 확인 및 프로모션 보상 API 호출
+  useEffect(() => {
+    const promotionCode = localStorage.getItem("promotionCode");
+    if (promotionCode === "promotion-reward") {
+      console.log("[DiceEventPage] 프로모션 링크 감지됨. 프로모션 보상 API 호출...");
+      getPromotion(promotionCode)
+        .then((response) => {
+          console.log("[DiceEventPage] 프로모션 보상 API 응답:", response);
+          // 응답 상태가 "SUCCESS"인 경우에만 다이얼로그 표시
+          if (response.status === "SUCCESS") {
+            setShowUrlReward(true);
+          } else if (response.status === "FAILED" || response.status === "GIVEUP") {
+            console.log("[DiceEventPage] 프로모션 보상 이미 지급됨 또는 실패:", response.errorMessage);
+          }
+          // 중복 호출 방지를 위해 promotionCode 삭제
+          localStorage.removeItem("promotionCode");
+        })
+        .catch((error) => {
+          console.error("[DiceEventPage] 프로모션 보상 API 에러:", error);
+          // 에러 발생 시에도 promotionCode 삭제
+          localStorage.removeItem("promotionCode");
         });
     }
   }, []);

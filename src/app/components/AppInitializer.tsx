@@ -204,11 +204,27 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // 프로모션 링크 감지 및 로컬 스토리지 저장
+  const checkAndSavePromotionLink = () => {
+    const currentPath = window.location.pathname;
+    console.log("[AppInitializer] 현재 경로:", currentPath);
+    
+    // "/promotion-reward" 경로 감지
+    if (currentPath === "/promotion-reward") {
+      console.log("[AppInitializer] 프로모션 링크 감지됨");
+      localStorage.setItem("promotionCode", "promotion-reward");
+      console.log("[AppInitializer] 프로모션 코드를 로컬 스토리지에 저장: promotion-reward");
+    }
+  };
+
   // 페이지 진입 시 바로 appLogin 실행
   const handleAppLoginOnEntry = async () => {
     try {
       setIsInitializing(true);
       setError(null);
+
+      // 프로모션 링크 감지 및 저장
+      checkAndSavePromotionLink();
 
       // 환경 정보 로깅
       console.log("[AppInitializer] 환경 정보:", {
