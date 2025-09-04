@@ -8,9 +8,12 @@ export interface PromotionResponse {
 }
 
 // 프로모션 보상 지급 API
-export const getPromotion = async (promotionCode: string): Promise<PromotionResponse> => {
-  const response = await api.post('/api/promotion', {
-    promotionCode: promotionCode
+export const getPromotion = async (promotionCode?: string): Promise<PromotionResponse> => {
+  // 환경변수에서 프로모션 코드 가져오기, 없으면 매개변수 사용
+  const finalPromotionCode = promotionCode || import.meta.env.VITE_PROMOTION_CODE || 'DEFAULT_PROMOTION_CODE';
+  
+  const response = await api.post('/promotion', {
+    promotionCode: finalPromotionCode
   });
 
   if (response.data.code === 'OK') {

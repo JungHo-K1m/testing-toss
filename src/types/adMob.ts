@@ -46,19 +46,19 @@ export interface AdNetworkResponseInfo {
 // 광고 타입 정의
 export type AdType = 'RANDOM_BOX' | 'DICE_REFILL' | 'CARD_FLIP_RETRY' | 'RPS_RETRY';
 
-// 플랫폼별, 광고 타입별 광고 ID
+// 플랫폼별, 광고 타입별 광고 ID (환경변수 사용)
 export const AD_UNIT_IDS = {
   android: {
-    RANDOM_BOX: 'ca-app-pub-8316376994464037/9670672503',      // 랜덤박스 광고
-    DICE_REFILL: 'ca-app-pub-8316376994464037/9670672503',     // 주사위 리필 광고
-    CARD_FLIP_RETRY: 'ca-app-pub-8316376994464037/9670672503', // 카드플립 재시도 광고
-    RPS_RETRY: 'ca-app-pub-8316376994464037/9670672503',       // RPS 재시도 광고
+    RANDOM_BOX: import.meta.env.VITE_AD_ANDROID_RANDOM_BOX || 'ca-app-pub-8316376994464037/3096004724',
+    DICE_REFILL: import.meta.env.VITE_AD_ANDROID_DICE_REFILL || 'ca-app-pub-8316376994464037/2030883800',
+    CARD_FLIP_RETRY: import.meta.env.VITE_AD_ANDROID_CARD_FLIP_RETRY || 'ca-app-pub-8316376994464037/7502702330',
+    RPS_RETRY: import.meta.env.VITE_AD_ANDROID_RPS_RETRY || 'ca-app-pub-8316376994464037/3884404413',
   },
   ios: {
-    RANDOM_BOX: 'ca-app-pub-8316376994464037/9774614282',      // 랜덤박스 광고
-    DICE_REFILL: 'ca-app-pub-8316376994464037/9774614282',     // 주사위 리필 광고
-    CARD_FLIP_RETRY: 'ca-app-pub-8316376994464037/9774614282', // 카드플립 재시도 광고
-    RPS_RETRY: 'ca-app-pub-8316376994464037/9774614282',       // RPS 재시도 광고
+    RANDOM_BOX: import.meta.env.VITE_AD_IOS_RANDOM_BOX || 'ca-app-pub-8316376994464037/4409086390',
+    DICE_REFILL: import.meta.env.VITE_AD_IOS_DICE_REFILL || 'ca-app-pub-8316376994464037/6670349857',
+    CARD_FLIP_RETRY: import.meta.env.VITE_AD_IOS_CARD_FLIP_RETRY || 'ca-app-pub-8316376994464037/1711319609',
+    RPS_RETRY: import.meta.env.VITE_AD_IOS_RPS_RETRY || 'ca-app-pub-8316376994464037/8676183201',
   }
 } as const;
 

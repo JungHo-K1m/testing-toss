@@ -110,6 +110,13 @@ const DiceEventPage: React.FC = () => {
   // URL 보상 팝업 표시를 위한 상태
   const [showUrlReward, setShowUrlReward] = useState<boolean>(false);
 
+  // 프로모션 보상 결과 모달을 위한 상태
+  const [showPromotionModal, setShowPromotionModal] = useState<boolean>(false);
+  const [promotionResult, setPromotionResult] = useState<{
+    status: string;
+    errorMessage?: string;
+  } | null>(null);
+
   // 레벨 업 시 팝업 표시를 위한 상태
   const [showLevelUpDialog, setShowLevelUpDialog] = useState<boolean>(false);
   const [prevLevel, setPrevLevel] = useState<number>(userLv);
@@ -891,25 +898,81 @@ const DiceEventPage: React.FC = () => {
     const promotionCode = localStorage.getItem("promotionCode");
     if (promotionCode === "promotion-reward") {
       console.log("[DiceEventPage] 프로모션 링크 감지됨. 프로모션 보상 API 호출...");
-      getPromotion(promotionCode)
+      getPromotion()
         .then((response) => {
           console.log("[DiceEventPage] 프로모션 보상 API 응답:", response);
-          // 응답 상태가 "SUCCESS"인 경우에만 다이얼로그 표시
-          if (response.status === "SUCCESS") {
-            setShowUrlReward(true);
-          } else if (response.status === "FAILED" || response.status === "GIVEUP") {
-            console.log("[DiceEventPage] 프로모션 보상 이미 지급됨 또는 실패:", response.errorMessage);
-          }
+          
+          // 응답 결과를 상태에 저장
+          setPromotionResult({
+            status: response.status,
+            errorMessage: response.errorMessage
+          });
+          
+          // 모든 상태에 대해 모달 표시
+          setShowPromotionModal(true);
+          
           // 중복 호출 방지를 위해 promotionCode 삭제
           localStorage.removeItem("promotionCode");
         })
         .catch((error) => {
           console.error("[DiceEventPage] 프로모션 보상 API 에러:", error);
+          
+          // 에러 발생 시에도 에러 상태로 모달 표시
+          setPromotionResult({
+            status: "ERROR",
+            errorMessage: error.message || "알 수 없는 오류가 발생했습니다."
+          });
+          setShowPromotionModal(true);
+          
           // 에러 발생 시에도 promotionCode 삭제
           localStorage.removeItem("promotionCode");
         });
     }
   }, []);
+
+  // 프로모션 결과에 따른 메시지 반환 함수
+  const getPromotionMessage = () => {
+    if (!promotionResult) return { title: "", message: "", icon: "" };
+    
+    switch (promotionResult.status) {
+      case "SUCCESS":
+        return {
+          title: "프로모션 보상 지급 완료",
+          message: "10 토스 포인트가 지급되었습니다!",
+          icon: "success"
+        };
+      case "FAILED":
+        return {
+          title: "프로모션 보상 지급 실패",
+          message: promotionResult.errorMessage || "보상 지급에 실패했습니다.",
+          icon: "failed"
+        };
+      case "PENDING":
+        return {
+          title: "프로모션 보상 처리 중",
+          message: "보상이 처리 중입니다. 잠시 후 확인해주세요.",
+          icon: "pending"
+        };
+      case "GIVEUP":
+        return {
+          title: "프로모션 보상 지급 불가",
+          message: promotionResult.errorMessage || "이미 보상을 받았거나 지급 조건을 만족하지 않습니다.",
+          icon: "giveup"
+        };
+      case "ERROR":
+        return {
+          title: "오류 발생",
+          message: promotionResult.errorMessage || "알 수 없는 오류가 발생했습니다.",
+          icon: "error"
+        };
+      default:
+        return {
+          title: "알 수 없는 상태",
+          message: "예상치 못한 응답이 발생했습니다.",
+          icon: "unknown"
+        };
+    }
+  };
 
   // 현재 레벨 보상 찾기
   const currentReward = levelRewards.find((r) => r.level === userLv);
@@ -2801,12 +2864,12 @@ const DiceEventPage: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-                        {/* 이벤트 안내 모달 */}
+            {/* 이벤트 안내 모달 */}
             <Dialog
               open={showEventGuideModal}
               onOpenChange={setShowEventGuideModal}
             >
-              <DialogTitle className="sr-only">이벤트 안내</DialogTitle>
+              <DialogTitle></DialogTitle>
               <DialogContent
                 className="rounded-[24px] max-w-[90%] sm:max-w-[80%] md:max-w-lg p-6 border-none mx-auto relative"
                 style={{
@@ -2992,6 +3055,194 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+
+
+            {/* 프로모션 보상 지급 결과 안내 모달 */}
+            <Dialog
+              open={showPromotionModal}
+              onOpenChange={setShowPromotionModal}
+            >
+              <DialogTitle></DialogTitle>
+              <DialogContent
+                className="rounded-[24px] max-w-[90%] sm:max-w-[80%] md:max-w-lg p-6 border-none mx-auto relative"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+                  position: "fixed",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={() => {
+                    playSfx(Audios.button_click);
+                    setShowPromotionModal(false);
+                    setPromotionResult(null);
+                  }}
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center z-10"
+                >
+                  <HiX className="w-5 h-5 text-white" />
+                </button>
+
+                <div className="flex flex-col items-center w-full">
+                  {/* 메인 타이틀 */}
+                  <div className="text-center mb-6">
+                    <h1
+                      style={{
+                        fontFamily: "'ONE Mobile POP', sans-serif",
+                        fontSize: "30px",
+                        fontWeight: "400",
+                        color: "#FDE047",
+                        WebkitTextStroke: "2px #000000",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      {getPromotionMessage().title}
+                    </h1>
+                  </div>
+
+                  {/* 상태별 아이콘 및 메시지 */}
+                  <div
+                    className="w-full mb-6 p-5 rounded-[20px]"
+                    style={{
+                      background: "rgba(0, 94, 170, 0.5)",
+                      backdropFilter: "blur(10px)",
+                      boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
+                    }}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
+                      >
+                        {getPromotionMessage().icon === "success" && (
+                          <img
+                            src={Images.TossPoint}
+                            alt="success"
+                            className="w-[20px] h-[20px]"
+                          />
+                        )}
+                        {getPromotionMessage().icon === "failed" && (
+                          <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                            <span
+                            style={{
+                              fontFamily: "'ONE Mobile POP', sans-serif",
+                              fontSize: "30px",
+                              fontWeight: "400",
+                              color: "#FDE047",
+                              WebkitTextStroke: "2px #000000",
+                              lineHeight: "1.2",
+                            }}>✕</span>
+                          </div>
+                        )}
+                        {getPromotionMessage().icon === "pending" && (
+                          <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                            <span 
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "30px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "2px #000000",
+                                lineHeight: "1.2",
+                              }}>⏳</span>
+                          </div>
+                        )}
+                        {getPromotionMessage().icon === "giveup" && (
+                          <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                            <span 
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "30px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "2px #000000",
+                                lineHeight: "1.2",
+                              }}>!</span>
+                          </div>
+                        )}
+                        {getPromotionMessage().icon === "error" && (
+                          <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                            <span 
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "30px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "2px #000000",
+                                lineHeight: "1.2",
+                              }}>!</span>
+                          </div>
+                        )}
+                        {getPromotionMessage().icon === "unknown" && (
+                          <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                              <span 
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "30px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "2px #000000",
+                                lineHeight: "1.2",
+                              }}>?</span>
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "'ONE Mobile POP', sans-serif",
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          color: "#FFFFFF",
+                          WebkitTextStroke: "1px #000000",
+                        }}
+                      >
+                        {getPromotionMessage().message}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 닫기 버튼 */}
+                  <button
+                    onClick={() => {
+                      playSfx(Audios.button_click);
+                      setShowPromotionModal(false);
+                      setPromotionResult(null);
+                    }}
+                    className="w-full h-14 rounded-[12px] flex items-center justify-center relative"
+                    style={{
+                      background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                      border: "2px solid #76C1FF",
+                      outline: "2px solid #000000",
+                      boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                      color: "#FFFFFF",
+                      fontFamily: "'ONE Mobile POP', sans-serif",
+                      fontSize: "18px",
+                      fontWeight: "400",
+                      WebkitTextStroke: "1px #000000",
+                      opacity: 1,
+                    }}
+                  >
+                    <img
+                      src={Images.ButtonPointBlue}
+                      alt="button-point-blue"
+                      style={{
+                        position: "absolute",
+                        top: "3px",
+                        left: "3px",
+                        width: "8.47px",
+                        height: "6.3px",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    닫기
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
 
             {/* UID 복사 완료 모달 */}
             {showCopyModal && (
