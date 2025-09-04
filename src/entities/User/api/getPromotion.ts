@@ -17,7 +17,6 @@ export const getPromotion = async (promotionCode?: string): Promise<PromotionRes
   });
 
   if (response.data.code === 'OK') {
-    console.log("프로모션 보상 지급 응답: ", response.data);
     return {
       promotionCode: response.data.data.promotionCode,
       status: response.data.data.status,

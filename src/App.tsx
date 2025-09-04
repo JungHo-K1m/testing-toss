@@ -47,11 +47,6 @@ const App: React.FC = () => {
 
     document.addEventListener("contextmenu", preventContextMenu);
 
-    // 프로모션 코드 저장 (테스트용)
-    console.log("[App] 프로모션 코드 저장");
-    localStorage.setItem("promotionCode", "promotion-reward");
-    console.log("[App] 프로모션 코드를 로컬 스토리지에 저장: promotion-reward");
-
     // 초기화 상태 확인
     const checkInitializationStatus = () => {
       const initializationFlag = localStorage.getItem("isInitialized");

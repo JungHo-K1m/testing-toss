@@ -1215,7 +1215,7 @@ const Inventory: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center relative min-h-screen pt-20">
+    <div className="flex flex-col items-center relative min-h-screen">
       <div
         style={{
           backgroundImage: `url(${Images.BackgroundHome})`,
@@ -1227,7 +1227,7 @@ const Inventory: React.FC = () => {
         }}
         className="w-full mx-6 flex flex-col pt-2"
       >
-        <TopTitle title={"인벤토리"} back={false} />
+        <TopTitle title={"인벤토리"} back={false} className=" pt-20"/>
         {/* 착용 중인 아이템 및 캐릭터 표시 영역 */}
         <div className="flex items-center justify-center flex-1 w-full">
           {/* 좌측 아이템 슬롯 */}
@@ -1365,7 +1365,7 @@ const Inventory: React.FC = () => {
 
       {/* 보유 중인 아이템 목록 영역 */}
       <div
-        className="w-full h-[45vh] mx-6 overflow-hidden"
+        className="w-full h-[45vh] mx-6 overflow-hidden pb-20"
         style={{
           background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
         }}

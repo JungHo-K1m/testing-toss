@@ -498,26 +498,20 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그인 함수
   login: async (initData: string): Promise<void> => {
-    console.log('[userModel] login 시작, initData:', initData);
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/auth/login', { initData });
 
       if (response.data.code === 'OK') {
         const { userId, accessToken, refreshToken } = response.data.data;
-        console.log('[userModel] login 성공, userId:', userId);
         // 토큰 및 userId 저장
         localStorage.setItem('accessToken', accessToken);
         
         // 리프레시 토큰은 서버에서 HttpOnly 쿠키로 자동 설정됨
         // 클라이언트에서 수동으로 설정할 필요 없음
-        console.log('[userModel] 리프레시 토큰은 서버에서 HttpOnly 쿠키로 자동 설정됩니다');
         
         // Set-Cookie 헤더 확인 (디버깅용)
         const setCookieHeader = response.headers['set-cookie'];
-        if (setCookieHeader) {
-          console.log('[userModel] 서버에서 설정된 Set-Cookie 헤더:', setCookieHeader);
-        }
         set({  });
 
         // 사용자 데이터 가져오기
@@ -550,7 +544,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 회원가입 함수
   signup: async (initData: string, petType: 'DOG' | 'CAT'): Promise<void> => {
-    console.log('[userModel] signup 시작, initData:', initData, 'petType:', petType);
     set({ isLoading: true, error: null });
     try {
       // 회원가입 요청 보내기
@@ -574,7 +567,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // 로그아웃 함수
   logout: () => {
-    console.log('[userModel] logout 실행. 토큰 및 userId 제거 및 상태 초기화.');
     localStorage.removeItem('accessToken');
     // refreshToken은 HttpOnly 쿠키이므로 서버에서 처리됨
     set({
@@ -646,7 +638,6 @@ export const useUserStore = create<UserState>((set, get) => ({
         isAuto
       });
   
-      console.log('[userModel] 스위치 변경 성공:', data);
     } catch (error: any) {
       console.error('[userModel] 스위치 변경 중 에러 발생:', error);
       set({ error: error.message || '스위치 변경에 실패했습니다.' });
@@ -665,7 +656,6 @@ export const useUserStore = create<UserState>((set, get) => ({
         completeTutorial
       });
   
-      console.log('[userModel] 튜토리얼 완료:', data);
     } catch (error: any) {
       console.error('[userModel] 튜토리얼 중 에러 발생:', error);
       set({ error: error.message || '튜토리얼에 실패했습니다.' });
@@ -684,7 +674,6 @@ export const useUserStore = create<UserState>((set, get) => ({
     //   const response = await api.get('/test/items/gold');
     //   if (response.data.code === 'OK') {
     //     set({ items: response.data.data });
-    //     // // console.log('골드 아이템 추가 성공:', response.data.data);
     //   } else {
     //     throw new Error(response.data.message || '골드 아이템 추가 실패');
     //   }

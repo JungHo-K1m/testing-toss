@@ -35,7 +35,6 @@ export const useMissionStore = create<MissionState>((set) => ({
     try {
       const response = await api.get('/missions');
       if (response.data.code === 'OK') {
-        // // console.log(response);
         set({ missions: response.data.data, loading: false });
       } else {
         set({ error: response.data.message, loading: false });

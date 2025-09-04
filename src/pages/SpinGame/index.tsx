@@ -17,6 +17,7 @@ import Audios from "@/shared/assets/audio";
 // 10개 아이템으로 구성된 스핀 게임 데이터
 // 룰렛 보상 확률에 맞춰 구성 (3 Keys: 35%, 10 Keys: 25%, 20 Keys: 15%, 50 Keys: 5%, SL Points: 15%, 꽝: 5%)
 // 10개 칸에 맞추기 위해 키 아이템들을 중복 배치하고, 순서를 섞어서 다채롭게 구성
+// 중복된 아이템이 API 응답으로 올 경우, 리스트에서 먼저 나오는 아이템을 선택함 (findIndex 사용)
 const data = [
   {
     option: "3 Keys",
@@ -158,7 +159,11 @@ const CustomWheel: React.FC<{
       // 핀은 상단(12시 방향)에 위치하므로, 각도 계산을 조정
       // prizeNumber가 0일 때 핀이 첫 번째 칸(3 Keys)을 가리키도록
       const segmentAngle = 360 / data.length; // 각 세그먼트의 각도 (36도)
-      const targetAngle = segmentAngle * prizeNumber; // 목표 칸의 각도
+      
+      // 핀이 상단(12시 방향)에 있으므로, 목표 아이템이 상단에 오도록 회전
+      // 아이템 배치가 -90도로 시작하므로, 회전도 -90도를 고려해야 함
+      // 첫 번째 아이템(인덱스 0)이 상단에 오려면 추가 회전이 필요하지 않음
+      const targetAngle = segmentAngle * prizeNumber;
 
       // 5바퀴 + 목표 각도로 회전 (핀 위치에 맞춰 조정)
       const totalRotation = 360 * 5 + targetAngle;
@@ -398,52 +403,25 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         const starCount = responseData.starCount;
         const slCount = responseData.slCount;
 
-        console.log("추출된 데이터:", {
-          spinType,
-          amount,
-          baseAmount,
-          rank,
-          diceCount,
-          starCount,
-          slCount,
-        });
-        console.log(
-          "사용 가능한 상품:",
-          data.map((item) => ({
-            type: item.prize.type,
-            amount: item.prize.amount,
-          }))
-        );
-
         // 매칭 과정 상세 로깅
         data.forEach((item, idx) => {
           const match =
             item.prize.type === spinType.toUpperCase() &&
             item.prize.amount === baseAmount;
-          console.log(
-            `아이템 ${idx}: ${item.prize.type} ${item.prize.amount} - 매칭: ${match}`
-          );
         });
 
         // data 배열에서 spinType과 baseAmount에 맞는 인덱스 찾기
         // API 응답의 spinType과 baseAmount를 기준으로 정확한 매칭
+        // 중복된 아이템이 있을 경우, 리스트에서 먼저 나오는 아이템을 선택 (findIndex 사용)
+        // 예: 3 Keys는 인덱스 0, 3, 6에 있지만, API에서 3 Keys가 오면 인덱스 0을 선택
         const foundIndex = data.findIndex((item) => {
           const match =
             item.prize.type === spinType.toUpperCase() &&
             item.prize.amount === baseAmount;
-          console.log(
-            `Checking item:`,
-            item.prize,
-            `against API:`,
-            { type: spinType.toUpperCase(), amount: baseAmount },
-            `Match:`,
-            match
-          );
           return match;
         });
 
         if (foundIndex !== -1) {
-          console.log("Prize index found:", foundIndex);
           setPrizeNumber(foundIndex);
           // API 문서에 맞게 모든 필드 포함
           setPrizeData({

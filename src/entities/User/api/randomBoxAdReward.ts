@@ -15,14 +15,11 @@ export interface RandomBoxAdRewardResponse {
  * @returns Promise<RandomBoxAdRewardResponse>
  */
 export const getRandomBoxAdReward = async (): Promise<RandomBoxAdRewardResponse> => {
-  console.log('📡 getRandomBoxAdReward API 호출 시작');
   
   try {
     const response = await api.get('/randombox/ad');
-    console.log('📡 API 응답 받음:', response.data);
 
     if (response.data.code === 'OK') {
-      console.log('✅ API 성공 - 반환할 데이터:', response.data.data);
       // API 응답 구조에 맞게 데이터 반환
       return response.data.data;
     } else {

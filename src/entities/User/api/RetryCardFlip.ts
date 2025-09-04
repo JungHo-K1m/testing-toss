@@ -29,8 +29,6 @@ export const getCardFlipRetryAdReward = async (requestData: CardFlipRetryRequest
   try {
     const response = await api.post<CardFlipRetryResponse>('/cardflip/retry', requestData);
     
-    // console.log('카드게임 재시도 광고 보상 API 응답:', response.data);
-    
     return response.data;
   } catch (error: any) {
     console.error('카드게임 재시도 광고 보상 API 오류:', error);

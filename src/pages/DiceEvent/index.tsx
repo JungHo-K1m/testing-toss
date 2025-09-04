@@ -130,9 +130,6 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (UserLevel용 - 희귀도 포함)
   const getEquippedItemsForUserLevel = () => {
-    // console.log("🔍 getEquippedItemsForUserLevel 호출됨");
-    // console.log("📦 equippedItems:", equippedItems);
-    // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
 
     if (!equippedItems?.slot) return [];
 
@@ -168,9 +165,6 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (Board용 - 기존 방식 유지)
   const getEquippedItemsForComponents = () => {
-    // // console.log("🔍 getEquippedItemsForComponents 호출됨");
-    // // console.log("📦 equippedItems:", equippedItems);
-    // // console.log("🎯 equippedItems?.slot:", equippedItems?.slot);
 
     if (!equippedItems?.slot) return [];
 
@@ -195,13 +189,11 @@ const DiceEventPage: React.FC = () => {
   // 장착된 아이템 찾기 (아이템 오버레이 렌더링용)
   const getEquippedItem = (type: string) => {
     const item = equippedItems?.slot.find((item) => item.type === type);
-    // console.log(`🔍 getEquippedItem(${type}):`, item);
     return item;
   };
 
   // 장비 타입별 이미지 가져오기 함수 (아이템 오버레이용)
   const getEquipmentIcon = (type: string, rarity: number) => {
-    // console.log(`🎨 getEquipmentIcon 호출됨 - type: ${type}, rarity: ${rarity}`);
 
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
@@ -235,7 +227,6 @@ const DiceEventPage: React.FC = () => {
     }
 
     const imagePath = Images[imageKey as keyof typeof Images] || Images.Ballon1;
-    // console.log(`🎨 생성된 이미지 키: ${imageKey}, 경로:`, imagePath);
 
     return imagePath;
   };
@@ -285,7 +276,6 @@ const DiceEventPage: React.FC = () => {
       try {
         await fetchUserData();
         await fetchEquippedItems(); // 장착 아이템 데이터도 함께 가져오기
-        // console.log("✅ 사용자 데이터 및 장착 아이템 데이터 로딩 완료");
       } catch (error: any) {
         console.error("Failed to fetch user data:", error);
 
@@ -296,16 +286,8 @@ const DiceEventPage: React.FC = () => {
             "Full authentication is required to access this resource"
           )
         ) {
-          console.log(
-            "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
-          );
-          // 로그인 페이지로 리다이렉트
-          // window.location.href = "/";
           return;
         }
-
-        // 기타 에러는 콘솔에만 기록하고 계속 진행
-        console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
       }
     };
 
@@ -544,7 +526,6 @@ const DiceEventPage: React.FC = () => {
   // 광고보고 랜덤박스 열기 핸들러
   const handleAdRandomBox = async () => {
     if (!isSupported) {
-      // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
@@ -574,26 +555,18 @@ const DiceEventPage: React.FC = () => {
 
     try {
       setIsAdWatching(true); // 광고 시청 시작
-      console.log('광고보고 랜덤박스 시작 - 광고 상태:', randomBoxStatus);
 
       // 광고가 로드되지 않은 경우 먼저 로드
       if (randomBoxStatus !== "loaded") {
-        console.log('광고 로드 시작...');
         await loadAd("RANDOM_BOX");
-        console.log('광고 로드 완료 후 상태:', getAdStatus("RANDOM_BOX"));
         return;
       }
 
-      // console.log('광고 표시 시작...');
 
       // 광고 표시 및 보상 결과 대기
-      // console.log('showAd() Promise 대기 시작...');
       const rewardData: RandomBoxAdRewardResponse = await showAd("RANDOM_BOX");
-      // console.log('showAd() Promise 완료 - 보상 결과:', rewardData);
 
       if (rewardData) {
-        // console.log('보상 결과 처리 시작...');
-        // console.log('원본 rewardData:', rewardData);
 
         // rewardData 구조 확인 및 안전한 매핑
         if (!rewardData.type) {
@@ -608,45 +581,20 @@ const DiceEventPage: React.FC = () => {
           equipment: rewardData.equipment || undefined,
         };
 
-        // console.log('새로운 boxResult 설정:', newBoxResult);
-        // console.log('boxResult.type 확인:', newBoxResult.type);
-        // console.log('boxResult.equipment 확인:', newBoxResult.equipment);
-
         // 광고 시청 후 랜덤박스 결과를 위한 별도 상태에 저장
         setAdBoxResult(newBoxResult);
-
-        // console.log('결과 모달 표시 설정...');
         // 기존 랜덤박스 모달 닫기
         setShowRaffleBoxModal(false);
-
-        // console.log('진동 효과 시작...');
         // 진동 효과 (선택사항)
         setIsVibrating(true);
         setTimeout(() => setIsVibrating(false), 1000);
 
         // API 호출 완료 후 바로 광고 랜덤박스 결과 모달 표시
-        console.log("🎭 광고 랜덤박스 결과 모달 표시 시도...");
-        console.log("🎭 현재 adBoxResult 상태:", adBoxResult);
-        console.log(
-          "🎭 현재 showAdRaffleBoxResultModal 상태:",
-          showAdRaffleBoxResultModal
-        );
-
         setShowAdRaffleBoxResultModal(true);
-        console.log("✅ setShowAdRaffleBoxResultModal(true) 호출 완료");
-
-        // 모달 상태 변경 확인을 위한 지연 로그
-        setTimeout(() => {
-          console.log("🎭 100ms 후 모달 상태 확인:", {
-            showAdRaffleBoxResultModal,
-            adBoxResult: adBoxResult ? "있음" : "없음",
-          });
-        }, 100);
 
         // 사운드 효과 추가
         playSfx(Audios.button_click);
 
-        // console.log('사용자 데이터 새로고침 시작...');
         // 사용자 데이터 새로고침 (보상 반영)
         try {
           await fetchUserData();
@@ -663,33 +611,19 @@ const DiceEventPage: React.FC = () => {
               "Full authentication is required to access this resource"
             )
           ) {
-            console.log(
-              "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
-            );
-            // window.location.href = "/";
             return;
           }
-
-          // 기타 에러는 콘솔에만 기록하고 계속 진행
-          console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
         }
-
-        // console.log('광고보고 랜덤박스 완료!');
 
         // 마지막 광고 시청 시간 업데이트
         setLastAdWatchTime(now);
-
-        // 🔥 핵심 수정: 광고 시청 완료 후 강제 대기 시간 추가
-        // console.log('광고 시청 완료 후 2초 대기 시작...');
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        // console.log('대기 완료 - 다음 광고 시청 준비됨');
 
         // 보상 처리 완료 후 광고 재로드 (다음 사용을 위해)
         setTimeout(() => {
           reloadAd("RANDOM_BOX");
         }, 1000);
       } else {
-        // console.log('보상 결과가 없습니다.');
       }
     } catch (error: any) {
       console.error("광고 표시 중 오류:", error);
@@ -711,29 +645,21 @@ const DiceEventPage: React.FC = () => {
   // 주사위 리필 광고 핸들러 수정
   const handleAdRefillDice = async () => {
     if (!isSupported) {
-      // console.log('광고가 지원되지 않는 환경입니다');
       return;
     }
 
     try {
       const diceRefillStatus = getAdStatus("DICE_REFILL");
-      console.log('주사위 리필 광고 시작 - 광고 상태:', diceRefillStatus);
 
       // 광고가 로드되지 않은 경우 먼저 로드
       if (diceRefillStatus !== "loaded") {
-        console.log('광고 로드 시작...');
         await loadAd("DICE_REFILL"); // 광고 타입 지정
-        console.log('광고 로드 완료 후 상태:', getAdStatus("DICE_REFILL"));
       }
 
       // 광고 표시 및 보상 결과 대기 (광고 타입 지정)
-      console.log('광고 표시 시작...');
       const rewardData = await showAd("DICE_REFILL");
-      // console.log('주사위 리필 광고 완료 - 보상 결과:', rewardData);
 
       if (rewardData) {
-        // console.log('주사위 리필 보상 처리 완료');
-
         // 사용자 데이터 새로고침
         try {
           await fetchUserData();
@@ -750,15 +676,8 @@ const DiceEventPage: React.FC = () => {
               "Full authentication is required to access this resource"
             )
           ) {
-            console.log(
-              "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
-            );
-            // window.location.href = "/";
             return;
           }
-
-          // 기타 에러는 콘솔에만 기록하고 계속 진행
-          console.log("[DiceEvent] 에러를 던지지 않고 콘솔에만 기록");
         }
 
         // 성공 메시지 표시
@@ -803,45 +722,6 @@ const DiceEventPage: React.FC = () => {
 
   const isAdButtonDisabled = getAdStatus("RANDOM_BOX") === "loading";
 
-  // 보유 열쇠 개수는 lotteryCount를 직접 사용
-
-  // 디버깅용: 랜덤박스 결과 로깅
-  useEffect(() => {
-    if (boxResult) {
-      // console.log("랜덤박스 결과:", boxResult);
-      // console.log("결과 타입:", boxResult.type);
-      if (boxResult.equipment) {
-        // console.log("장비 정보:", boxResult.equipment);
-        // console.log("장비 타입:", boxResult.equipment.type);
-        // console.log("장비 희귀도:", boxResult.equipment.rarity);
-        // console.log(
-        //     "이미지 경로:",
-        //     getEquipmentIcon(boxResult.equipment.type, boxResult.equipment.rarity)
-        //   );
-      }
-    }
-  }, [boxResult]);
-
-  // 디버깅용: 모달 상태 변경 감지
-  useEffect(() => {
-    console.log("🎭 모달 상태 변경:", {
-      showAdRaffleBoxResultModal,
-      adBoxResult: adBoxResult ? "있음" : "없음",
-      showRaffleBoxModal,
-      showResult,
-      showRaffleBoxOpenModal,
-      boxResult: boxResult ? "있음" : "없음",
-    });
-  }, [
-    showAdRaffleBoxResultModal,
-    adBoxResult,
-    showRaffleBoxModal,
-    showResult,
-    showRaffleBoxOpenModal,
-    boxResult,
-  ]);
-
-  // 사용자 데이터 초기 로딩 (중복 제거됨)
 
   useEffect(() => {
     if (showAdModal) {
@@ -874,15 +754,12 @@ const DiceEventPage: React.FC = () => {
   useEffect(() => {
     const referralCode = localStorage.getItem("referralCode");
     if (referralCode === "from-dapp-portal") {
-      // // console.log("[DiceEventPage] Dapp Portal referral detected. Calling reward API...");
       getRewardPoints()
         .then((message) => {
-          // // console.log("[DiceEventPage] Reward API response:", message);
           // 응답 메시지가 "Success"인 경우에만 다이얼로그 표시
           if (message === "Success") {
             setShowUrlReward(true);
           } else if (message === "Already Rewarded") {
-            // // console.log("[DiceEventPage] Reward already claimed.");
           }
           // 중복 호출 방지를 위해 referralCode 삭제
           localStorage.removeItem("referralCode");
@@ -897,11 +774,8 @@ const DiceEventPage: React.FC = () => {
   useEffect(() => {
     const promotionCode = localStorage.getItem("promotionCode");
     if (promotionCode === "promotion-reward") {
-      console.log("[DiceEventPage] 프로모션 링크 감지됨. 프로모션 보상 API 호출...");
       getPromotion()
-        .then((response) => {
-          console.log("[DiceEventPage] 프로모션 보상 API 응답:", response);
-          
+        .then((response) => {          
           // 응답 결과를 상태에 저장
           setPromotionResult({
             status: response.status,
@@ -995,9 +869,6 @@ const DiceEventPage: React.FC = () => {
     if (
       error.includes("Full authentication is required to access this resource")
     ) {
-      console.log(
-        "[DiceEvent] 전체 인증 필요 에러 감지 - 로그인 페이지로 리다이렉트"
-      );
       // 약간의 지연 후 리다이렉트 (무한 리프레시 방지)
       setTimeout(() => {
         // window.location.href = "/";
@@ -1133,7 +1004,6 @@ const DiceEventPage: React.FC = () => {
     rpsId?: number,
     lastPlayerChoice?: number
   ) => {
-    // // console.log(`RPS Game Ended: ${result}, Winnings: ${winnings}`);
     fetchUserData();
     game.handleRPSGameEnd(result, winnings, rpsId, lastPlayerChoice);
   };
@@ -1327,7 +1197,7 @@ const DiceEventPage: React.FC = () => {
             )}
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
-              <div className="absolute md:top-0 top-0 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
+              <div className="absolute md:top-0 top-20 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div
                   className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl"

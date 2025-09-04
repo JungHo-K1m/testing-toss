@@ -51,7 +51,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     flagsToRemove.forEach((flag) => {
       if (sessionStorage.getItem(flag)) {
         sessionStorage.removeItem(flag);
-        console.log(`[AppInitializer] ${flag} 플래그 정리 완료`);
       }
     });
   };
@@ -59,23 +58,19 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // tossLogin 전에 모든 토큰 정리 함수 (Redis 충돌 방지)
   const clearAllTokensBeforeNewLogin = async () => {
     try {
-      console.log("[AppInitializer] tossLogin 전 토큰 정리 시작");
       
       // 1. 로컬스토리지의 액세스 토큰 삭제
       if (localStorage.getItem("accessToken")) {
         localStorage.removeItem("accessToken");
-        console.log("[AppInitializer] 액세스 토큰 삭제 완료");
       }
       
       // 2. 초기화 플래그 삭제
       if (localStorage.getItem("isInitialized")) {
         localStorage.removeItem("isInitialized");
-        console.log("[AppInitializer] 초기화 플래그 삭제 완료");
       }
       
-      // 3. ⭐ 중요: 서버에 명시적 로그아웃 요청으로 Redis 리프레시 토큰 정리
+      // 3.  중요: 서버에 명시적 로그아웃 요청으로 Redis 리프레시 토큰 정리
       try {
-        console.log("[AppInitializer] 서버 로그아웃 요청으로 Redis 토큰 정리");
         await api.post('/auth/logout', {}, {
           headers: {
             'Content-Type': 'application/json'
@@ -83,7 +78,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           withCredentials: true, // HttpOnly 쿠키 전송
           timeout: 10000 // 로그아웃은 빠르게 처리
         });
-        console.log("[AppInitializer] 서버 로그아웃 요청 완료 - Redis 토큰 정리됨");
       } catch (logoutError: any) {
         console.warn("[AppInitializer] 서버 로그아웃 요청 실패:", {
           status: logoutError.response?.status,
@@ -96,10 +90,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       clearSessionStorageFlags();
       
       // 5. ⭐ 서버 처리 완료를 위한 충분한 대기 시간
-      console.log("[AppInitializer] 서버 Redis 정리 완료 대기 중...");
       await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5초 대기
       
-      console.log("[AppInitializer] 토큰 정리 완료");
     } catch (error) {
       console.error("[AppInitializer] 토큰 정리 중 오류:", error);
       // 토큰 정리 실패해도 계속 진행
@@ -111,22 +103,18 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 토큰 충돌 시 재시도 로직 (개선)
   const handleTokenConflictRetry = async (authCode?: string, refCode?: string) => {
     try {
-      console.log("[AppInitializer] 토큰 충돌 재시도 로직 시작");
       
       // 1. 더 강력한 토큰 정리 (Redis 포함)
       await clearAllTokensBeforeNewLogin();
       
       // 2. 새로운 appLogin으로 authorizationCode 재획득
-      console.log("[AppInitializer] 새로운 appLogin으로 authorizationCode 재획득");
       const newLoginResult = await appLogin();
       const { authorizationCode: newAuthCode, referrer: newRefCode } = newLoginResult;
       
       // 3. ⭐ 추가 대기 시간 (서버 Redis 상태 안정화)
-      console.log("[AppInitializer] 서버 상태 안정화 대기...");
       await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
       
       // 4. 새로운 authorizationCode로 tossLogin 재시도
-      console.log("[AppInitializer] 새로운 authorizationCode로 tossLogin 재시도");
       await handleServerLogin(newAuthCode, newRefCode);
       
     } catch (retryError: any) {
@@ -137,31 +125,21 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
   // 페이지 최초 진입 시 자동 초기화 활성화
   useEffect(() => {
-    console.log("[AppInitializer] 페이지 진입 - 플래그 정리 및 초기화 시작");
 
     // 앱인토스 웹뷰 환경에서 모든 세션 스토리지 플래그 정리
     clearSessionStorageFlags();
 
-    // 프로모션 링크 감지 및 저장 (모든 경로에서 실행)
-    checkAndSavePromotionLink();
-
     // AppInitializer 재실행 플래그 확인
     if (sessionStorage.getItem("restartAppInitializer")) {
       sessionStorage.removeItem("restartAppInitializer");
-      console.log(
-        "[AppInitializer] 재실행 플래그 감지 - AppInitializer 로직 재실행"
-      );
 
       // 액세스 토큰이 있다면 삭제 (리프레시 실패로 인한 재실행이므로)
       if (localStorage.getItem("accessToken")) {
         localStorage.removeItem("accessToken");
-        console.log("[AppInitializer] 리프레시 실패로 인한 액세스 토큰 삭제");
       }
 
       // 초기화 플래그도 삭제 (새로운 로그인 시도이므로)
       localStorage.removeItem("isInitialized");
-      console.log("[AppInitializer] 초기화 플래그 삭제 - 새로운 로그인 시도");
-
       // 모든 세션 스토리지 플래그 정리 (무한 루프 방지)
       clearSessionStorageFlags();
 
@@ -182,18 +160,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       const isInitialized = localStorage.getItem("isInitialized") === "true";
       const hasAccessToken = !!localStorage.getItem("accessToken");
 
-      console.log("[AppInitializer] 라우팅 상태 체크:", {
-        currentPath,
-        isInitialized,
-        hasAccessToken,
-        timestamp: new Date().toISOString(),
-      });
 
       // 초기화되지 않은 상태에서 루트가 아닌 페이지에 있는 경우
       if (!isInitialized && currentPath !== "/" && currentPath !== "/login") {
-        console.log(
-          "[AppInitializer] 초기화되지 않은 상태에서 잘못된 페이지 감지, 루트로 리다이렉트"
-        );
         window.location.href = "/";
       }
     };
@@ -207,36 +176,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 프로모션 링크 감지 및 로컬 스토리지 저장 (테스트용)
-  const checkAndSavePromotionLink = () => {
-    const currentPath = window.location.pathname;
-    console.log("[AppInitializer] 현재 경로:", currentPath);
-    
-    // 테스트용: 항상 프로모션 코드 저장
-    console.log("[AppInitializer] 테스트용 프로모션 코드 저장");
-    localStorage.setItem("promotionCode", "promotion-reward");
-    console.log("[AppInitializer] 프로모션 코드를 로컬 스토리지에 저장: promotion-reward");
-    
-    // 실제 프로덕션에서는 아래 주석을 해제하고 위 코드를 제거
-    // if (currentPath === "/promotion-reward") {
-    //   console.log("[AppInitializer] 프로모션 링크 감지됨");
-    //   localStorage.setItem("promotionCode", "promotion-reward");
-    //   console.log("[AppInitializer] 프로모션 코드를 로컬 스토리지에 저장: promotion-reward");
-    // }
-  };
 
   // 페이지 진입 시 바로 appLogin 실행
   const handleAppLoginOnEntry = async () => {
     try {
       setIsInitializing(true);
       setError(null);
-
-      // 환경 정보 로깅
-      console.log("[AppInitializer] 환경 정보:", {
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        hasReactNativeWebView: !!window.ReactNativeWebView,
-      });
 
       // 토스 앱 환경 확인
       if (!window.ReactNativeWebView) {
@@ -258,9 +203,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
 
       // appLogin 함수 호출하여 authorizationCode와 referrer 즉시 획득
-      console.log("[AppInitializer] appLogin 호출 시작...");
       const loginResult = await appLogin();
-      console.log("[AppInitializer] appLogin 응답:", loginResult);
 
       // 타입 안전성을 위한 검증
       if (!loginResult || typeof loginResult !== "object") {
@@ -273,7 +216,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
 
       const { authorizationCode: authCode, referrer: refCode } = loginResult;
-      console.log("[AppInitializer] 파싱된 값:", { authCode, refCode });
 
       if (!authCode || typeof authCode !== "string") {
         console.error(
@@ -355,7 +297,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 무한 리프레시 방지 체크
       if (sessionStorage.getItem("redirectingToLogin")) {
         sessionStorage.removeItem("redirectingToLogin");
-        console.log("[AppInitializer] 리다이렉트 상태 감지, 초기화 중단");
         return;
       }
 
@@ -379,15 +320,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       if (accessToken) {
         // 1. 액세스토큰이 있는 경우
-        console.log(
-          "[AppInitializer] 기존 액세스 토큰 발견, 사용자 데이터 확인"
-        );
         await handleExistingTokenLogin();
       } else {
         // 2. 액세스 토큰이 없는 경우
-        console.log(
-          "[AppInitializer] 액세스 토큰 없음, 리프레시 토큰으로 1회 시도"
-        );
         await handleNoTokenFlow(authCode, refCode);
       }
     } catch (error) {
@@ -405,7 +340,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       
       if (!accessToken) {
         // 액세스 토큰이 없으면 리프레시 토큰으로 시도
-        console.log("[AppInitializer] 액세스 토큰 없음, 리프레시 토큰으로 시도");
         
         // 리프레시 시도 로깅
         const noTokenLog = {
@@ -424,7 +358,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             action: 'app_no_token_refresh_success'
           };
           localStorage.setItem('refreshToken_logs', JSON.stringify(refreshSuccessLog));
-          console.log("[AppInitializer] 액세스 토큰 없음 상태에서 리프레시 성공");
           
           await handleNavigationAfterLogin();
           return;
@@ -436,26 +369,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             error: refreshError.response?.status || 'No status'
           };
           localStorage.setItem('refreshToken_logs', JSON.stringify(refreshFailLog));
-          console.log("[AppInitializer] 액세스 토큰 없음 상태에서 리프레시 실패, tossLogin으로 진행:", refreshError.message);
           
           // 리프레시 실패 시 tossLogin으로 진행
           const currentAuthCode = authCode || authorizationCode;
           const currentRefCode = refCode || referrer;
 
-          console.log("[AppInitializer] handleNoTokenFlow에서 사용할 값:", {
-            authCode,
-            refCode,
-            authorizationCode,
-            referrer,
-            currentAuthCode,
-            currentRefCode,
-          });
-
           if (currentAuthCode && currentRefCode) {
-            console.log("[AppInitializer] handleTossLoginFlow 호출:", {
-              currentAuthCode,
-              currentRefCode,
-            });
             await handleTossLoginFlow(currentAuthCode, currentRefCode);
           } else {
             console.error(
@@ -468,7 +387,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
       
       // 액세스 토큰이 있으면 fetchUserData 시도 (axiosInstance에서 리프레시 처리)
-      console.log("[AppInitializer] 액세스 토큰 있음, fetchUserData 시도 (axiosInstance에서 리프레시 처리)");
       
       // 액세스 토큰 있음 로깅
       const hasTokenLog = {
@@ -486,7 +404,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           action: 'app_fetch_user_data_success'
         };
         localStorage.setItem('refreshToken_logs', JSON.stringify(fetchSuccessLog));
-        console.log("[AppInitializer] fetchUserData 성공");
         
         await handleNavigationAfterLogin();
         return;
@@ -498,17 +415,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           error: fetchError.response?.status || 'No status'
         };
         localStorage.setItem('refreshToken_logs', JSON.stringify(fetchFailLog));
-        console.log("[AppInitializer] fetchUserData 실패, tossLogin 시도:", fetchError.message);
         
         // fetchUserData 실패 시 tossLogin으로 새 토큰 발급
         const currentAuthCode = authCode || authorizationCode;
         const currentRefCode = refCode || referrer;
 
         if (currentAuthCode && currentRefCode) {
-          console.log("[AppInitializer] handleTossLoginFlow 호출:", {
-            currentAuthCode,
-            currentRefCode,
-          });
           await handleTossLoginFlow(currentAuthCode, currentRefCode);
         } else {
           console.error(
@@ -535,7 +447,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // tossLogin 플로우 처리
   const handleTossLoginFlow = async (authCode?: string, refCode?: string) => {
     try {
-      console.log("[AppInitializer] tossLogin 시작");
       
       // tossLogin 시작 로깅
       const tossLoginStartLog = {
@@ -544,23 +455,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       };
       localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginStartLog));
       
-      console.log("[AppInitializer] handleTossLoginFlow 매개변수:", {
-        authCode,
-        refCode,
-      });
 
       // authorizationCode와 referrer 확인 (매개변수 우선, 없으면 상태값 사용)
       const currentAuthCode = authCode || authorizationCode;
       const currentRefCode = refCode || referrer;
 
-      console.log("[AppInitializer] handleTossLoginFlow에서 사용할 값:", {
-        authCode,
-        refCode,
-        authorizationCode,
-        referrer,
-        currentAuthCode,
-        currentRefCode,
-      });
 
       if (!currentAuthCode || !currentRefCode) {
         // 매개변수 없음 에러 로깅
@@ -602,7 +501,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         };
         localStorage.setItem('refreshToken_logs', JSON.stringify(conflictLog));
         
-        console.log("[AppInitializer] 토큰 충돌 감지, 재시도 로직 실행");
         await handleTokenConflictRetry(authCode, refCode);
       } else {
         setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
@@ -656,7 +554,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // 인증 관련 에러 처리
       if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-        console.log("[AppInitializer] 인증 필요 - 새로운 로그인 시도");
         
         // ⭐ 토큰 정리 후 새 로그인 시도
         await clearAllTokensBeforeNewLogin();
@@ -665,10 +562,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
 
       if (!isRetry) {
-        console.log("[AppInitializer] fetchUserData 재시도");
         await handleFetchUserDataWithRetry(true);
       } else {
-        console.log("[AppInitializer] fetchUserData 재시도도 실패 - 새 로그인 시도");
         await clearAllTokensBeforeNewLogin();
         await handleNewTokenLogin();
       }
@@ -678,7 +573,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도
   const handleRefreshTokenAndRetry = async () => {
     try {
-      console.log("[AppInitializer] 리프레시 토큰으로 액세스 토큰 재발급 시도");
 
       // 재발급된 토큰으로 fetchUserData 재시도
       await handleFetchUserDataWithRetry();
@@ -751,28 +645,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     fallbackToWindowLocation: boolean = true
   ) => {
     try {
-      console.log("[AppInitializer] safeNavigate 호출:", {
-        path,
-        hasReactNativeWebView: !!window.ReactNativeWebView,
-        currentPath: window.location.pathname,
-      });
-
-      // 페이지 이동 전에 프로모션 코드 저장
-      console.log("[AppInitializer] 페이지 이동 전 프로모션 코드 저장");
-      localStorage.setItem("promotionCode", "promotion-reward");
-      console.log("[AppInitializer] 프로모션 코드를 로컬 스토리지에 저장: promotion-reward");
-
       // React Native WebView 환경에서는 window.location을 직접 사용
       if (window.ReactNativeWebView) {
         // localStorage 상태 확인
         const initializationFlag = localStorage.getItem("isInitialized");
         const accessToken = localStorage.getItem("accessToken");
-
-        console.log("[AppInitializer] WebView 환경에서 페이지 이동:", {
-          initializationFlag,
-          hasAccessToken: !!accessToken,
-          targetPath: path,
-        });
 
         // 상태가 제대로 설정되었는지 확인 후 페이지 이동
         if (initializationFlag === "true" && accessToken) {
@@ -781,14 +658,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
           // 약간의 지연 후 페이지 이동 (초기화 상태 업데이트를 위해)
           setTimeout(() => {
-            console.log("[AppInitializer] WebView에서 페이지 이동 실행:", path);
             window.location.href = path;
           }, 100);
         } else {
-          console.error("[AppInitializer] 초기화 상태 또는 토큰이 없음:", {
-            initializationFlag,
-            hasAccessToken: !!accessToken,
-          });
           setError("초기화 상태 설정에 실패했습니다. 다시 시도해주세요.");
         }
 
@@ -796,10 +668,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       }
 
       // 일반 브라우저 환경에서는 React Router navigate 시도
-      console.log(
-        "[AppInitializer] 일반 브라우저에서 React Router navigate 시도:",
-        path
-      );
       navigate(path);
 
       // 초기화 완료 처리
@@ -817,16 +685,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             onInitialized();
           }
         } else {
-          console.log("[AppInitializer] React Router navigate 성공:", path);
         }
       }, 100);
     } catch (error) {
       console.error("[AppInitializer] safeNavigate 에러:", error);
       if (fallbackToWindowLocation) {
-        console.log(
-          "[AppInitializer] 에러 발생으로 window.location fallback:",
-          path
-        );
         window.location.href = path;
         onInitialized();
       }
@@ -855,11 +718,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         return;
       }
 
-      console.log("[AppInitializer] handleServerLogin 시작:", {
-        currentAuthCode: currentAuthCode.substring(0, 10) + "...",
-        currentRefCode,
-      });
-
       // 서버 로그인 시작 로깅
       const serverLoginStartLog = {
         time: new Date().toLocaleTimeString(),
@@ -867,8 +725,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       };
       localStorage.setItem('refreshToken_logs', JSON.stringify(serverLoginStartLog));
 
-      // ⭐ tossLogin 전 토큰 정리 (Redis 동기화)
-      console.log("[AppInitializer] tossLogin 전 토큰 완전 정리");
+      // tossLogin 전 토큰 정리 (Redis 동기화)
       await clearAllTokensBeforeNewLogin();
 
       // tossLogin 호출
@@ -887,7 +744,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         return;
       }
 
-      console.log("[AppInitializer] handleServerLogin: tossLogin 성공");
 
       // tossLogin 성공 로깅
       const tossLoginSuccessLog = {
@@ -899,14 +755,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
       const accessToken = localStorage.getItem("accessToken");
-
-      console.log("[AppInitializer] 토큰 및 사용자 정보 확인:", {
-        hasAccessToken: !!accessToken,
-        userId,
-        userName,
-        isInitial,
-        note: "새 리프레시 토큰이 HttpOnly 쿠키로 설정됨"
-      });
 
       // 토큰 및 사용자 정보 로깅
       const tokenInfoLog = {
@@ -939,7 +787,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // 초기화 플래그 설정
       localStorage.setItem("isInitialized", "true");
-      console.log("[AppInitializer] isInitialized 플래그 설정 완료");
 
       // 초기화 플래그 설정 로깅
       const initFlagLog = {
@@ -948,13 +795,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       };
       localStorage.setItem('refreshToken_logs', JSON.stringify(initFlagLog));
 
-      // ⭐ 새로운 토큰 발급 완료 후 잠시 대기 (토큰 동기화)
-      console.log("[AppInitializer] 새 토큰 동기화 대기...");
+      // 새로운 토큰 발급 완료 후 잠시 대기 (토큰 동기화)
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // 사용자 타입에 따른 페이지 이동
       if (isInitial === true) {
-        console.log("[AppInitializer] 신규 사용자 - fetchUserData 호출");
         
         // 신규 사용자 로깅
         const newUserLog = {
@@ -968,7 +813,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           await handleNavigationAfterLogin();
         } catch (error: any) {
           if (error.message && error.message.includes("Please choose your character first")) {
-            console.log("[AppInitializer] 캐릭터 선택 페이지로 이동");
             safeNavigate("/choose-character");
             onInitialized();
           } else {
@@ -976,7 +820,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           }
         }
       } else {
-        console.log("[AppInitializer] 기존 사용자 - fetchUserData 호출");
         
         // 기존 사용자 로깅
         const existingUserLog = {
@@ -990,7 +833,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           await handleNavigationAfterLogin();
         } catch (error: any) {
           if (error.message && error.message.includes("Please choose your character first")) {
-            console.log("[AppInitializer] 기존 사용자도 캐릭터 선택 필요");
             safeNavigate("/choose-character");
             onInitialized();
           } else {
@@ -1025,7 +867,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         };
         localStorage.setItem('refreshToken_logs', JSON.stringify(conflictDetectedLog));
         
-        console.log("[AppInitializer] 토큰 충돌/Redis 동기화 문제 감지, 재시도 로직 실행");
         await handleTokenConflictRetry(authCode, refCode);
       } else {
         setError(`서버 로그인 실패: ${error.message || "알 수 없는 오류"}`);

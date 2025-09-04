@@ -69,15 +69,6 @@ api.interceptors.response.use(
 
     // 액세스 토큰이 없는 경우 리프레시 시도
     if (!localStorage.getItem('accessToken')) {
-      console.log('[axiosInstance] 액세스 토큰 없음 - 리프레시 토큰으로 시도');
-      
-      // 리프레시 시도 로깅
-      const noTokenLog = {
-        time: new Date().toLocaleTimeString(),
-        action: 'no_token_refresh_attempt',
-        url: originalRequest.url?.split('/').pop() || 'unknown'
-      };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(noTokenLog));
       
       try {
         // 리프레시 토큰으로 새 액세스 토큰 획득 시도
@@ -87,15 +78,6 @@ api.interceptors.response.use(
         if (newAccessToken) {
           localStorage.setItem('accessToken', newAccessToken.replace('Bearer ', ''));
           originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-          
-          // 리프레시 성공 로깅
-          const refreshSuccessLog = {
-            time: new Date().toLocaleTimeString(),
-            action: 'no_token_refresh_success',
-            url: originalRequest.url?.split('/').pop() || 'unknown'
-          };
-          localStorage.setItem('refreshToken_logs', JSON.stringify(refreshSuccessLog));
-          console.log('[axiosInstance] 액세스 토큰 없음 상태에서 리프레시 성공');
           
           return api(originalRequest);
         }
@@ -115,15 +97,6 @@ api.interceptors.response.use(
         return Promise.reject(new Error("No new access token in refresh response."));
         
       } catch (refreshError: any) {
-        // 리프레시 실패 로깅
-        const refreshFailLog = {
-          time: new Date().toLocaleTimeString(),
-          action: 'no_token_refresh_failed',
-          url: originalRequest.url?.split('/').pop() || 'unknown',
-          error: refreshError.response?.status || 'No status'
-        };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(refreshFailLog));
-        console.log('[axiosInstance] 액세스 토큰 없음 상태에서 리프레시 실패:', refreshError.message);
         
         const currentPath = window.location.pathname;
         if (currentPath !== "/" && currentPath !== "/login") {
@@ -149,16 +122,6 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       
-      // 인터셉터 로깅
-      const interceptorLog = {
-        time: new Date().toLocaleTimeString(),
-        action: 'token_expired_refresh_attempt',
-        url: originalRequest.url?.split('/').pop() || 'unknown',
-        status: error.response.status
-      };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(interceptorLog));
-      console.log('[axiosInstance] 토큰 만료 감지 - 로그 저장됨');
-      
       try {
         // 🔥 간소화: 직접 API 호출로 리프레시 토큰 처리
         const refreshResponse = await api.get('/auth/refresh');
@@ -174,8 +137,6 @@ api.interceptors.response.use(
             action: 'token_refresh_retry_success',
             url: originalRequest.url?.split('/').pop() || 'unknown'
           };
-          localStorage.setItem('refreshToken_logs', JSON.stringify(retrySuccessLog));
-          console.log('[axiosInstance] 재시도 성공 - 로그 저장됨');
           
           return api(originalRequest);
         }
