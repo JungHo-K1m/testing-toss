@@ -7,7 +7,7 @@ import { getRPSRetryAdReward } from '@/entities/User/api/RetryRPS';
 import { getCardFlipRetryAdReward } from '@/entities/User/api/RetryCardFlip';
 
 // 광고 상태 타입
-export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed';
+export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed' | 'cleaning';
 
 
 
@@ -256,7 +256,7 @@ export const useAdMob = (): UseAdMobReturn => {
                   // 광고 시청 완료 후 자동으로 인스턴스 정리 (지연)
                   setTimeout(() => {
                     resetAdInstance(adType);
-                  }, 3000);
+                  }, 2000);
                   return; // 여기서 함수 종료하여 아래 API 호출 방지
                 }
 
@@ -287,7 +287,7 @@ export const useAdMob = (): UseAdMobReturn => {
                 // 광고 인스턴스 리셋을 지연시켜 호출 (모달 표시 후)
                 setTimeout(() => {
                   resetAdInstance(adType);
-                }, 3000);
+                }, 2000);
               }
               break;
           }
@@ -325,10 +325,10 @@ export const useAdMob = (): UseAdMobReturn => {
     const instance = adInstancesRef.current[adType];
     const currentStatus = adStatuses[adType];
     
-    // 광고 시청 간격 체크 (최소 2초 간격)
+    // 광고 시청 간격 체크 (최소 3초 간격)
     const now = Date.now();
     const lastAdTime = instance.lastAdTime || 0;
-    if (now - lastAdTime < 2000) {
+    if (now - lastAdTime < 3000) {
       throw new Error('광고 시청 간격이 너무 짧습니다. 잠시 후 다시 시도해주세요.');
     }
     
@@ -350,8 +350,9 @@ export const useAdMob = (): UseAdMobReturn => {
         while (waitCount < 30) {
           await new Promise(resolve => setTimeout(resolve, 100));
           waitCount++;
-          const updatedStatus = adStatuses[adType];
-          if (updatedStatus === 'loaded' && instance.isReady) {
+          // 현재 상태를 직접 확인하여 클로저 문제 해결
+          const currentStatus = adStatuses[adType];
+          if (currentStatus === 'loaded' && instance.isReady) {
             break;
           }
         }
@@ -366,8 +367,9 @@ export const useAdMob = (): UseAdMobReturn => {
         while (waitCount < 30) {
           await new Promise(resolve => setTimeout(resolve, 100));
           waitCount++;
-          const updatedStatus = adStatuses[adType];
-          if (updatedStatus === 'loaded' && instance.isReady) {
+          // 현재 상태를 직접 확인하여 클로저 문제 해결
+          const currentStatus = adStatuses[adType];
+          if (currentStatus === 'loaded' && instance.isReady) {
             break;
           }
         }
@@ -414,10 +416,10 @@ export const useAdMob = (): UseAdMobReturn => {
           }
         });
         
-        // 타임아웃 설정을 60초로 설정 (30초 광고 + 여유시간)
+        // 타임아웃 설정을 45초로 설정 (30초 광고 + 여유시간)
         const timeoutId = setTimeout(() => {
           if (instance.pendingPromise) {
-            console.error(`${adType} showAd: 광고 표시 타임아웃 (60초)`);
+            console.error(`${adType} showAd: 광고 표시 타임아웃 (45초)`);
             
             // 타임아웃 시 적절한 에러 응답 생성
             const timeoutResponse = {
@@ -431,7 +433,7 @@ export const useAdMob = (): UseAdMobReturn => {
             instance.pendingPromise.resolve(timeoutResponse);
             instance.pendingPromise = null;
           }
-        }, 60000);
+        }, 45000);
 
         // 타임아웃 정리 함수 저장
         if (instance.cleanup) {
@@ -455,6 +457,12 @@ export const useAdMob = (): UseAdMobReturn => {
     
     const instance = adInstancesRef.current[adType];
     
+    // 정리 상태로 설정
+    setAdStatuses(prev => ({
+      ...prev,
+      [adType]: 'cleaning'
+    }));
+    
     // 기존 인스턴스 정리
     if (instance.cleanup && typeof instance.cleanup === 'function') {
       try {
@@ -469,16 +477,18 @@ export const useAdMob = (): UseAdMobReturn => {
     instance.isReady = false;
     instance.adUnitId = '';
     
-    // 상태 업데이트
-    setAdStatuses(prev => ({
-      ...prev,
-      [adType]: 'not_loaded'
-    }));
-    
     // 보류 중인 Promise 정리
     if (instance.pendingPromise) {
       instance.pendingPromise = null;
     }
+    
+    // 정리 완료 후 not_loaded 상태로 변경 (약간의 지연을 두어 UI가 정리 상태를 보여줄 수 있도록)
+    setTimeout(() => {
+      setAdStatuses(prev => ({
+        ...prev,
+        [adType]: 'not_loaded'
+      }));
+    }, 500);
   }, []);
 
   // 광고 재로드 함수 - 광고 타입별로 관리

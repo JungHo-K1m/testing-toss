@@ -94,6 +94,7 @@ const DiceEventPage: React.FC = () => {
     suspend,
     setSuspend,
     lotteryCount, // lotteryCount로 변경 (열쇠 개수)
+    setLotteryCount, // 열쇠 개수 업데이트 함수 추가
   } = useUserStore();
 
   const game = useDiceGame();
@@ -515,11 +516,13 @@ const DiceEventPage: React.FC = () => {
       case "loading":
         return "광고 로딩 중...";
       case "loaded":
-        return "광고 시청 후 주사위 얻기";
+        return "광고 시청 후 랜덤 박스 열기";
       case "failed":
         return "광고 로드 실패 - 다시 시도";
+      case "cleaning":
+        return "정리 중...";
       default:
-        return "광고 시청 후 주사위 얻기";
+        return "광고 시청 후 랜덤 박스 열기";
     }
   };
 
@@ -631,12 +634,19 @@ const DiceEventPage: React.FC = () => {
         message: error.message,
         stack: error.stack,
       });
-      alert("광고 시청에 실패했습니다. 다시 시도해주세요.");
+      
+      // 에러 메시지에 따라 다른 알림 표시
+      const errorMessage = error.message?.includes('간격이 너무 짧습니다') 
+        ? error.message 
+        : "광고 시청에 실패했습니다. 다시 시도해주세요.";
+      
+      alert(errorMessage);
 
-      // 오류 발생 시 광고 재로드
+      // 오류 발생 시 광고 상태 리셋 및 재로드
+      resetAdInstance("RANDOM_BOX");
       setTimeout(() => {
         reloadAd("RANDOM_BOX");
-      }, 1000);
+      }, 2000);
     } finally {
       setIsAdWatching(false); // 광고 시청 완료
     }
@@ -694,12 +704,19 @@ const DiceEventPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error("주사위 리필 광고 중 오류:", error);
-      alert("광고 시청에 실패했습니다. 다시 시도해주세요.");
+      
+      // 에러 메시지에 따라 다른 알림 표시
+      const errorMessage = error.message?.includes('간격이 너무 짧습니다') 
+        ? error.message 
+        : "광고 시청에 실패했습니다. 다시 시도해주세요.";
+      
+      alert(errorMessage);
 
-      // 오류 발생 시 광고 재로드
+      // 오류 발생 시 광고 상태 리셋 및 재로드
+      resetAdInstance("DICE_REFILL");
       setTimeout(() => {
         reloadAd("DICE_REFILL");
-      }, 1000);
+      }, 2000);
     } finally {
       setIsAdWatching(false); // 광고 시청 완료
     }
@@ -720,7 +737,10 @@ const DiceEventPage: React.FC = () => {
     }
   }, [showRaffleBoxModal, autoLoadAd]);
 
-  const isAdButtonDisabled = getAdStatus("RANDOM_BOX") === "loading";
+  const isAdButtonDisabled = () => {
+    const randomBoxStatus = getAdStatus("RANDOM_BOX");
+    return randomBoxStatus === "loading" || randomBoxStatus === "cleaning";
+  };
 
 
   useEffect(() => {
@@ -977,15 +997,16 @@ const DiceEventPage: React.FC = () => {
             const result = await purchaseRandomBox();
             setBoxResult(result);
 
-            // 보유 열쇠 차감 - lotteryCount 직접 업데이트
-            // TODO: API 응답에서 업데이트된 열쇠 개수를 받아와서 업데이트
-            // 현재는 임시로 로컬 상태만 업데이트
+            // API 응답에서 받은 keyCount로 열쇠 개수 업데이트 (keyCount가 있는 경우에만)
+            if (result.keyCount !== undefined) {
+              setLotteryCount(result.keyCount);
+            }
 
             setIsVibrating(false);
             setShowResult(true);
           } catch (error) {
-            console.error("랜덤박스 구매 실패:", error);
-            alert("랜덤박스 구매에 실패했습니다. 다시 시도해주세요.");
+            console.error("랜덤박스 오픈 실패:", error);
+            alert("랜덤박스 오픈에 실패했습니다. 다시 시도해주세요.");
             setShowRaffleBoxOpenModal(false);
           } finally {
             setIsLoadingBox(false);
@@ -1755,8 +1776,10 @@ const DiceEventPage: React.FC = () => {
                     <div className="mt-3 mb-5 w-full flex justify-center">
                       <button
                         onClick={handleAdRandomBox}
-                        disabled={getAdStatus("RANDOM_BOX") !== "loaded"}
-                        className="relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95"
+                        disabled={isAdButtonDisabled()}
+                        className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
+                          isAdButtonDisabled() ? "opacity-50 cursor-not-allowed" : "hover:scale-105"
+                        }`}
                         style={{
                           background:
                             "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
@@ -1793,12 +1816,8 @@ const DiceEventPage: React.FC = () => {
                           }}
                         />
 
-                        <span>
-                          {getAdStatus("RANDOM_BOX") === "loading" && "로딩 중..."}
-                          {getAdStatus("RANDOM_BOX") === "loaded" &&
-                            "광고보고 램덤박스 열기"}
-                          {getAdStatus("RANDOM_BOX") === "failed" && "로드 실패"}
-                          {getAdStatus("RANDOM_BOX") === "not_loaded" && "준비 중..."}
+                        <span className="whitespace-nowrap">
+                          {getAdButtonText()}
                         </span>
                       </button>
                     </div>
@@ -2679,7 +2698,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="flex flex-col gap-6">
                       <button
                         className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                          isAdButtonDisabled
+                          isAdButtonDisabled()
                             ? "opacity-50 cursor-not-allowed"
                             : "hover:scale-105"
                         }`}
@@ -2695,10 +2714,10 @@ const DiceEventPage: React.FC = () => {
                           fontSize: "18px",
                           fontWeight: "400",
                           WebkitTextStroke: "1px #000000",
-                          opacity: isAdButtonDisabled ? 0.5 : 1,
+                          opacity: isAdButtonDisabled() ? 0.5 : 1,
                         }}
                         onClick={handleAdRefillDice}
-                        disabled={isAdButtonDisabled}
+                        disabled={isAdButtonDisabled()}
                       >
                         <img
                           src={Images.ButtonPointBlue}
@@ -2726,6 +2745,7 @@ const DiceEventPage: React.FC = () => {
                             "광고 시청 후 주사위 리필"}
                           {getAdStatus("DICE_REFILL") === "failed" && "로드 실패 - 다시 시도"}
                           {getAdStatus("DICE_REFILL") === "not_loaded" && "준비 중..."}
+                          {getAdStatus("DICE_REFILL") === "cleaning" && "정리 중..."}
                         </span>
                       </button>
                     </div>

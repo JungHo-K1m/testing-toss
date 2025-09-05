@@ -8,9 +8,10 @@ export interface RandomBoxResult {
     type: string; // HEAD/EYE/EAR/NECK/BACK
     rarity: number; // 0~9 등급
   };
+  keyCount?: number; // 랜덤박스 오픈픈 후 남은 열쇠 개수 (선택적 필드)
 }
 
-// 랜덤박스 구매 API 함수
+// 랜덤박스 오픈 API 함수
 export const purchaseRandomBox = async (): Promise<RandomBoxResult> => {
   const response = await api.get('/randombox');
 
@@ -18,10 +19,11 @@ export const purchaseRandomBox = async (): Promise<RandomBoxResult> => {
     // API 응답 구조에 맞게 수정 - data.data에서 가져오기
     return {
       type: response.data.data.type,  // data.data.type에서 가져오기
-      equipment: response.data.data.equipment  // data.data.equipment에서 가져오기
+      equipment: response.data.data.equipment,  // data.data.equipment에서 가져오기
+      keyCount: response.data.data.keyCount  // data.data.keyCount에서 가져오기
     };
   } else {
-    throw new Error(response.data.message || '랜덤박스 구매에 실패했습니다.');
+    throw new Error(response.data.message || '랜덤박스 오픈에 실패했습니다.');
   }
 };
 
