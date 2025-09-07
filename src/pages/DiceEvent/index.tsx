@@ -95,6 +95,8 @@ const DiceEventPage: React.FC = () => {
     setSuspend,
     lotteryCount, // lotteryCount로 변경 (열쇠 개수)
     setLotteryCount, // 열쇠 개수 업데이트 함수 추가
+    diceCount, // 주사위 개수
+    setDiceCount, // 주사위 개수 업데이트 함수 추가
   } = useUserStore();
 
   const game = useDiceGame();
@@ -1000,6 +1002,11 @@ const DiceEventPage: React.FC = () => {
             // API 응답에서 받은 keyCount로 열쇠 개수 업데이트 (keyCount가 있는 경우에만)
             if (result.keyCount !== undefined) {
               setLotteryCount(result.keyCount);
+            }
+            
+            // API 응답에서 받은 diceCount로 주사위 개수 업데이트 (diceCount가 있는 경우에만)
+            if (result.diceCount !== undefined) {
+              setDiceCount(result.diceCount);
             }
 
             setIsVibrating(false);
