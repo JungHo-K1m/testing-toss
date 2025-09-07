@@ -948,29 +948,55 @@ const DiceEventPage: React.FC = () => {
     return itemNames[type] || type;
   };
 
-  // 아이템 효과 정보 가져오기 함수 (기획 피그마 기반)
+  // 아이템 효과 정보 가져오기 함수 (이미지 테이블 기반)
   const getEquipmentEffect = (type: string, rarity: number): string => {
-    // 희귀도에 따른 효과 배율 계산
-    const getRarityMultiplier = (rarity: number): number => {
-      if (rarity <= 1) return 1.0; // 보라색
-      if (rarity <= 3) return 1.2; // 하늘색
-      if (rarity <= 5) return 1.5; // 초록색
-      if (rarity <= 7) return 1.8; // 노란색
-      return 2.0; // 빨간색
+    // 희귀도에 따른 효과 값 계산 (이미지 테이블 기준)
+    const getEffectByRarity = (rarity: number, itemType: string) => {
+      // 기본값 (아이템 없는 경우)
+      const baseValues = {
+        EAR: { successRate: 30 }, // 리본: 럭키 다이스 성공 확률
+        HEAD: { cooldown: 0 }, // 왕관: 재충전 대기시간 감소
+        EYE: { starPoint: 1 }, // 선글라스: 미니게임 StarPoint 배수
+        NECK: { diceStarPoint: 1 }, // 목도리: 주사위 StarPoint 배수
+        BACK: { spinReward: 1 }, // 풍선: 스핀 보상 배수
+      };
+
+      // 희귀도별 효과 값 (이미지 테이블 기준)
+      const rarityEffects = {
+        0: { EAR: { successRate: 30 }, HEAD: { cooldown: 0 }, EYE: { starPoint: 1 }, NECK: { diceStarPoint: 1 }, BACK: { spinReward: 1 } },
+        1: { EAR: { successRate: 32.4 }, HEAD: { cooldown: 3.2 }, EYE: { starPoint: 1.33 }, NECK: { diceStarPoint: 2.7 }, BACK: { spinReward: 1.33 } },
+        2: { EAR: { successRate: 32.9 }, HEAD: { cooldown: 3.9 }, EYE: { starPoint: 1.52 }, NECK: { diceStarPoint: 3.1 }, BACK: { spinReward: 1.52 } },
+        3: { EAR: { successRate: 33.6 }, HEAD: { cooldown: 4.9 }, EYE: { starPoint: 1.77 }, NECK: { diceStarPoint: 3.6 }, BACK: { spinReward: 1.77 } },
+        4: { EAR: { successRate: 34.8 }, HEAD: { cooldown: 6.5 }, EYE: { starPoint: 2.17 }, NECK: { diceStarPoint: 4.4 }, BACK: { spinReward: 2.17 } },
+        5: { EAR: { successRate: 36.9 }, HEAD: { cooldown: 9.4 }, EYE: { starPoint: 2.91 }, NECK: { diceStarPoint: 5.9 }, BACK: { spinReward: 2.91 } },
+        6: { EAR: { successRate: 40.8 }, HEAD: { cooldown: 14.6 }, EYE: { starPoint: 4.27 }, NECK: { diceStarPoint: 8.6 }, BACK: { spinReward: 4.27 } },
+        7: { EAR: { successRate: 48.0 }, HEAD: { cooldown: 24.4 }, EYE: { starPoint: 6.78 }, NECK: { diceStarPoint: 13.6 }, BACK: { spinReward: 6.78 } },
+        8: { EAR: { successRate: 62.7 }, HEAD: { cooldown: 44.4 }, EYE: { starPoint: 11.94 }, NECK: { diceStarPoint: 24 }, BACK: { spinReward: 11.94 } },
+        9: { EAR: { successRate: 100 }, HEAD: { cooldown: 95 }, EYE: { starPoint: 25.00 }, NECK: { diceStarPoint: 50 }, BACK: { spinReward: 25.00 } },
+      };
+
+      // 희귀도에 맞는 효과 반환
+      const clampedRarity = Math.min(Math.max(rarity, 0), 9);
+      return rarityEffects[clampedRarity as keyof typeof rarityEffects] || rarityEffects[0];
     };
 
-    const multiplier = getRarityMultiplier(rarity);
+    const effects = getEffectByRarity(rarity, type);
 
-    // 아이템 타입별 기본 효과
-    const baseEffects: { [key: string]: string } = {
-      HEAD: `주사위 재충전 대기시간 -${Math.round(95 * multiplier)}%`,
-      EAR: `미니게임 스타포인트 ×${(1.86 * multiplier).toFixed(2)}`,
-      EYE: `주사위 획득 확률 +${Math.round(15 * multiplier)}%`,
-      NECK: `경험치 획득량 +${Math.round(25 * multiplier)}%`,
-      BACK: `이동 속도 +${Math.round(20 * multiplier)}%`,
-    };
-
-    return baseEffects[type] || "효과 없음";
+    // 아이템 타입별 효과 텍스트 생성
+    switch (type) {
+      case "EAR": // 리본 (머리핀)
+        return `럭키 다이스 성공 확률 ${effects.EAR.successRate}%`;
+      case "HEAD": // 왕관 (크라운)
+        return `재충전 대기시간 -${effects.HEAD.cooldown}%`;
+      case "EYE": // 선글라스
+        return `미니게임 StarPoint ×${effects.EYE.starPoint}`;
+      case "NECK": // 목도리
+        return `주사위 StarPoint ×${effects.NECK.diceStarPoint}`;
+      case "BACK": // 풍선
+        return `스핀 보상 배수 ×${effects.BACK.spinReward}`;
+      default:
+        return "효과 없음";
+    }
   };
 
   // 랜덤박스 열기 함수

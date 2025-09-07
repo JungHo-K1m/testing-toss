@@ -142,11 +142,11 @@ const Reward: React.FC = () => {
               opacity: 0.6,
             }}
           />
-          <div className="relative z-10 flex flex-col h-full">
+          <div className="relative z-10 flex flex-col h-full pt-20">
             <DialogHeader className="flex w-full items-end">
               <DialogClose>
                 <HiX
-                  className="w-5 h-5"
+                  className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer"
                   style={{
                     backgroundColor: "transparent",
                     outline: "none",

@@ -120,11 +120,12 @@ function ItemModal({
     const material = findUpgradeMaterial(currentItem, inventoryData);
     return material !== null;
   };
-  // 아이템 타입별 강화 효과 정의
+  // 아이템 타입별 강화 효과 정의 (이미지 테이블 기준)
   const getEnhancementEffects = (type: string) => {
     switch (type?.toUpperCase()) {
-      case "HEAD": // 크라운 - 주사위 재충전 대기시간 감소
+      case "HEAD": // 크라운 - 재충전 대기시간 감소
         return [
+          { level: 0, effect: "0%" },
           { level: 1, effect: "-3.2%" },
           { level: 2, effect: "-3.9%" },
           { level: 3, effect: "-4.9%" },
@@ -135,32 +136,35 @@ function ItemModal({
           { level: 8, effect: "-44.4%" },
           { level: 9, effect: "-95%" },
         ];
-      case "EYE": // 선글라스 - 미니게임 스타포인트 배수
+      case "EYE": // 선글라스 - 미니게임 StarPoint 배수
         return [
-          { level: 1, effect: "×1.01" },
-          { level: 2, effect: "×1.02" },
-          { level: 3, effect: "×1.11" },
-          { level: 4, effect: "×1.35" },
-          { level: 5, effect: "×1.86" },
-          { level: 6, effect: "×2.78" },
-          { level: 7, effect: "×4.29" },
-          { level: 8, effect: "×6.62" },
-          { level: 9, effect: "×10" },
+          { level: 0, effect: "×1" },
+          { level: 1, effect: "×1.33" },
+          { level: 2, effect: "×1.52" },
+          { level: 3, effect: "×1.77" },
+          { level: 4, effect: "×2.17" },
+          { level: 5, effect: "×2.91" },
+          { level: 6, effect: "×4.27" },
+          { level: 7, effect: "×6.78" },
+          { level: 8, effect: "×11.94" },
+          { level: 9, effect: "×25.00" },
         ];
-      case "EAR": // 머리핀 - 럭키다이스 성공 확률
+      case "EAR": // 머리핀 - 럭키 다이스 성공 확률
         return [
+          { level: 0, effect: "30%" },
           { level: 1, effect: "32.4%" },
           { level: 2, effect: "32.9%" },
           { level: 3, effect: "33.6%" },
           { level: 4, effect: "34.8%" },
           { level: 5, effect: "36.9%" },
           { level: 6, effect: "40.8%" },
-          { level: 7, effect: "48%" },
+          { level: 7, effect: "48.0%" },
           { level: 8, effect: "62.7%" },
           { level: 9, effect: "100%" },
         ];
-      case "NECK": // 목도리 - 주사위 스타포인트 배수
+      case "NECK": // 목도리 - 주사위 StarPoint 배수
         return [
+          { level: 0, effect: "×1" },
           { level: 1, effect: "×2.7" },
           { level: 2, effect: "×3.1" },
           { level: 3, effect: "×3.6" },
@@ -171,8 +175,9 @@ function ItemModal({
           { level: 8, effect: "×24" },
           { level: 9, effect: "×50" },
         ];
-      case "BACK": // 풍선 - 스핀 보상배수
+      case "BACK": // 풍선 - 스핀 보상 배수
         return [
+          { level: 0, effect: "×1" },
           { level: 1, effect: "×1.33" },
           { level: 2, effect: "×1.52" },
           { level: 3, effect: "×1.77" },
@@ -181,10 +186,11 @@ function ItemModal({
           { level: 6, effect: "×4.27" },
           { level: 7, effect: "×6.78" },
           { level: 8, effect: "×11.94" },
-          { level: 9, effect: "×25" },
+          { level: 9, effect: "×25.00" },
         ];
       default:
         return [
+          { level: 0, effect: "+0%" },
           { level: 1, effect: "+10%" },
           { level: 2, effect: "+10%" },
           { level: 3, effect: "+20%" },
@@ -200,7 +206,7 @@ function ItemModal({
 
   const enhancementEffects = getEnhancementEffects(item.type || "");
 
-  // 아이템 타입별 효과 설명 생성
+  // 아이템 타입별 효과 설명 생성 (이미지 테이블 기준)
   const getEffectDescription = (
     type: string,
     level: number,
@@ -208,15 +214,15 @@ function ItemModal({
   ) => {
     switch (type?.toUpperCase()) {
       case "HEAD":
-        return `주사위 재충전 대기시간 ${effect}`;
+        return `재충전 대기시간 ${effect}`;
       case "EYE":
-        return `미니게임 스타포인트 ${effect}`;
+        return `미니게임 StarPoint ${effect}`;
       case "EAR":
-        return `럭키다이스 성공 확률 ${effect}`;
+        return `럭키 다이스 성공 확률 ${effect}`;
       case "NECK":
-        return `주사위 스타포인트 배수 ${effect}`;
+        return `주사위 StarPoint ${effect}`;
       case "BACK":
-        return `스핀 보상배수(토스포인트 제외) ${effect}`;
+        return `스핀 보상 배수 ${effect}`;
       default:
         return `찬스 게임 성공 확률 ${effect}`;
     }
