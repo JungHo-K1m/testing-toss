@@ -14,10 +14,85 @@ import api from "@/shared/api/axiosInstance";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
 
-// 10개 아이템으로 구성된 스핀 게임 데이터
+// 고유한 아이템들 (실제 계산에 사용)
+const uniqueItems = [
+  {
+    option: "3 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 3 },
+    style: { backgroundColor: "#FFD700" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+  {
+    option: "10 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 10 },
+    style: { backgroundColor: "#FF6B6B" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+  {
+    option: "20 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 20 },
+    style: { backgroundColor: "#4ECDC4" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+  {
+    option: "50 Keys",
+    image: {
+      uri: `${Images.KeyIcon}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "KEY", amount: 50 },
+    style: { backgroundColor: "#4ECDC4" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+  {
+    option: "SL Points",
+    image: {
+      uri: `${Images.TokenReward}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "SL", amount: 100 },
+    style: { backgroundColor: "#3498DB" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+  {
+    option: "Boom!",
+    image: {
+      uri: `${Images.Boom}`,
+      sizeMultiplier: 0.7,
+      offsetY: 150,
+    },
+    prize: { type: "BOOM", amount: 0 },
+    style: { backgroundColor: "#E74C3C" },
+    angleOffset: 0,
+    rotationOffset: 0,
+  },
+];
+
+// 10개 아이템으로 구성된 스핀 게임 데이터 (표시용)
 // 룰렛 보상 확률에 맞춰 구성 (3 Keys: 35%, 10 Keys: 25%, 20 Keys: 15%, 50 Keys: 5%, SL Points: 15%, 꽝: 5%)
 // 10개 칸에 맞추기 위해 키 아이템들을 중복 배치하고, 순서를 섞어서 다채롭게 구성
-// 중복된 아이템이 API 응답으로 올 경우, 리스트에서 먼저 나오는 아이템을 선택함 (findIndex 사용)
 const data = [
   {
     option: "3 Keys",
@@ -155,18 +230,29 @@ const CustomWheel: React.FC<{
     if (mustSpin && !isSpinning) {
       setIsSpinning(true);
 
-      // 핀의 위치를 기준으로 정확한 칸에 멈추도록 각도 계산 조정
-      // 핀은 상단(12시 방향)에 위치하므로, 각도 계산을 조정
       // prizeNumber가 0일 때 핀이 첫 번째 칸(3 Keys)을 가리키도록
       const segmentAngle = 360 / data.length; // 각 세그먼트의 각도 (36도)
       
-      // 핀이 상단(12시 방향)에 있으므로, 목표 아이템이 상단에 오도록 회전
-      // 아이템 배치가 -90도로 시작하므로, 회전도 -90도를 고려해야 함
-      // 첫 번째 아이템(인덱스 0)이 상단에 오려면 추가 회전이 필요하지 않음
-      const targetAngle = segmentAngle * prizeNumber;
+      const targetItemBaseAngle = (360 / data.length) * prizeNumber - 90;
+      const pinAngle = 270; // 핀이 6시 방향(270도)을 가리킴
+      const targetAngle = -(targetItemBaseAngle - pinAngle);
 
       // 5바퀴 + 목표 각도로 회전 (핀 위치에 맞춰 조정)
-      const totalRotation = 360 * 5 + targetAngle;
+      // 현재 회전값에서 목표 각도까지 회전하도록 수정
+      const totalRotation = rotation + 360 * 5 + targetAngle;
+      
+      // 실제 회전 후 최종 위치 계산
+      const finalRotation = totalRotation % 360;
+      
+      // 각 아이템의 최종 위치 계산
+      data.forEach((item, idx) => {
+        const baseAngle = (360 / data.length) * idx - 90;
+        // CSS transform은 시계방향 회전이므로, 회전 각도를 빼야 함
+        const finalAngle = (baseAngle - finalRotation + 360) % 360;
+        const isAtTop = Math.abs(finalAngle) < 18 || Math.abs(finalAngle - 360) < 18;
+      });
+      
+      // 예상 결과 검증
       const duration = 3000; // 3초
 
       setRotation(totalRotation);
@@ -177,7 +263,7 @@ const CustomWheel: React.FC<{
         onSpinEnd();
       }, duration);
     }
-  }, [mustSpin, prizeNumber, data.length, onSpinEnd, isSpinning]);
+  }, [mustSpin, prizeNumber, data.length, onSpinEnd, isSpinning, rotation]);
 
   return (
     <div className="relative min-[376px]:w-[328px] min-[376px]:h-[328px] w-[280px] h-[280px]">
@@ -208,6 +294,14 @@ const CustomWheel: React.FC<{
           const radius = 30; // 휠 크기의 30% 반지름으로 조정
           const x = Math.cos((angle * Math.PI) / 180) * radius;
           const y = Math.sin((angle * Math.PI) / 180) * radius;
+          
+          // 첫 번째 렌더링 시에만 아이템 배치 정보 로그 출력
+          if (index === 0) {
+            data.forEach((item, idx) => {
+              const baseAngle = (360 / data.length) * idx - 90;
+              const angle = baseAngle + (item.angleOffset || 0);
+            });
+          }
 
           return (
             <div
@@ -404,25 +498,31 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         const slCount = responseData.slCount;
 
         // 매칭 과정 상세 로깅
-        data.forEach((item, idx) => {
+        uniqueItems.forEach((item, idx) => {
           const match =
             item.prize.type === spinType.toUpperCase() &&
             item.prize.amount === baseAmount;
         });
 
-        // data 배열에서 spinType과 baseAmount에 맞는 인덱스 찾기
-        // API 응답의 spinType과 baseAmount를 기준으로 정확한 매칭
-        // 중복된 아이템이 있을 경우, 리스트에서 먼저 나오는 아이템을 선택 (findIndex 사용)
-        // 예: 3 Keys는 인덱스 0, 3, 6에 있지만, API에서 3 Keys가 오면 인덱스 0을 선택
-        const foundIndex = data.findIndex((item) => {
+        // 고유한 아이템들에서 spinType과 baseAmount에 맞는 인덱스 찾기
+        const uniqueIndex = uniqueItems.findIndex((item) => {
           const match =
             item.prize.type === spinType.toUpperCase() &&
             item.prize.amount === baseAmount;
           return match;
         });
 
-        if (foundIndex !== -1) {
-          setPrizeNumber(foundIndex);
+        // 표시용 data 배열에서 해당 아이템의 첫 번째 위치 찾기
+        const displayIndex = data.findIndex((item) => {
+          const match =
+            item.prize.type === spinType.toUpperCase() &&
+            item.prize.amount === baseAmount;
+          return match;
+        });
+
+        if (uniqueIndex !== -1 && displayIndex !== -1) {
+          // 표시용 인덱스를 사용하여 스핀판 회전
+          setPrizeNumber(displayIndex);
           // API 문서에 맞게 모든 필드 포함
           setPrizeData({
             spinType,
@@ -440,15 +540,15 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
           );
           console.error("API Response:", { spinType, baseAmount });
           console.error(
-            "Available prizes:",
-            data.map((item) => ({
+            "Available unique prizes:",
+            uniqueItems.map((item) => ({
               type: item.prize.type,
               amount: item.prize.amount,
             }))
           );
 
           // 에러 메시지 개선
-          const errorMessage = `API 응답과 일치하는 상품을 찾을 수 없습니다.\n\n요청된 상품: ${spinType} ${baseAmount}\n\n사용 가능한 상품:\n${data
+          const errorMessage = `API 응답과 일치하는 상품을 찾을 수 없습니다.\n\n요청된 상품: ${spinType} ${baseAmount}\n\n사용 가능한 상품:\n${uniqueItems
             .map(
               (item, idx) =>
                 `${idx + 1}. ${item.prize.type} ${item.prize.amount}`
@@ -488,7 +588,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     setMustSpin(false);
     // 사용자 상태 업데이트
     if (prizeData) {
-      // // console.log("Prize data:", prizeData);
       const {
         spinType,
         amount,
@@ -505,7 +604,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       if (normalizedSpinType === "BOOM") {
         // 붐(꽝)이면 패배 사운드
         playSfx(Audios.rps_lose);
-        // // console.log("Boom! Better luck next time!");
       } else {
         // 그 외엔 보상 사운드
         playSfx(Audios.reward);
@@ -520,11 +618,7 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         setSlToken((prev: number) => prev + amount);
       } else if (normalizedSpinType === "BOOM") {
         // BOOM은 꽝이므로 보상 없음
-        // console.log("Boom! Better luck next time!");
       }
-
-      // 추가 정보 로깅 (디버깅용)
-      // // console.log("Additional prize info:", { rank, diceCount, starCount, slCount });
     }
     setIsDialogOpen(true);
   };

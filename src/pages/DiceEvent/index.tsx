@@ -1335,17 +1335,19 @@ const DiceEventPage: React.FC = () => {
                   }}
                 />
                 <div className="relative z-10 flex flex-col h-full pt-20">
-                  <DialogHeader className="flex w-full items-end">
-                    <DialogClose>
-                      <HiX
-                        className="w-5 h-5 pt-4"
-                        style={{
-                          backgroundColor: "transparent",
-                          outline: "none",
-                          border: "none",
-                        }}
-                      />
-                    </DialogClose>
+                  <DialogHeader className="w-full pr-4 pt-4">
+                    <div className="flex justify-end w-full">
+                      <DialogClose>
+                        <HiX
+                          className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: "transparent",
+                            outline: "none",
+                            border: "none",
+                          }}
+                        />
+                      </DialogClose>
+                    </div>
                   </DialogHeader>
                   <ModalRanking />
                   <NewMyRanking />
