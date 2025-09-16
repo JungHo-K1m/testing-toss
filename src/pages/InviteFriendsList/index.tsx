@@ -55,7 +55,6 @@ const InviteFriendsList: React.FC = () => {
     <div className="flex flex-col items-center text-white mx-6 relative min-h-screen pb-32">
       {/* 상단 타이틀 */}
       <TopTitle title="친구 초대 리스트" back={true} />
-
       {/* 레퍼럴 보상 내용 */}
       <div className="w-full">
         <div className="flex justify-between items-center">
@@ -146,10 +145,9 @@ const InviteFriendsList: React.FC = () => {
           </div> */}
         </div>
       </div>
-
       {/* 초대한 친구 목록 */}
       {friends.length > 0 ? ( // 친구 목록이 존재하는 경우에만 렌더링
-        <div className="flex flex-col mt-12 w-full gap-3">
+        (<div className="flex flex-col mt-12 w-full gap-3">
           <div className="flex flex-row justify-between items-center mb-[6px]">
             <p
               style={{
@@ -201,9 +199,9 @@ const InviteFriendsList: React.FC = () => {
               </p>
             </div>
           ))}
-        </div>
+        </div>)
       ) : (
-        <p
+        (<p
           className="text-gray-400 mt-8"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
@@ -212,9 +210,8 @@ const InviteFriendsList: React.FC = () => {
             color: "#FEE900",
             WebkitTextStroke: "1px #000000",
           }}
-        >
-          친구를 초대하세요!
-        </p> // 친구가 없을 경우
+        >친구를 초대하세요!
+                  </p>) // 친구가 없을 경우
       )}
     </div>
   );

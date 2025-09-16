@@ -34,14 +34,13 @@ const HallofFame: React.FC = () => {
   return (
     <div className="min-h-screen mb-20 flex-col items-center mx-2 relative pt-20">
       <TopTitle title="명예의 전당" back={true} />
-
       {/* 메인 컨텐츠 */}
       <div className="px-4 py-6">
         {winners.map((winner, index) => (
           <div key={winner.round}>
             {index === 0 ? (
               // 가장 최근 회차 - 카드 형태
-              <div
+              (<div
                 className="mb-4"
                 style={{
                   backgroundColor: "rgba(255, 255, 255, 0.5)", // #FFFFFF with 50% opacity
@@ -118,10 +117,10 @@ const HallofFame: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div>)
             ) : (
               // 나머지 회차 - 경계선으로 구분
-              <div className="py-3">
+              (<div className="py-3">
                 <div className="flex items-center justify-between">
                   {/* 캐릭터 이미지와 사용자 정보 */}
                   <div className="flex items-center space-x-3">
@@ -188,7 +187,7 @@ const HallofFame: React.FC = () => {
                 </div>
                 {/* 하단 경계선 */}
                 <div className="border-b border-[#D9D9D9] mt-3"></div>
-              </div>
+              </div>)
             )}
           </div>
         ))}

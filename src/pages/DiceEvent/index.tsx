@@ -2236,7 +2236,7 @@ const DiceEventPage: React.FC = () => {
                   <div className="flex flex-col gap-6">
                     {equippedItems?.slot && equippedItems.slot.length > 0 ? (
                       // 장착된 아이템이 있는 경우
-                      <div className="flex flex-col gap-4">
+                      (<div className="flex flex-col gap-4">
                         {equippedItems.slot.map((item, index) => (
                           <div
                             key={`${item.type}-${index}`}
@@ -2337,10 +2337,10 @@ const DiceEventPage: React.FC = () => {
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div>)
                     ) : (
                       // 장착된 아이템이 없는 경우
-                      <div
+                      (<div
                         className="flex flex-row items-center justify-center gap-6"
                         style={{
                           width: "70vw",
@@ -2366,7 +2366,7 @@ const DiceEventPage: React.FC = () => {
                         >
                           현재 장착 중인 아이템이 없습니다.
                         </p>
-                      </div>
+                      </div>)
                     )}
                   </div>
                 </div>
@@ -2625,7 +2625,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
                       {refillTimeInfo?.hasRemainingDice ? (
                         // 주사위가 남아있는 경우 안내 메시지
-                        <div className="flex flex-col items-center gap-3">
+                        (<div className="flex flex-col items-center gap-3">
                           <img
                             src={Images.Dice}
                             alt="Dice"
@@ -2655,10 +2655,10 @@ const DiceEventPage: React.FC = () => {
                               모든 주사위를 사용한 후 리필이 가능합니다
                             </p>
                           </div>
-                        </div>
+                        </div>)
                       ) : (
                         // 기존 리필 시간 표시 로직
-                        <div className="flex flex-col items-center gap-3">
+                        (<div className="flex flex-col items-center gap-3">
                           <img
                             src={Images.RefillDice}
                             alt="Refill Dice"
@@ -2688,7 +2688,7 @@ const DiceEventPage: React.FC = () => {
                               {refillTimeInfo?.timeUntilRefill}
                             </p>
                           </div>
-                        </div>
+                        </div>)
                       )}
                     </div>
                   </div>

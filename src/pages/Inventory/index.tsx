@@ -1368,7 +1368,6 @@ const Inventory: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* 보유 중인 아이템 목록 영역 */}
       <div
         className="w-full h-[45vh] mx-6 overflow-hidden pb-20"
@@ -1404,7 +1403,7 @@ const Inventory: React.FC = () => {
               ))
             ) : (
               // 보유 아이템이 없을 때의 빈 상태
-              <div className="col-span-4 flex flex-col items-center justify-center py-12 text-gray-400">
+              (<div className="col-span-4 flex flex-col items-center justify-center py-12 text-gray-400">
                 <div className="w-24 h-24 mb-4 rounded-full bg-gray-700/50 flex items-center justify-center border-2 border-dashed border-gray-500">
                   <svg
                     className="w-12 h-12 text-gray-500"
@@ -1428,12 +1427,11 @@ const Inventory: React.FC = () => {
                     게임을 플레이하여 아이템을 획득해보세요!
                   </div>
                 </div>
-              </div>
+              </div>)
             )}
           </div>
         </div>
       </div>
-
       {/* 아이템 상세 모달 */}
       {selectedItem && (
         <ItemModal
@@ -1466,7 +1464,6 @@ const Inventory: React.FC = () => {
           }}
         />
       )}
-
       {/* 하단 네비게이션 */}
       <BottomNavigation hidden={isModalOpen} />
     </div>
