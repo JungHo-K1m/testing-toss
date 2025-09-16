@@ -2790,7 +2790,7 @@ const DiceEventPage: React.FC = () => {
             </Dialog>
 
             {/* 이벤트 안내 모달 */}
-            <Dialog
+            {/* <Dialog
               open={showEventGuideModal}
               onOpenChange={setShowEventGuideModal}
             >
@@ -2805,18 +2805,18 @@ const DiceEventPage: React.FC = () => {
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                 }}
-              >
+              > */}
                 {/* 닫기 버튼 */}
-                <button
+                {/* <button
                   onClick={handleCloseEventGuideModal}
                   className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center z-10"
                 >
                   <HiX className="w-5 h-5 text-white" />
                 </button>
 
-                <div className="flex flex-col items-center w-full">
+                <div className="flex flex-col items-center w-full"> */}
                   {/* 메인 타이틀 */}
-                  <div className="text-center mb-6">
+                  {/* <div className="text-center mb-6">
                     <h1
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -2841,10 +2841,10 @@ const DiceEventPage: React.FC = () => {
                     >
                       리워드를 잡아라!
                     </h1>
-                  </div>
+                  </div> */}
 
                   {/* 서브타이틀 */}
-                  <div className="text-center mb-2">
+                  {/* <div className="text-center mb-2">
                     <h2
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -2856,19 +2856,19 @@ const DiceEventPage: React.FC = () => {
                     >
                       랭킹 리워드 :
                     </h2>
-                  </div>
+                  </div> */}
 
                   {/* 보상 정보 박스 */}
-                  <div
+                  {/* <div
                     className="w-full mb-6 p-5 rounded-[20px]"
                     style={{
                       background: "rgba(0, 94, 170, 0.5)",
                       backdropFilter: "blur(10px)",
                       boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     }}
-                  >
+                  > */}
                     {/* 1~3등 보상 */}
-                    <div className="flex items-center gap-3 mb-3">
+                    {/* <div className="flex items-center gap-3 mb-3">
                       <div
                         className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
                       >
@@ -2892,7 +2892,7 @@ const DiceEventPage: React.FC = () => {
                     </div>
 
                     {/* 4~100등 보상 */}
-                    <div className="flex items-center gap-3">
+                    {/* <div className="flex items-center gap-3">
                       <div
                         className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
                       >
@@ -2914,10 +2914,10 @@ const DiceEventPage: React.FC = () => {
                         4~100등 : 5만원 상당의 상품권 증정
                       </span>
                     </div>
-                  </div>
+                  </div>  */}
 
                   {/* 안내 메시지 */}
-                  <div className="text-center mb-8">
+                  {/* <div className="text-center mb-8">
                     <p
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -2941,10 +2941,10 @@ const DiceEventPage: React.FC = () => {
                     >
                       @savethelife_SL
                     </p>
-                  </div>
+                  </div> */}
 
                   {/* 게임하러 가기 버튼 */}
-                  <button
+                  {/* <button
                     onClick={() => {
                       playSfx(Audios.button_click);
                       handleCloseEventGuideModal();
@@ -2979,7 +2979,7 @@ const DiceEventPage: React.FC = () => {
                   </button>
                 </div>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
 
 
 
