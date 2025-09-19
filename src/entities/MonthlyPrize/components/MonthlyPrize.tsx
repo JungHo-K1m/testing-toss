@@ -92,22 +92,10 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
     }
   };
 
-  // Snowfall에 쓸 이미지
-  const slTokenImage = new Image();
-  slTokenImage.src = Images.TokenReward;
-  const usdtImage = new Image();
-  usdtImage.src = Images.USDT;
-  const images = [slTokenImage, usdtImage];
 
   return (
     <div
       onClick={handleRankingClick}
-      // className="
-      //   relative z-10 flex flex-col items-center justify-center
-      //   w-[210px] h-[160px] md:w-[340px] md:h-44
-      //   text-white border-2 border-[#BBA361] rounded-3xl
-      //   overflow-visible bg-neutral-900
-      // "
       className="z-10 flex flex-col items-center justify-center relative"
       style={{
         width: "210px",
@@ -159,12 +147,12 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
           className="text-center mt-2"
           style={{
             fontFamily: "'ONE Mobile POP', sans-serif",
-            fontSize: "12px",
+            fontSize: "16px",
             fontWeight: 400,
-            color: "#2A294E",
+            color: "#0147E5",
           }}
         >
-          (약 1,000만원 상당의 리워드)
+          아이패드, 가정용 전자기기
         </p>
       </div>
     </div>

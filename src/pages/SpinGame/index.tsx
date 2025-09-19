@@ -65,13 +65,13 @@ const uniqueItems = [
     rotationOffset: 0,
   },
   {
-    option: "SL Points",
+    option: "3 Keys",
     image: {
-      uri: `${Images.TokenReward}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "SL", amount: 100 },
+    prize: { type: "KEY", amount: 3 },
     style: { backgroundColor: "#3498DB" },
     angleOffset: 0,
     rotationOffset: 0,
@@ -107,13 +107,13 @@ const data = [
     rotationOffset: 0,
   },
   {
-    option: "SL Points",
+    option: "3 Keys",
     image: {
-      uri: `${Images.TokenReward}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "SL", amount: 100 }, // baseAmount: 100과 정확히 일치
+    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치
     style: { backgroundColor: "#3498DB" },
     angleOffset: 0,
     rotationOffset: 36,
@@ -155,13 +155,13 @@ const data = [
     rotationOffset: 144,
   },
   {
-    option: "SL Points",
+    option: "3 Keys",
     image: {
-      uri: `${Images.TokenReward}`,
+      uri: `${Images.KeyIcon}`,
       sizeMultiplier: 0.7,
       offsetY: 150,
     },
-    prize: { type: "SL", amount: 100 }, // baseAmount: 100과 정확히 일치 (중복)
+    prize: { type: "KEY", amount: 3 }, // baseAmount: 3과 정확히 일치 (중복)
     style: { backgroundColor: "#3498DB" },
     angleOffset: 0,
     rotationOffset: 180,
@@ -465,12 +465,11 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     rank?: number;
     diceCount?: number;
     starCount?: number;
-    slCount?: number;
   } | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { playSfx } = useSound();
 
-  const { setStarPoints, setDiceCount, setSlToken, setLotteryCount } =
+  const { setStarPoints, setDiceCount, setLotteryCount } =
     useUserStore();
 
   const handleSpinClick = async () => {
@@ -495,7 +494,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         const rank = responseData.rank;
         const diceCount = responseData.diceCount;
         const starCount = responseData.starCount;
-        const slCount = responseData.slCount;
 
         // 매칭 과정 상세 로깅
         uniqueItems.forEach((item, idx) => {
@@ -531,7 +529,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
             rank,
             diceCount,
             starCount,
-            slCount,
           });
           setMustSpin(true);
         } else {
@@ -595,7 +592,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
         rank,
         diceCount,
         starCount,
-        slCount,
       } = prizeData;
 
       const normalizedSpinType = spinType.trim().toUpperCase();
@@ -614,8 +610,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
       if (normalizedSpinType === "KEY") {
         // KEY 타입은 열쇠로 처리
         setLotteryCount((prev: number) => prev + amount);
-      } else if (normalizedSpinType === "SL") {
-        setSlToken((prev: number) => prev + amount);
       } else if (normalizedSpinType === "BOOM") {
         // BOOM은 꽝이므로 보상 없음
       }
@@ -641,8 +635,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     switch (normalizedSpinType) {
       case "KEY":
         return `Keys ${baseAmount || ""}`;
-      case "SL":
-        return `SL Points ${baseAmount || ""}`;
       case "BOOM":
         return "Boom! Try Again";
       default:
@@ -657,8 +649,6 @@ const Spin: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     switch (normalizedSpinType) {
       case "KEY":
         return Images.KeyIcon; // 열쇠 이미지
-      case "SL":
-        return Images.TokenReward; // SL 포인트 이미지
       case "BOOM":
         return Images.Boom; // 붐 이미지
       default:
@@ -949,7 +939,6 @@ const SpinGame: React.FC<{ onSpinEnd: () => void }> = ({ onSpinEnd }) => {
     Images.RewardNFT,
     // 새로운 보상 타입에 필요한 이미지들
     Images.KeyIcon, // 열쇠 이미지
-    Images.TokenReward, // SL 포인트 이미지
     Images.Boom, // 붐 이미지
     // 기본 이미지들
     Images.Dice, // 기본값 이미지

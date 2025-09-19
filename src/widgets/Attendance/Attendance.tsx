@@ -261,27 +261,27 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
           </div>
         );
 
-      case "SL":
-        return (
-          <div className="flex items-center gap-3 mb-2">
-            <img
-              src={Images.SLToken}
-              style={{ width: 40, height: 40 }}
-              alt="SL Token"
-            />
-            <span
-              style={{
-                fontFamily: "'ONE Mobile POP', sans-serif",
-                fontSize: "20px",
-                fontWeight: 400,
-                color: "#FFFFFF",
-                WebkitTextStroke: "1px #000000",
-              }}
-            >
-              SL 토큰 보상
-            </span>
-          </div>
-        );
+      // case "SL":
+      //   return (
+      //     <div className="flex items-center gap-3 mb-2">
+      //       <img
+      //         src={Images.SLToken}
+      //         style={{ width: 40, height: 40 }}
+      //         alt="SL Token"
+      //       />
+      //       <span
+      //         style={{
+      //           fontFamily: "'ONE Mobile POP', sans-serif",
+      //           fontSize: "20px",
+      //           fontWeight: 400,
+      //           color: "#FFFFFF",
+      //           WebkitTextStroke: "1px #000000",
+      //         }}
+      //       >
+      //         SL 토큰 보상
+      //       </span>
+      //     </div>
+      //   );
 
       case "NONE":
         return (
@@ -389,26 +389,28 @@ const Attendance: React.FC<AttendanceProps> = ({ customWidth }) => {
                     주사위 보상
                   </span>
                 </>
-              ) : item.type === "SL" ? (
-                <>
-                  <img
-                    src={Images.SLToken}
-                    style={{ width: 35, height: 35 }}
-                    alt="SL Token"
-                  />
-                  <span
-                    style={{
-                      fontFamily: "'ONE Mobile POP', sans-serif",
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      color: "#FFFFFF",
-                      WebkitTextStroke: "0.5px #000000",
-                    }}
-                  >
-                    SL 토큰 보상
-                  </span>
-                </>
-              ) : item.type === "NONE" ? (
+              ) 
+              // : item.type === "SL" ? (
+              //   <>
+              //     <img
+              //       src={Images.SLToken}
+              //       style={{ width: 35, height: 35 }}
+              //       alt="SL Token"
+              //     />
+              //     <span
+              //       style={{
+              //         fontFamily: "'ONE Mobile POP', sans-serif",
+              //         fontSize: "16px",
+              //         fontWeight: 400,
+              //         color: "#FFFFFF",
+              //         WebkitTextStroke: "0.5px #000000",
+              //       }}
+              //     >
+              //       SL 토큰 보상
+              //     </span>
+              //   </>
+              // ) 
+              : item.type === "NONE" ? (
                 <span
                   style={{
                     fontFamily: "'ONE Mobile POP', sans-serif",

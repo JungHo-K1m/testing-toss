@@ -249,7 +249,6 @@ const MissionPage: React.FC = () => {
 
   const imagesToLoad = [
     Images.IconCheck,
-    Images.TokenReward,
     Images.LargeTwitter,
     Images.Star,
     Images.Dice,

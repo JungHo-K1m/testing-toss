@@ -180,7 +180,7 @@ const Reward: React.FC = () => {
               WebkitTextStroke: "1px #000000",
             }}
           >
-            월간 보상
+            특별 월간 보상
           </h2>
         </div>
 
@@ -202,7 +202,7 @@ const Reward: React.FC = () => {
           >
             <span className="ml-3">1등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000원
+              아이패드
             </span>
           </div>
 
@@ -221,7 +221,7 @@ const Reward: React.FC = () => {
           >
             <span className="ml-3">2등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000원
+              아이패드
             </span>
           </div>
 
@@ -240,7 +240,7 @@ const Reward: React.FC = () => {
           >
             <span className="ml-3">3등</span>
             <span className="absolute left-1/2 transform -translate-x-1/2">
-              1,000,000원
+              아이패드
             </span>
           </div>
 
@@ -255,7 +255,7 @@ const Reward: React.FC = () => {
             }}
           >
             <span className="text-lg">4-100 등</span>
-            <span className="text-sm">50,000원</span>
+            <span className="text-sm">가정용 전자기기</span>
           </div>
 
           {/* 구분선 */}
