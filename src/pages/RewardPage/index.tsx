@@ -180,7 +180,7 @@ const Reward: React.FC = () => {
               WebkitTextStroke: "1px #000000",
             }}
           >
-            특별 월간 보상
+            게임 런칭 특별 이벤트
           </h2>
         </div>
 

@@ -119,7 +119,7 @@ const MonthlyPrize: React.FC<MonthlyPrizeProps> = ({
             WebkitTextStroke: "1px #000000",
           }}
         >
-          이번 달 보상
+          게임 런칭 특별 이벤트
         </p>
       </div>
 
