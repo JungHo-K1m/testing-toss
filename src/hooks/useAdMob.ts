@@ -5,6 +5,7 @@ import { getRandomBoxAdReward } from '@/entities/User/api/randomBoxAdReward';
 import { getDiceRefillAdReward } from '@/entities/User/api/AdRefilDice';
 import { getRPSRetryAdReward } from '@/entities/User/api/RetryRPS';
 import { getCardFlipRetryAdReward } from '@/entities/User/api/RetryCardFlip';
+import { useSoundStore } from '@/shared/store/useSoundStore';
 
 // 광고 상태 타입
 export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed' | 'cleaning';
@@ -92,6 +93,7 @@ const showAdMobRewardedAd = async (
 
 export const useAdMob = (): UseAdMobReturn => {
   const [isSupported, setIsSupported] = useState<boolean>(false);
+  const { setAdPlaying } = useSoundStore();
   
   // 광고 타입별 상태 관리
   const [adStatuses, setAdStatuses] = useState<Record<AdType, AdLoadStatus>>({
@@ -225,14 +227,20 @@ export const useAdMob = (): UseAdMobReturn => {
             case 'clicked':
               break;
             case 'dismissed':
+              // 광고 종료 시 사운드 재생
+              setAdPlaying(false);
               resetAdInstance(adType);
               break;
             case 'failedToShow':
+              // 광고 실패 시 사운드 재생
+              setAdPlaying(false);
               resetAdInstance(adType);
               break;
             case 'impression':
               break;
             case 'show':
+              // 광고 표시 시작 시 사운드 정지
+              setAdPlaying(true);
               break;
             case 'userEarnedReward':
               if (instance.pendingPromise) {
@@ -255,6 +263,7 @@ export const useAdMob = (): UseAdMobReturn => {
                   
                   // 광고 시청 완료 후 자동으로 인스턴스 정리 (지연)
                   setTimeout(() => {
+                    setAdPlaying(false); // 사운드 재생
                     resetAdInstance(adType);
                   }, 2000);
                   return; // 여기서 함수 종료하여 아래 API 호출 방지
@@ -286,6 +295,7 @@ export const useAdMob = (): UseAdMobReturn => {
                 
                 // 광고 인스턴스 리셋을 지연시켜 호출 (모달 표시 후)
                 setTimeout(() => {
+                  setAdPlaying(false); // 사운드 재생
                   resetAdInstance(adType);
                 }, 2000);
               }
@@ -400,6 +410,9 @@ export const useAdMob = (): UseAdMobReturn => {
           onError: (error: unknown) => {
             console.error(`${adType} showAd: 광고 표시 중 오류:`, error);
             
+            // 에러 발생 시 사운드 재생
+            setAdPlaying(false);
+            
             // 에러 발생 시 Promise reject
             if (instance.pendingPromise) {
               const errorResponse = {
@@ -420,6 +433,9 @@ export const useAdMob = (): UseAdMobReturn => {
         const timeoutId = setTimeout(() => {
           if (instance.pendingPromise) {
             console.error(`${adType} showAd: 광고 표시 타임아웃 (45초)`);
+            
+            // 타임아웃 시 사운드 재생
+            setAdPlaying(false);
             
             // 타임아웃 시 적절한 에러 응답 생성
             const timeoutResponse = {

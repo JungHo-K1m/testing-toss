@@ -474,6 +474,7 @@ export const useUserStore = create<UserState>((set, get) => ({
           masterMuted: safeBgm.masterMute || false,
           bgmMuted: safeBgm.backMute || false,
           sfxMuted: safeBgm.effectMute || false,
+          isAdPlaying: false, // 광고 상태 초기화
         });
       } catch (soundError) {
         console.warn('Sound settings failed:', soundError);
@@ -569,6 +570,16 @@ export const useUserStore = create<UserState>((set, get) => ({
   logout: () => {
     localStorage.removeItem('accessToken');
     // refreshToken은 HttpOnly 쿠키이므로 서버에서 처리됨
+    
+    // 사운드 상태 초기화
+    try {
+      useSoundStore.setState({
+        isAdPlaying: false,
+      });
+    } catch (soundError) {
+      console.warn('Sound state reset failed:', soundError);
+    }
+    
     set({
       nickName: null,
       uid: null,

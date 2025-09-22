@@ -27,6 +27,8 @@ const SoundSetting: React.FC = () => {
     sfxMuted,
     setSfxVolume,
     toggleSfxMute,
+    // 광고 상태
+    isAdPlaying,
   } = useSoundStore();
 
   const handleSave = async () => {
@@ -56,6 +58,15 @@ const SoundSetting: React.FC = () => {
   return (
     <div className="flex flex-col items-center text-white px-6 min-h-screen pt-20">
       <TopTitle title="사운드 설정" back={true} />
+
+      {/* 광고 시청 중 알림 */}
+      {isAdPlaying && (
+        <div className="w-full mb-4 p-3 bg-yellow-600/20 border border-yellow-500/50 rounded-lg text-center">
+          <p className="text-yellow-300 text-sm">
+            광고 시청 중입니다. 사운드 테스트가 제한됩니다.
+          </p>
+        </div>
+      )}
 
       <div className="w-full">
         {/* 1) 마스터 볼륨 */}

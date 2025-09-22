@@ -4,7 +4,7 @@ import { Howl } from 'howler';
 import { useSoundStore } from '../store/useSoundStore';
 
 /**
- * BGM 자동 로드/재생 + zustand(볼륨/뮤트) 연동.
+ * BGM 자동 로드/재생 + zustand(볼륨/뮤트) 연동
  * - 효과음(SFX)에 대해 loop 옵션과 stopSfx를 제공.
  * - loop=false인 경우, 기존처럼 1회성 재생 후 끝.
  * - loop=true인 경우, Map에 Howl을 저장하여 stopSfx로 정지 가능.
@@ -19,6 +19,7 @@ export function useAudioManager(bgmSrc: string) {
   const {
     bgmVolume, sfxVolume, masterVolume,
     bgmMuted, sfxMuted, masterMuted,
+    isAdPlaying,
   } = useSoundStore();
 
   // ========== 1) BGM: Howl 인스턴스 생성 및 재생 ==========
@@ -39,18 +40,46 @@ export function useAudioManager(bgmSrc: string) {
     };
   }, [bgmSrc]);
 
+  // ========== 1.5) 백그라운드 복귀 시 BGM 재생 ==========
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && bgmRef.current && !isAdPlaying) {
+        // 백그라운드에서 복귀하고 광고가 재생 중이 아닐 때 BGM 재생
+        const finalVolume = (masterMuted || bgmMuted)
+          ? 0
+          : bgmVolume * masterVolume;
+        
+        bgmRef.current.volume(finalVolume);
+        if (!bgmRef.current.playing()) {
+          bgmRef.current.play();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [masterMuted, bgmMuted, bgmVolume, masterVolume, isAdPlaying]);
+
   // ========== 2) BGM 볼륨/뮤트 연동 ==========
   useEffect(() => {
     if (bgmRef.current) {
-      const finalVolume = (masterMuted || bgmMuted)
+      const finalVolume = (masterMuted || bgmMuted || isAdPlaying)
         ? 0
         : bgmVolume * masterVolume;
       bgmRef.current.volume(finalVolume);
     }
-  }, [bgmVolume, bgmMuted, masterVolume, masterMuted]);
+  }, [bgmVolume, bgmMuted, masterVolume, masterMuted, isAdPlaying]);
 
   // ========== 3) SFX 재생 함수 (loop 옵션 포함) ==========
   function playSfx(sfxSrc: string, options?: { loop?: boolean }) {
+    // 광고 시청 중이면 사운드 재생하지 않음
+    if (isAdPlaying) {
+      return;
+    }
+
     // 최종 볼륨 계산
     const finalVolume = (masterMuted || sfxMuted)
       ? 0
@@ -104,13 +133,13 @@ export function useAudioManager(bgmSrc: string) {
 
   // ========== 5) (선택) 볼륨/뮤트 변화 시, 루프 사운드들도 실시간 반영 ==========
   useEffect(() => {
-    const finalVolume = (masterMuted || sfxMuted)
+    const finalVolume = (masterMuted || sfxMuted || isAdPlaying)
       ? 0
       : sfxVolume * masterVolume;
     loopSfxMapRef.current.forEach((sound) => {
       sound.volume(finalVolume);
     });
-  }, [sfxVolume, masterVolume, sfxMuted, masterMuted]);
+  }, [sfxVolume, masterVolume, sfxMuted, masterMuted, isAdPlaying]);
 
   return {
     playSfx,

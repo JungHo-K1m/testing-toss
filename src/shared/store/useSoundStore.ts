@@ -12,6 +12,9 @@ interface SoundStore {
   sfxMuted: boolean;
   masterMuted: boolean;
 
+  // 광고 시청 상태
+  isAdPlaying: boolean;
+
   // 액션(업데이트 함수들)
   setBgmVolume: (volume: number) => void;
   setSfxVolume: (volume: number) => void;
@@ -20,6 +23,9 @@ interface SoundStore {
   toggleBgmMute: () => void;
   toggleSfxMute: () => void;
   toggleMasterMute: () => void;
+
+  // 광고 상태 관리
+  setAdPlaying: (isPlaying: boolean) => void;
 }
 
 export const useSoundStore = create<SoundStore>((set) => ({
@@ -32,6 +38,9 @@ export const useSoundStore = create<SoundStore>((set) => ({
   sfxMuted: false,
   masterMuted: false,
 
+  // 광고 시청 상태 초기값
+  isAdPlaying: false,
+
   // 볼륨 설정
   setBgmVolume: (volume) => set({ bgmVolume: volume }),
   setSfxVolume: (volume) => set({ sfxVolume: volume }),
@@ -41,4 +50,7 @@ export const useSoundStore = create<SoundStore>((set) => ({
   toggleBgmMute: () => set((state) => ({ bgmMuted: !state.bgmMuted })),
   toggleSfxMute: () => set((state) => ({ sfxMuted: !state.sfxMuted })),
   toggleMasterMute: () => set((state) => ({ masterMuted: !state.masterMuted })),
+
+  // 광고 상태 관리
+  setAdPlaying: (isPlaying) => set({ isAdPlaying: isPlaying }),
 }));
