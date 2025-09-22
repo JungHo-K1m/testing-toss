@@ -26,9 +26,15 @@ interface SoundStore {
 
   // 광고 상태 관리
   setAdPlaying: (isPlaying: boolean) => void;
+
+  // 사운드 설정 초기화
+  initializeSoundSettings: () => void;
+  
+  // 강제 사운드 재시작 (디버그용)
+  forceRestartSound: () => void;
 }
 
-export const useSoundStore = create<SoundStore>((set) => ({
+export const useSoundStore = create<SoundStore>((set, get) => ({
   // 초기값 설정
   bgmVolume: 0.15,
   sfxVolume: 0.15,
@@ -53,4 +59,70 @@ export const useSoundStore = create<SoundStore>((set) => ({
 
   // 광고 상태 관리
   setAdPlaying: (isPlaying) => set({ isAdPlaying: isPlaying }),
+
+  // 사운드 설정 초기화 (로컬 스토리지에서 불러오기)
+  initializeSoundSettings: () => {
+    try {
+      const savedSettings = localStorage.getItem('soundSettings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        set({
+          bgmVolume: settings.bgmVolume ?? 0.15,
+          sfxVolume: settings.sfxVolume ?? 0.15,
+          masterVolume: settings.masterVolume ?? 0.15,
+          bgmMuted: settings.bgmMuted ?? false,
+          sfxMuted: settings.sfxMuted ?? false,
+          masterMuted: settings.masterMuted ?? false,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load sound settings from localStorage:', error);
+    }
+  },
+
+  // 강제 사운드 재시작 (디버그용)
+  forceRestartSound: () => {
+    // AudioContext 재활성화 시도 (여러 방법)
+    const resumeAudioContext = async () => {
+      try {
+        let audioContext = null;
+        
+        // 방법 1: Howler.js의 내부 AudioContext
+        if ((window as any).Howl?._howls?.[0]?._sounds?.[0]?._node?.context) {
+          audioContext = (window as any).Howl._howls[0]._sounds[0]._node.context;
+        }
+        
+        // 방법 2: Howler.js의 전역 AudioContext
+        if (!audioContext && (window as any).Howl?._ctx) {
+          audioContext = (window as any).Howl._ctx;
+        }
+        
+        // 방법 3: 새로운 AudioContext 생성
+        if (!audioContext && window.AudioContext) {
+          audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        
+        if (audioContext && audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+      } catch (error) {
+        // AudioContext 재활성화 실패 시 무시
+      }
+    };
+    
+    resumeAudioContext();
+    
+    // 상태를 강제로 업데이트하여 useAudioManager의 useEffect를 다시 실행
+    const currentState = get();
+    set({
+      ...currentState,
+      bgmVolume: currentState.bgmVolume + 0.001, // 미세한 변화로 리렌더링 트리거
+    });
+    setTimeout(() => {
+      set({
+        ...currentState,
+        bgmVolume: currentState.bgmVolume, // 원래 값으로 복원
+      });
+    }, 100);
+  },
 }));

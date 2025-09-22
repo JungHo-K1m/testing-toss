@@ -1233,7 +1233,7 @@ const Inventory: React.FC = () => {
         }}
         className="w-full mx-6 flex flex-col pt-2"
       >
-        <TopTitle title={"인벤토리"} back={false} className=" pt-20"/>
+        <TopTitle title={"인벤토리"} back={false} className=""/>
         {/* 착용 중인 아이템 및 캐릭터 표시 영역 */}
         <div className="flex items-center justify-center flex-1 w-full">
           {/* 좌측 아이템 슬롯 */}

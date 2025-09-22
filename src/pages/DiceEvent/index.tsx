@@ -27,6 +27,7 @@ import { HiX } from "react-icons/hi";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { useSound } from "@/shared/provider/SoundProvider";
 import Audios from "@/shared/assets/audio";
+import { useSoundStore } from "@/shared/store/useSoundStore";
 import getRewardPoints from "@/entities/Mission/api/fromRewardPoint";
 import updateTimeZone from "@/entities/User/api/updateTimeZone";
 import { getPromotion } from "@/entities/User/api/getPromotion";
@@ -101,6 +102,7 @@ const DiceEventPage: React.FC = () => {
 
   const game = useDiceGame();
   const { playSfx } = useSound();
+  const { initializeSoundSettings } = useSoundStore();
   const [initialX, setInitialX] = useState<number>(140);
   const [initialY, setInitialY] = useState<number>(474);
   const [delta, setDelta] = useState<number>(56);
@@ -297,15 +299,20 @@ const DiceEventPage: React.FC = () => {
     initializeUserData();
   }, [fetchUserData]); // fetchEquippedItems 제거하여 무한 루프 방지
 
+  // 사운드 설정 초기화
+  useEffect(() => {
+    initializeSoundSettings();
+  }, [initializeSoundSettings]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setInitialX(250);
-        setInitialY(730 + 80 + 80); // pt-20 (80px) 추가
+        setInitialY(730 + 80);
         setDelta(100);
       } else {
         setInitialX(140);
-        setInitialY(474 + 80 + 80); // pt-20 (80px) 추가
+        setInitialY(474 + 80);
         setDelta(56);
       }
     };
@@ -1085,7 +1092,7 @@ const DiceEventPage: React.FC = () => {
         ) : (
           <>
             {/* 상단 캐릭터 정보 영역 */}
-            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4 pt-20">
+            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4">
               {/* 왼쪽: 캐릭터 정보 */}
               <div className="flex items-center">
                 <div className="flex items-center">
@@ -1156,7 +1163,7 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 오른쪽: 설정 아이콘 */}
+              {/* 오른쪽: 설정 아이콘 및 사운드 재시작 버튼 */}
               <div className="flex items-center gap-2">
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -1255,7 +1262,7 @@ const DiceEventPage: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div
                   className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl"
-                  style={{ marginTop: "80px" }}
+                  style={{ marginTop: "0px" }}
                 >
                   <img
                     src={Images.AirplaneIcon}
@@ -1367,7 +1374,7 @@ const DiceEventPage: React.FC = () => {
                     opacity: 0.6,
                   }}
                 />
-                <div className="relative z-10 flex flex-col h-full pt-20">
+                <div className="relative z-10 flex flex-col h-full">
                   <DialogHeader className="w-full pr-4 pt-4">
                     <div className="flex justify-end w-full">
                       <DialogClose>

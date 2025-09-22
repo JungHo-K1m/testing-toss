@@ -95,6 +95,41 @@ export const useAdMob = (): UseAdMobReturn => {
   const [isSupported, setIsSupported] = useState<boolean>(false);
   const { setAdPlaying } = useSoundStore();
   
+  // 사운드 제어 상태 추적 (중복 호출 방지)
+  const soundControlRef = useRef<{
+    isAdPlaying: boolean;
+    soundRestartTimeout: NodeJS.Timeout | null;
+  }>({
+    isAdPlaying: false,
+    soundRestartTimeout: null,
+  });
+  
+  // 중앙화된 사운드 제어 함수
+  const controlAdSound = useCallback((shouldPlay: boolean, delay: number = 0) => {
+    // 기존 타임아웃 정리
+    if (soundControlRef.current.soundRestartTimeout) {
+      clearTimeout(soundControlRef.current.soundRestartTimeout);
+      soundControlRef.current.soundRestartTimeout = null;
+    }
+    
+    // 즉시 실행
+    if (delay === 0) {
+      if (soundControlRef.current.isAdPlaying !== shouldPlay) {
+        soundControlRef.current.isAdPlaying = shouldPlay;
+        setAdPlaying(shouldPlay);
+      }
+    } else {
+      // 지연 실행
+      soundControlRef.current.soundRestartTimeout = setTimeout(() => {
+        if (soundControlRef.current.isAdPlaying !== shouldPlay) {
+          soundControlRef.current.isAdPlaying = shouldPlay;
+          setAdPlaying(shouldPlay);
+        }
+        soundControlRef.current.soundRestartTimeout = null;
+      }, delay);
+    }
+  }, [setAdPlaying]);
+  
   // 광고 타입별 상태 관리
   const [adStatuses, setAdStatuses] = useState<Record<AdType, AdLoadStatus>>({
     RANDOM_BOX: 'not_loaded',
@@ -139,6 +174,11 @@ export const useAdMob = (): UseAdMobReturn => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
+      // 사운드 제어 타임아웃 정리
+      if (soundControlRef.current.soundRestartTimeout) {
+        clearTimeout(soundControlRef.current.soundRestartTimeout);
+      }
+      
       // 모든 광고 인스턴스 정리
       Object.values(adInstancesRef.current).forEach(instance => {
         if (instance.cleanup && typeof instance.cleanup === 'function') {
@@ -228,19 +268,19 @@ export const useAdMob = (): UseAdMobReturn => {
               break;
             case 'dismissed':
               // 광고 종료 시 사운드 재생
-              setAdPlaying(false);
+              controlAdSound(false);
               resetAdInstance(adType);
               break;
             case 'failedToShow':
               // 광고 실패 시 사운드 재생
-              setAdPlaying(false);
+              controlAdSound(false);
               resetAdInstance(adType);
               break;
             case 'impression':
               break;
             case 'show':
               // 광고 표시 시작 시 사운드 정지
-              setAdPlaying(true);
+              controlAdSound(true);
               break;
             case 'userEarnedReward':
               if (instance.pendingPromise) {
@@ -263,7 +303,7 @@ export const useAdMob = (): UseAdMobReturn => {
                   
                   // 광고 시청 완료 후 자동으로 인스턴스 정리 (지연)
                   setTimeout(() => {
-                    setAdPlaying(false); // 사운드 재생
+                    controlAdSound(false); // 사운드 재생
                     resetAdInstance(adType);
                   }, 2000);
                   return; // 여기서 함수 종료하여 아래 API 호출 방지
@@ -295,7 +335,7 @@ export const useAdMob = (): UseAdMobReturn => {
                 
                 // 광고 인스턴스 리셋을 지연시켜 호출 (모달 표시 후)
                 setTimeout(() => {
-                  setAdPlaying(false); // 사운드 재생
+                  controlAdSound(false); // 사운드 재생
                   resetAdInstance(adType);
                 }, 2000);
               }
@@ -411,7 +451,7 @@ export const useAdMob = (): UseAdMobReturn => {
             console.error(`${adType} showAd: 광고 표시 중 오류:`, error);
             
             // 에러 발생 시 사운드 재생
-            setAdPlaying(false);
+            controlAdSound(false);
             
             // 에러 발생 시 Promise reject
             if (instance.pendingPromise) {
@@ -435,7 +475,7 @@ export const useAdMob = (): UseAdMobReturn => {
             console.error(`${adType} showAd: 광고 표시 타임아웃 (45초)`);
             
             // 타임아웃 시 사운드 재생
-            setAdPlaying(false);
+            controlAdSound(false);
             
             // 타임아웃 시 적절한 에러 응답 생성
             const timeoutResponse = {

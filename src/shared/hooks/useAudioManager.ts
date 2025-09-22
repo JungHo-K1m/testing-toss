@@ -3,6 +3,37 @@ import { useEffect, useRef } from 'react';
 import { Howl } from 'howler';
 import { useSoundStore } from '../store/useSoundStore';
 
+// AudioContext 재활성화를 위한 헬퍼 함수
+const resumeAudioContext = async () => {
+  try {
+    // 여러 방법으로 AudioContext에 접근 시도
+    let audioContext = null;
+    
+    // 방법 1: Howler.js의 내부 AudioContext
+    if ((Howl as any)._howls?.[0]?._sounds?.[0]?._node?.context) {
+      audioContext = (Howl as any)._howls[0]._sounds[0]._node.context;
+    }
+    
+    // 방법 2: Howler.js의 전역 AudioContext
+    if (!audioContext && (Howl as any)._ctx) {
+      audioContext = (Howl as any)._ctx;
+    }
+    
+    // 방법 3: Web Audio API의 기본 AudioContext
+    if (!audioContext && window.AudioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    
+    if (audioContext) {
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+    }
+  } catch (error) {
+    // AudioContext 재활성화 실패 시 무시
+  }
+};
+
 /**
  * BGM 자동 로드/재생 + zustand(볼륨/뮤트) 연동
  * - 효과음(SFX)에 대해 loop 옵션과 stopSfx를 제공.
@@ -29,8 +60,52 @@ export function useAudioManager(bgmSrc: string) {
         src: [bgmSrc],
         loop: true,
         volume: 0, // 초기 볼륨 0, 아래 useEffect에서 업데이트
+        preload: true, // 미리 로드하여 재생 지연 방지
+        html5: false, // Web Audio API 사용 (더 안정적)
       });
-      bgmRef.current.play();
+      
+      // BGM 로드 완료 후 자동 재생
+      bgmRef.current.on('load', async () => {
+        if (bgmRef.current && !isAdPlaying) {
+          // AudioContext 재활성화
+          await resumeAudioContext();
+          
+          const finalVolume = (masterMuted || bgmMuted)
+            ? 0
+            : bgmVolume * masterVolume;
+          bgmRef.current.volume(finalVolume);
+          bgmRef.current.play();
+          
+          // 재생 실패 시 재시도
+          if (!bgmRef.current.playing()) {
+            setTimeout(async () => {
+              await resumeAudioContext();
+              bgmRef.current?.play();
+            }, 100);
+          }
+        }
+      });
+      
+      
+      // 즉시 재생 시도 (로드가 이미 완료된 경우)
+      if (bgmRef.current.state() === 'loaded' && !isAdPlaying) {
+        // AudioContext 재활성화
+        resumeAudioContext().then(() => {
+          const finalVolume = (masterMuted || bgmMuted)
+            ? 0
+            : bgmVolume * masterVolume;
+          bgmRef.current!.volume(finalVolume);
+          bgmRef.current!.play();
+          
+          // 재생 실패 시 재시도
+          if (!bgmRef.current!.playing()) {
+            setTimeout(async () => {
+              await resumeAudioContext();
+              bgmRef.current?.play();
+            }, 100);
+          }
+        });
+      }
     }
 
     return () => {
@@ -38,28 +113,161 @@ export function useAudioManager(bgmSrc: string) {
       bgmRef.current?.unload();
       bgmRef.current = null;
     };
-  }, [bgmSrc]);
+  }, [bgmSrc, masterMuted, bgmMuted, bgmVolume, masterVolume, isAdPlaying]);
 
   // ========== 1.5) 백그라운드 복귀 시 BGM 재생 ==========
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (!document.hidden && bgmRef.current && !isAdPlaying) {
         // 백그라운드에서 복귀하고 광고가 재생 중이 아닐 때 BGM 재생
         const finalVolume = (masterMuted || bgmMuted)
           ? 0
           : bgmVolume * masterVolume;
         
+        // 더 강력한 재시작 로직
+        const restartBGM = async (attempt = 1) => {
+          if (!bgmRef.current) return;
+          
+          // 1. AudioContext 재활성화
+          await resumeAudioContext();
+          
+          // 2. 볼륨 설정
+          bgmRef.current.volume(finalVolume);
+          
+          // 3. 완전 중지
+          bgmRef.current.stop();
+          
+          // 4. 잠시 대기 후 재생
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          // 5. 다시 AudioContext 확인
+          await resumeAudioContext();
+          
+          // 6. 재생 시도
+          if (bgmRef.current) {
+            bgmRef.current.play();
+            
+            // 7. 재생 상태 확인
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const isPlaying = bgmRef.current.playing();
+            
+            // 8. 재생 실패 시 재시도 (최대 3회)
+            if (!isPlaying && attempt < 3) {
+              setTimeout(() => restartBGM(attempt + 1), 300);
+            }
+          }
+        };
+        
+        await restartBGM();
+      }
+    };
+
+    // 페이지 포커스 이벤트도 추가로 처리
+    const handleFocus = async () => {
+      if (bgmRef.current && !isAdPlaying) {
+        const finalVolume = (masterMuted || bgmMuted)
+          ? 0
+          : bgmVolume * masterVolume;
+        
+        // 포커스 시 강력한 재시작 로직
+        const restartBGMOnFocus = async (attempt = 1) => {
+          if (!bgmRef.current) return;
+          
+          await resumeAudioContext();
+          bgmRef.current.volume(finalVolume);
+          bgmRef.current.stop();
+          
+          await new Promise(resolve => setTimeout(resolve, 150));
+          await resumeAudioContext();
+          
+          if (bgmRef.current) {
+            bgmRef.current.play();
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const isPlaying = bgmRef.current.playing();
+            
+            if (!isPlaying && attempt < 3) {
+              setTimeout(() => restartBGMOnFocus(attempt + 1), 300);
+            }
+          }
+        };
+        
+        await restartBGMOnFocus();
+      }
+    };
+
+    // 페이지 로드 완료 시에도 재시작 시도
+    const handleLoad = () => {
+      if (bgmRef.current && !isAdPlaying) {
+        const finalVolume = (masterMuted || bgmMuted)
+          ? 0
+          : bgmVolume * masterVolume;
+        
         bgmRef.current.volume(finalVolume);
+        
         if (!bgmRef.current.playing()) {
-          bgmRef.current.play();
+          bgmRef.current.stop();
+          setTimeout(() => {
+            if (bgmRef.current) {
+              bgmRef.current.play();
+            }
+          }, 100);
         }
       }
     };
 
+    // 사용자 상호작용 시 오디오 재시작 (클릭, 터치 등)
+    const handleUserInteraction = async () => {
+      if (bgmRef.current && !isAdPlaying && !bgmRef.current.playing()) {
+        const finalVolume = (masterMuted || bgmMuted)
+          ? 0
+          : bgmVolume * masterVolume;
+        
+        // 사용자 상호작용 시 강력한 재시작
+        const restartBGMOnInteraction = async (attempt = 1) => {
+          if (!bgmRef.current) return;
+          
+          await resumeAudioContext();
+          bgmRef.current.volume(finalVolume);
+          bgmRef.current.stop();
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await resumeAudioContext();
+          
+          if (bgmRef.current) {
+            bgmRef.current.play();
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const isPlaying = bgmRef.current.playing();
+            
+            if (!isPlaying && attempt < 2) {
+              setTimeout(() => restartBGMOnInteraction(attempt + 1), 200);
+            }
+          }
+        };
+        
+        await restartBGMOnInteraction();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('load', handleLoad);
+    
+    // 사용자 상호작용 이벤트 리스너 추가
+    document.addEventListener('click', handleUserInteraction, { once: false });
+    document.addEventListener('touchstart', handleUserInteraction, { once: false });
+    document.addEventListener('keydown', handleUserInteraction, { once: false });
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('load', handleLoad);
+      
+      // 사용자 상호작용 이벤트 리스너 제거
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
     };
   }, [masterMuted, bgmMuted, bgmVolume, masterVolume, isAdPlaying]);
 
@@ -140,6 +348,41 @@ export function useAudioManager(bgmSrc: string) {
       sound.volume(finalVolume);
     });
   }, [sfxVolume, masterVolume, sfxMuted, masterMuted, isAdPlaying]);
+
+  // ========== 6) 주기적 BGM 상태 체크 및 자동 복구 ==========
+  useEffect(() => {
+    const checkBGMStatus = async () => {
+      if (bgmRef.current && !isAdPlaying && !masterMuted && !bgmMuted) {
+        const isPlaying = bgmRef.current.playing();
+        const shouldBePlaying = bgmVolume * masterVolume > 0;
+        
+        if (shouldBePlaying && !isPlaying) {
+          // AudioContext 재활성화
+          await resumeAudioContext();
+          
+          // 볼륨 설정
+          const finalVolume = bgmVolume * masterVolume;
+          bgmRef.current.volume(finalVolume);
+          
+          // 재시작
+          bgmRef.current.stop();
+          setTimeout(async () => {
+            if (bgmRef.current) {
+              await resumeAudioContext();
+              bgmRef.current.play();
+            }
+          }, 100);
+        }
+      }
+    };
+
+    // 3초마다 상태 체크
+    const interval = setInterval(checkBGMStatus, 3000);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, [bgmVolume, masterVolume, bgmMuted, masterMuted, isAdPlaying]);
 
   return {
     playSfx,

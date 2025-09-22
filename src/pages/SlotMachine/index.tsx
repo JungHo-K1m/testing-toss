@@ -15,7 +15,7 @@ const SlotMachine: React.FC = () => {
   const { playSfx } = useSound();
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: number | null = null;
 
     if (isSpinning) {
       interval = setInterval(() => {

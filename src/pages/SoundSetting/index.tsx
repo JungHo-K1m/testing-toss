@@ -43,6 +43,17 @@ const SoundSetting: React.FC = () => {
         effectMute: sfxMuted,
       };
 
+      // 로컬 스토리지에도 저장
+      const localSoundSettings = {
+        bgmVolume,
+        sfxVolume,
+        masterVolume,
+        bgmMuted,
+        sfxMuted,
+        masterMuted,
+      };
+      localStorage.setItem('soundSettings', JSON.stringify(localSoundSettings));
+
       const saveResponse = await saveSoundSetting(soundData);
 
       if (saveResponse) {
@@ -56,7 +67,7 @@ const SoundSetting: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center text-white px-6 min-h-screen pt-20">
+    <div className="flex flex-col items-center text-white px-6 min-h-screen">
       <TopTitle title="사운드 설정" back={true} />
 
       {/* 광고 시청 중 알림 */}

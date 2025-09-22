@@ -288,7 +288,7 @@ const InviteFriends: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col mx-6 mb-44 text-white items-center min-h-screen pt-20">
+    <div className="flex flex-col mx-6 mb-44 text-white items-center min-h-screen">
       <TopTitle title="친구 초대" back={true} />
       <div className="invite-reward-box w-full md:w-[500px] h-[332px] rounded-3xl flex flex-col items-center justify-center mt-9 gap-4">
         <div className="flex flex-row items-center">

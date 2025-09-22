@@ -311,7 +311,7 @@ const MissionPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col text-white mb-20 md:mb-96 min-h-screen mx-6 pt-20">
+    <div className="flex flex-col text-white mb-20 md:mb-96 min-h-screen mx-6">
       <TopTitle title="미션" />
 
       {/* 출석 위젯 */}

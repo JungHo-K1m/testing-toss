@@ -111,7 +111,7 @@ const Reward: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col text-white mb-44 w-full min-h-screen pt-20">
+    <div className="flex flex-col text-white mb-44 w-full min-h-screen">
       {/* my-rank 위젯 표시 */}
       <Dialog>
         <DialogTrigger
@@ -142,7 +142,7 @@ const Reward: React.FC = () => {
               opacity: 0.6,
             }}
           />
-          <div className="relative z-10 flex flex-col h-full pt-20">
+          <div className="relative z-10 flex flex-col h-full">
             <DialogHeader className="flex w-full items-end">
               <DialogClose>
                 <HiX
