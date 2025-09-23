@@ -263,6 +263,68 @@ const Reward: React.FC = () => {
         </div>
       </div>
 
+      {/* 보상 안내 박스 영역 */}
+      <div
+        className="w-[340px] max-w-md rounded-3xl p-6 cursor-pointer mx-auto mb-8"
+        style={{
+          background: "linear-gradient(180deg, #282F4E 0%, #0044A3 100%)",
+          boxShadow:
+            "0px 2px 2px 0px rgba(0, 0, 0, 0.5), inset 0px 0px 2px 2px rgba(74, 149, 255, 0.5)",
+          borderRadius: "24px",
+        }}
+        onClick={() => navigate("/reward-info")}
+      >
+        <div className="flex justify-between items-center">
+          {/* 텍스트 영역 */}
+          <div className="flex flex-col gap-2">
+            <h2
+              className="text-xl font-bold"
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "24px",
+                fontWeight: 400,
+                color: "#FDE047",
+                WebkitTextStroke: "1px #000000",
+              }}
+            >
+              보상 지급 안내
+            </h2>
+            <p
+              className="text-white text-sm"
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "14px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                WebkitTextStroke: "1px #000000",
+              }}
+            >
+              보상에 대한 상세한 내용은
+            </p>
+            <p
+              className="text-white text-sm"
+              style={{
+                fontFamily: "'ONE Mobile POP', sans-serif",
+                fontSize: "14px",
+                fontWeight: 400,
+                color: "#FFFFFF",
+                WebkitTextStroke: "1px #000000",
+              }}
+            >
+              별도 페이지에서 확인하세요!
+            </p>
+          </div>
+
+          {/* 아이콘 영역 */}
+          <img
+            src={Images.RewardBox}
+            alt="hall-of-fame"
+            className="w-[120px] h-[120px]"
+            style={{ width: "120px", height: "120px" }}
+          />
+        </div>
+      </div>
+
       {/* 명예의 전당 영역 */}
       <div
         className="w-[340px] max-w-md rounded-3xl p-6 cursor-pointer mx-auto"

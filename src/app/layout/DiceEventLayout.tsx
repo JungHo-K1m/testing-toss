@@ -18,6 +18,7 @@ const backgroundMap: Record<string, string> = {
   "/reward-history": Images.BackgroundLobby,
   "/hall-of-fame": Images.BackgroundLobby,
   "/inventory": Images.BackgroundHome,
+  "/reward-info": Images.BackgroundLobby,
   // 필요시 추가
 };
 

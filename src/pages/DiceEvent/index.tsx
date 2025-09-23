@@ -135,7 +135,6 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (UserLevel용 - 희귀도 포함)
   const getEquippedItemsForUserLevel = () => {
-
     if (!equippedItems?.slot) return [];
 
     return equippedItems.slot.map((item) => {
@@ -170,7 +169,6 @@ const DiceEventPage: React.FC = () => {
 
   // 장착된 아이템을 컴포넌트에서 사용할 수 있는 형태로 변환 (Board용 - 기존 방식 유지)
   const getEquippedItemsForComponents = () => {
-
     if (!equippedItems?.slot) return [];
 
     return equippedItems.slot.map((item) => {
@@ -199,7 +197,6 @@ const DiceEventPage: React.FC = () => {
 
   // 장비 타입별 이미지 가져오기 함수 (아이템 오버레이용)
   const getEquipmentIcon = (type: string, rarity: number) => {
-
     const getRarityImageIndex = (rarity: number): number => {
       if (rarity <= 1) return 1; // 보라색
       if (rarity <= 3) return 2; // 하늘색
@@ -574,12 +571,10 @@ const DiceEventPage: React.FC = () => {
         return;
       }
 
-
       // 광고 표시 및 보상 결과 대기
       const rewardData: RandomBoxAdRewardResponse = await showAd("RANDOM_BOX");
 
       if (rewardData) {
-
         // rewardData 구조 확인 및 안전한 매핑
         if (!rewardData.type) {
           console.error("rewardData.type이 없습니다:", rewardData);
@@ -643,12 +638,12 @@ const DiceEventPage: React.FC = () => {
         message: error.message,
         stack: error.stack,
       });
-      
+
       // 에러 메시지에 따라 다른 알림 표시
-      const errorMessage = error.message?.includes('간격이 너무 짧습니다') 
-        ? error.message 
+      const errorMessage = error.message?.includes("간격이 너무 짧습니다")
+        ? error.message
         : "광고 시청에 실패했습니다. 다시 시도해주세요.";
-      
+
       alert(errorMessage);
 
       // 오류 발생 시 광고 상태 리셋 및 재로드
@@ -713,12 +708,12 @@ const DiceEventPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error("주사위 리필 광고 중 오류:", error);
-      
+
       // 에러 메시지에 따라 다른 알림 표시
-      const errorMessage = error.message?.includes('간격이 너무 짧습니다') 
-        ? error.message 
+      const errorMessage = error.message?.includes("간격이 너무 짧습니다")
+        ? error.message
         : "광고 시청에 실패했습니다. 다시 시도해주세요.";
-      
+
       alert(errorMessage);
 
       // 오류 발생 시 광고 상태 리셋 및 재로드
@@ -750,7 +745,6 @@ const DiceEventPage: React.FC = () => {
     const randomBoxStatus = getAdStatus("RANDOM_BOX");
     return randomBoxStatus === "loading" || randomBoxStatus === "cleaning";
   };
-
 
   useEffect(() => {
     if (showAdModal) {
@@ -804,29 +798,29 @@ const DiceEventPage: React.FC = () => {
     const promotionCode = localStorage.getItem("promotionCode");
     if (promotionCode === "promotion-reward") {
       getPromotion()
-        .then((response) => {          
+        .then((response) => {
           // 응답 결과를 상태에 저장
           setPromotionResult({
             status: response.status,
-            errorMessage: response.errorMessage
+            errorMessage: response.errorMessage,
           });
-          
+
           // 모든 상태에 대해 모달 표시
           setShowPromotionModal(true);
-          
+
           // 중복 호출 방지를 위해 promotionCode 삭제
           localStorage.removeItem("promotionCode");
         })
         .catch((error) => {
           console.error("[DiceEventPage] 프로모션 보상 API 에러:", error);
-          
+
           // 에러 발생 시에도 에러 상태로 모달 표시
           setPromotionResult({
             status: "ERROR",
-            errorMessage: error.message || "알 수 없는 오류가 발생했습니다."
+            errorMessage: error.message || "알 수 없는 오류가 발생했습니다.",
           });
           setShowPromotionModal(true);
-          
+
           // 에러 발생 시에도 promotionCode 삭제
           localStorage.removeItem("promotionCode");
         });
@@ -836,43 +830,46 @@ const DiceEventPage: React.FC = () => {
   // 프로모션 결과에 따른 메시지 반환 함수
   const getPromotionMessage = () => {
     if (!promotionResult) return { title: "", message: "", icon: "" };
-    
+
     switch (promotionResult.status) {
       case "SUCCESS":
         return {
           title: "프로모션 보상 지급 완료",
           message: "10 토스 포인트가 지급되었습니다!",
-          icon: "success"
+          icon: "success",
         };
       case "FAILED":
         return {
           title: "프로모션 보상 지급 실패",
           message: promotionResult.errorMessage || "보상 지급에 실패했습니다.",
-          icon: "failed"
+          icon: "failed",
         };
       case "PENDING":
         return {
           title: "프로모션 보상 처리 중",
           message: "보상이 처리 중입니다. 잠시 후 확인해주세요.",
-          icon: "pending"
+          icon: "pending",
         };
       case "GIVEUP":
         return {
           title: "프로모션 보상 지급 불가",
-          message: promotionResult.errorMessage || "이미 보상을 받았거나 지급 조건을 만족하지 않습니다.",
-          icon: "giveup"
+          message:
+            promotionResult.errorMessage ||
+            "이미 보상을 받았거나 지급 조건을 만족하지 않습니다.",
+          icon: "giveup",
         };
       case "ERROR":
         return {
           title: "오류 발생",
-          message: promotionResult.errorMessage || "알 수 없는 오류가 발생했습니다.",
-          icon: "error"
+          message:
+            promotionResult.errorMessage || "알 수 없는 오류가 발생했습니다.",
+          icon: "error",
         };
       default:
         return {
           title: "알 수 없는 상태",
           message: "예상치 못한 응답이 발생했습니다.",
-          icon: "unknown"
+          icon: "unknown",
         };
     }
   };
@@ -970,21 +967,84 @@ const DiceEventPage: React.FC = () => {
 
       // 희귀도별 효과 값 (이미지 테이블 기준)
       const rarityEffects = {
-        0: { EAR: { successRate: 30 }, HEAD: { cooldown: 0 }, EYE: { starPoint: 1 }, NECK: { diceStarPoint: 1 }, BACK: { spinReward: 1 } },
-        1: { EAR: { successRate: 32.4 }, HEAD: { cooldown: 3.2 }, EYE: { starPoint: 1.33 }, NECK: { diceStarPoint: 2.7 }, BACK: { spinReward: 1.33 } },
-        2: { EAR: { successRate: 32.9 }, HEAD: { cooldown: 3.9 }, EYE: { starPoint: 1.52 }, NECK: { diceStarPoint: 3.1 }, BACK: { spinReward: 1.52 } },
-        3: { EAR: { successRate: 33.6 }, HEAD: { cooldown: 4.9 }, EYE: { starPoint: 1.77 }, NECK: { diceStarPoint: 3.6 }, BACK: { spinReward: 1.77 } },
-        4: { EAR: { successRate: 34.8 }, HEAD: { cooldown: 6.5 }, EYE: { starPoint: 2.17 }, NECK: { diceStarPoint: 4.4 }, BACK: { spinReward: 2.17 } },
-        5: { EAR: { successRate: 36.9 }, HEAD: { cooldown: 9.4 }, EYE: { starPoint: 2.91 }, NECK: { diceStarPoint: 5.9 }, BACK: { spinReward: 2.91 } },
-        6: { EAR: { successRate: 40.8 }, HEAD: { cooldown: 14.6 }, EYE: { starPoint: 4.27 }, NECK: { diceStarPoint: 8.6 }, BACK: { spinReward: 4.27 } },
-        7: { EAR: { successRate: 48.0 }, HEAD: { cooldown: 24.4 }, EYE: { starPoint: 6.78 }, NECK: { diceStarPoint: 13.6 }, BACK: { spinReward: 6.78 } },
-        8: { EAR: { successRate: 62.7 }, HEAD: { cooldown: 44.4 }, EYE: { starPoint: 11.94 }, NECK: { diceStarPoint: 24 }, BACK: { spinReward: 11.94 } },
-        9: { EAR: { successRate: 100 }, HEAD: { cooldown: 95 }, EYE: { starPoint: 25.00 }, NECK: { diceStarPoint: 50 }, BACK: { spinReward: 25.00 } },
+        0: {
+          EAR: { successRate: 30 },
+          HEAD: { cooldown: 0 },
+          EYE: { starPoint: 1 },
+          NECK: { diceStarPoint: 1 },
+          BACK: { spinReward: 1 },
+        },
+        1: {
+          EAR: { successRate: 32.4 },
+          HEAD: { cooldown: 3.2 },
+          EYE: { starPoint: 1.33 },
+          NECK: { diceStarPoint: 2.7 },
+          BACK: { spinReward: 1.33 },
+        },
+        2: {
+          EAR: { successRate: 32.9 },
+          HEAD: { cooldown: 3.9 },
+          EYE: { starPoint: 1.52 },
+          NECK: { diceStarPoint: 3.1 },
+          BACK: { spinReward: 1.52 },
+        },
+        3: {
+          EAR: { successRate: 33.6 },
+          HEAD: { cooldown: 4.9 },
+          EYE: { starPoint: 1.77 },
+          NECK: { diceStarPoint: 3.6 },
+          BACK: { spinReward: 1.77 },
+        },
+        4: {
+          EAR: { successRate: 34.8 },
+          HEAD: { cooldown: 6.5 },
+          EYE: { starPoint: 2.17 },
+          NECK: { diceStarPoint: 4.4 },
+          BACK: { spinReward: 2.17 },
+        },
+        5: {
+          EAR: { successRate: 36.9 },
+          HEAD: { cooldown: 9.4 },
+          EYE: { starPoint: 2.91 },
+          NECK: { diceStarPoint: 5.9 },
+          BACK: { spinReward: 2.91 },
+        },
+        6: {
+          EAR: { successRate: 40.8 },
+          HEAD: { cooldown: 14.6 },
+          EYE: { starPoint: 4.27 },
+          NECK: { diceStarPoint: 8.6 },
+          BACK: { spinReward: 4.27 },
+        },
+        7: {
+          EAR: { successRate: 48.0 },
+          HEAD: { cooldown: 24.4 },
+          EYE: { starPoint: 6.78 },
+          NECK: { diceStarPoint: 13.6 },
+          BACK: { spinReward: 6.78 },
+        },
+        8: {
+          EAR: { successRate: 62.7 },
+          HEAD: { cooldown: 44.4 },
+          EYE: { starPoint: 11.94 },
+          NECK: { diceStarPoint: 24 },
+          BACK: { spinReward: 11.94 },
+        },
+        9: {
+          EAR: { successRate: 100 },
+          HEAD: { cooldown: 95 },
+          EYE: { starPoint: 25.0 },
+          NECK: { diceStarPoint: 50 },
+          BACK: { spinReward: 25.0 },
+        },
       };
 
       // 희귀도에 맞는 효과 반환
       const clampedRarity = Math.min(Math.max(rarity, 0), 9);
-      return rarityEffects[clampedRarity as keyof typeof rarityEffects] || rarityEffects[0];
+      return (
+        rarityEffects[clampedRarity as keyof typeof rarityEffects] ||
+        rarityEffects[0]
+      );
     };
 
     const effects = getEffectByRarity(rarity, type);
@@ -1036,7 +1096,7 @@ const DiceEventPage: React.FC = () => {
             if (result.keyCount !== undefined) {
               setLotteryCount(result.keyCount);
             }
-            
+
             // API 응답에서 받은 diceCount로 주사위 개수 업데이트 (diceCount가 있는 경우에만)
             if (result.diceCount !== undefined) {
               setDiceCount(result.diceCount);
@@ -1153,7 +1213,7 @@ const DiceEventPage: React.FC = () => {
                             }, 2000);
                           }
                         } catch (error) {
-                          console.error('클립보드 복사 실패:', error);
+                          console.error("클립보드 복사 실패:", error);
                         }
                       }}
                     >
@@ -1163,7 +1223,7 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 오른쪽: 설정 아이콘 및 사운드 재시작 버튼 */}
+              {/* 오른쪽: 설정 아이콘 버튼 */}
               <div className="flex items-center gap-2">
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -1820,7 +1880,9 @@ const DiceEventPage: React.FC = () => {
                         onClick={handleAdRandomBox}
                         disabled={isAdButtonDisabled()}
                         className={`relative flex items-center justify-center gap-3 px-6 py-4 rounded-[10px] transition-transform active:scale-95 ${
-                          isAdButtonDisabled() ? "opacity-50 cursor-not-allowed" : "hover:scale-105"
+                          isAdButtonDisabled()
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:scale-105"
                         }`}
                         style={{
                           background:
@@ -2243,7 +2305,7 @@ const DiceEventPage: React.FC = () => {
                   <div className="flex flex-col gap-6">
                     {equippedItems?.slot && equippedItems.slot.length > 0 ? (
                       // 장착된 아이템이 있는 경우
-                      (<div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-4">
                         {equippedItems.slot.map((item, index) => (
                           <div
                             key={`${item.type}-${index}`}
@@ -2344,10 +2406,10 @@ const DiceEventPage: React.FC = () => {
                             </div>
                           </div>
                         ))}
-                      </div>)
+                      </div>
                     ) : (
                       // 장착된 아이템이 없는 경우
-                      (<div
+                      <div
                         className="flex flex-row items-center justify-center gap-6"
                         style={{
                           width: "70vw",
@@ -2373,7 +2435,7 @@ const DiceEventPage: React.FC = () => {
                         >
                           현재 장착 중인 아이템이 없습니다.
                         </p>
-                      </div>)
+                      </div>
                     )}
                   </div>
                 </div>
@@ -2632,7 +2694,7 @@ const DiceEventPage: React.FC = () => {
                     <div className="flex items-center justify-center w-[150px] h-[150px] mb-5">
                       {refillTimeInfo?.hasRemainingDice ? (
                         // 주사위가 남아있는 경우 안내 메시지
-                        (<div className="flex flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-3">
                           <img
                             src={Images.Dice}
                             alt="Dice"
@@ -2662,10 +2724,10 @@ const DiceEventPage: React.FC = () => {
                               모든 주사위를 사용한 후 리필이 가능합니다
                             </p>
                           </div>
-                        </div>)
+                        </div>
                       ) : (
                         // 기존 리필 시간 표시 로직
-                        (<div className="flex flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-3">
                           <img
                             src={Images.RefillDice}
                             alt="Refill Dice"
@@ -2695,7 +2757,7 @@ const DiceEventPage: React.FC = () => {
                               {refillTimeInfo?.timeUntilRefill}
                             </p>
                           </div>
-                        </div>)
+                        </div>
                       )}
                     </div>
                   </div>
@@ -2782,12 +2844,16 @@ const DiceEventPage: React.FC = () => {
                           }}
                         />
                         <span>
-                          {getAdStatus("DICE_REFILL") === "loading" && "로딩 중..."}
+                          {getAdStatus("DICE_REFILL") === "loading" &&
+                            "로딩 중..."}
                           {getAdStatus("DICE_REFILL") === "loaded" &&
                             "광고 시청 후 주사위 리필"}
-                          {getAdStatus("DICE_REFILL") === "failed" && "로드 실패 - 다시 시도"}
-                          {getAdStatus("DICE_REFILL") === "not_loaded" && "준비 중..."}
-                          {getAdStatus("DICE_REFILL") === "cleaning" && "정리 중..."}
+                          {getAdStatus("DICE_REFILL") === "failed" &&
+                            "로드 실패 - 다시 시도"}
+                          {getAdStatus("DICE_REFILL") === "not_loaded" &&
+                            "준비 중..."}
+                          {getAdStatus("DICE_REFILL") === "cleaning" &&
+                            "정리 중..."}
                         </span>
                       </button>
                     </div>
@@ -2797,7 +2863,7 @@ const DiceEventPage: React.FC = () => {
             </Dialog>
 
             {/* 이벤트 안내 모달 */}
-            {/* <Dialog
+            <Dialog
               open={showEventGuideModal}
               onOpenChange={setShowEventGuideModal}
             >
@@ -2812,18 +2878,18 @@ const DiceEventPage: React.FC = () => {
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                 }}
-              > */}
+              >
                 {/* 닫기 버튼 */}
-                {/* <button
+                <button
                   onClick={handleCloseEventGuideModal}
                   className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center z-10"
                 >
                   <HiX className="w-5 h-5 text-white" />
                 </button>
 
-                <div className="flex flex-col items-center w-full"> */}
+                <div className="flex flex-col items-center w-full">
                   {/* 메인 타이틀 */}
-                  {/* <div className="text-center mb-6">
+                  <div className="text-center mb-6">
                     <h1
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -2848,10 +2914,10 @@ const DiceEventPage: React.FC = () => {
                     >
                       리워드를 잡아라!
                     </h1>
-                  </div> */}
+                  </div>
 
                   {/* 서브타이틀 */}
-                  {/* <div className="text-center mb-2">
+                  <div className="text-center mb-2">
                     <h2
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
@@ -2863,22 +2929,21 @@ const DiceEventPage: React.FC = () => {
                     >
                       랭킹 리워드 :
                     </h2>
-                  </div> */}
+                  </div>
 
                   {/* 보상 정보 박스 */}
-                  {/* <div
+                  <div
                     className="w-full mb-6 p-5 rounded-[20px]"
                     style={{
                       background: "rgba(0, 94, 170, 0.5)",
                       backdropFilter: "blur(10px)",
-                      boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
+                      boxShadow:
+                        "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     }}
-                  > */}
+                  >
                     {/* 1~3등 보상 */}
-                    {/* <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
-                      >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-[20px] h-[20px] flex items-center justify-center rounded-full">
                         <img
                           src={Images.JamIcon}
                           alt="gold-medal"
@@ -2894,15 +2959,13 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "1px #000000",
                         }}
                       >
-                        1~3등 : 100만원 상당의 상금 수여
+                        1~3등 : 아이패드
                       </span>
                     </div>
 
                     {/* 4~100등 보상 */}
-                    {/* <div className="flex items-center gap-3">
-                      <div
-                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
-                      >
+                    <div className="flex items-center gap-3">
+                      <div className="w-[20px] h-[20px] flex items-center justify-center rounded-full">
                         <img
                           src={Images.LotteryTicket}
                           alt="lottery-ticket"
@@ -2918,50 +2981,55 @@ const DiceEventPage: React.FC = () => {
                           WebkitTextStroke: "1px #000000",
                         }}
                       >
-                        4~100등 : 5만원 상당의 상품권 증정
+                        4~100등 : 가정용 전자기기
                       </span>
                     </div>
-                  </div>  */}
+                  </div>
 
                   {/* 안내 메시지 */}
-                  {/* <div className="text-center mb-8">
+                  <div className="text-center mb-8">
                     <p
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
-                        fontSize: "12px",
+                        fontSize: "16px",
                         fontWeight: "400",
                         color: "#FFFFFF",
                         WebkitTextStroke: "1px #000000",
                         marginBottom: "4px",
                       }}
                     >
-                      * 자세한 내용은 트위터를 확인해주세요!
+                      이벤트 기간 및 지급 안내
                     </p>
                     <p
                       style={{
                         fontFamily: "'ONE Mobile POP', sans-serif",
                         fontSize: "12px",
                         fontWeight: "bold",
-                        color: "#008DFF",
+                        color: "#FFFFFF",
                         WebkitTextStroke: "1px #000000",
                       }}
                     >
-                      @savethelife_SL
+                      : 런칭 시점부터 45일간 진행
+                      <br />
+                      <br />* 결과 발표 및 지급은 11월 내 진행 예정
+                      <br />* 당첨자에게는 개별 안내 예정
                     </p>
-                  </div> */}
+                  </div>
 
                   {/* 게임하러 가기 버튼 */}
-                  {/* <button
+                  <button
                     onClick={() => {
                       playSfx(Audios.button_click);
                       handleCloseEventGuideModal();
                     }}
                     className="w-full h-14 rounded-[12px] flex items-center justify-center relative"
                     style={{
-                      background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                      background:
+                        "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
                       border: "2px solid #76C1FF",
                       outline: "2px solid #000000",
-                      boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                      boxShadow:
+                        "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
                       color: "#FFFFFF",
                       fontFamily: "'ONE Mobile POP', sans-serif",
                       fontSize: "18px",
@@ -2986,9 +3054,7 @@ const DiceEventPage: React.FC = () => {
                   </button>
                 </div>
               </DialogContent>
-            </Dialog> */}
-
-
+            </Dialog>
 
             {/* 프로모션 보상 지급 결과 안내 모달 */}
             <Dialog
@@ -3042,13 +3108,12 @@ const DiceEventPage: React.FC = () => {
                     style={{
                       background: "rgba(0, 94, 170, 0.5)",
                       backdropFilter: "blur(10px)",
-                      boxShadow: "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
+                      boxShadow:
+                        "inset 0px 0px 4px 3px rgba(255, 255, 255, 0.6)",
                     }}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-[20px] h-[20px] flex items-center justify-center rounded-full"
-                      >
+                      <div className="w-[20px] h-[20px] flex items-center justify-center rounded-full">
                         {getPromotionMessage().icon === "success" && (
                           <img
                             src={Images.TossPoint}
@@ -3059,19 +3124,22 @@ const DiceEventPage: React.FC = () => {
                         {getPromotionMessage().icon === "failed" && (
                           <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
                             <span
-                            style={{
-                              fontFamily: "'ONE Mobile POP', sans-serif",
-                              fontSize: "30px",
-                              fontWeight: "400",
-                              color: "#FDE047",
-                              WebkitTextStroke: "2px #000000",
-                              lineHeight: "1.2",
-                            }}>✕</span>
+                              style={{
+                                fontFamily: "'ONE Mobile POP', sans-serif",
+                                fontSize: "30px",
+                                fontWeight: "400",
+                                color: "#FDE047",
+                                WebkitTextStroke: "2px #000000",
+                                lineHeight: "1.2",
+                              }}
+                            >
+                              ✕
+                            </span>
                           </div>
                         )}
                         {getPromotionMessage().icon === "pending" && (
                           <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
-                            <span 
+                            <span
                               style={{
                                 fontFamily: "'ONE Mobile POP', sans-serif",
                                 fontSize: "30px",
@@ -3079,12 +3147,15 @@ const DiceEventPage: React.FC = () => {
                                 color: "#FDE047",
                                 WebkitTextStroke: "2px #000000",
                                 lineHeight: "1.2",
-                              }}>⏳</span>
+                              }}
+                            >
+                              ⏳
+                            </span>
                           </div>
                         )}
                         {getPromotionMessage().icon === "giveup" && (
                           <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
-                            <span 
+                            <span
                               style={{
                                 fontFamily: "'ONE Mobile POP', sans-serif",
                                 fontSize: "30px",
@@ -3092,12 +3163,15 @@ const DiceEventPage: React.FC = () => {
                                 color: "#FDE047",
                                 WebkitTextStroke: "2px #000000",
                                 lineHeight: "1.2",
-                              }}>!</span>
+                              }}
+                            >
+                              !
+                            </span>
                           </div>
                         )}
                         {getPromotionMessage().icon === "error" && (
                           <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
-                            <span 
+                            <span
                               style={{
                                 fontFamily: "'ONE Mobile POP', sans-serif",
                                 fontSize: "30px",
@@ -3105,12 +3179,15 @@ const DiceEventPage: React.FC = () => {
                                 color: "#FDE047",
                                 WebkitTextStroke: "2px #000000",
                                 lineHeight: "1.2",
-                              }}>!</span>
+                              }}
+                            >
+                              !
+                            </span>
                           </div>
                         )}
                         {getPromotionMessage().icon === "unknown" && (
                           <div className="w-[20px] h-[20px] rounded-full flex items-center justify-center">
-                              <span 
+                            <span
                               style={{
                                 fontFamily: "'ONE Mobile POP', sans-serif",
                                 fontSize: "30px",
@@ -3118,7 +3195,10 @@ const DiceEventPage: React.FC = () => {
                                 color: "#FDE047",
                                 WebkitTextStroke: "2px #000000",
                                 lineHeight: "1.2",
-                              }}>?</span>
+                              }}
+                            >
+                              ?
+                            </span>
                           </div>
                         )}
                       </div>
@@ -3145,10 +3225,12 @@ const DiceEventPage: React.FC = () => {
                     }}
                     className="w-full h-14 rounded-[12px] flex items-center justify-center relative"
                     style={{
-                      background: "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
+                      background:
+                        "linear-gradient(180deg, #50B0FF 0%, #50B0FF 50%, #008DFF 50%, #008DFF 100%)",
                       border: "2px solid #76C1FF",
                       outline: "2px solid #000000",
-                      boxShadow: "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
+                      boxShadow:
+                        "0px 4px 4px 0px rgba(0, 0, 0, 0.25), inset 0px 3px 0px 0px rgba(0, 0, 0, 0.1)",
                       color: "#FFFFFF",
                       fontFamily: "'ONE Mobile POP', sans-serif",
                       fontSize: "18px",
@@ -3174,12 +3256,11 @@ const DiceEventPage: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            
 
             {/* UID 복사 완료 모달 */}
             {showCopyModal && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 w-full z-50">
-                <div 
+                <div
                   className="bg-white text-black p-6 rounded-lg text-center w-[70%] max-w-[300px]"
                   style={{
                     fontFamily: "'ONE Mobile POP', sans-serif",

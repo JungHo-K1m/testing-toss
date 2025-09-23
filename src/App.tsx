@@ -25,21 +25,29 @@ import PreviousRanking from "./pages/PreviousRanking";
 import EditNickname from "./pages/EditNickname";
 import Inventory from "./pages/Inventory";
 import HallofFame from "./pages/HallofFame";
+import RewardInfo from "./pages/RewardInfo";
 
 const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCheckingInitialization, setIsCheckingInitialization] =
     useState(true);
-
-
+  const [showInitializer, setShowInitializer] = useState(true);
 
   // isInitialized 상태 변화 모니터링
   useEffect(() => {
     // 상태 변화 모니터링 (로그 제거)
   }, [isInitialized]);
 
+  // 3초 후 AppInitializer 숨기기
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowInitializer(false);
+    }, 3000);
 
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     // 컨텍스트 메뉴 방지
     const preventContextMenu = (e: { preventDefault: () => void }) => {
       e.preventDefault();
@@ -53,12 +61,10 @@ const App: React.FC = () => {
       const accessToken = localStorage.getItem("accessToken");
       const currentPath = window.location.pathname;
 
-
-
       // 이미 초기화된 상태이고 액세스 토큰이 있는 경우
       if (initializationFlag === "true" && accessToken) {
         setIsInitialized(true);
-        
+
         // React Native WebView 환경에서는 루트 경로에 있어도 리다이렉트하지 않음
         // 페이지 이동 후 상태 동기화를 위해
         if (currentPath === "/" && !window.ReactNativeWebView) {
@@ -87,21 +93,26 @@ const App: React.FC = () => {
       const currentPath = window.location.pathname;
       const accessToken = localStorage.getItem("accessToken");
       const initializationFlag = localStorage.getItem("isInitialized");
-      
+
       // 페이지가 이동되었고 액세스 토큰이 있는 경우 초기화 완료로 처리
-      if (currentPath !== "/" && accessToken && initializationFlag === "true" && !isInitialized) {
+      if (
+        currentPath !== "/" &&
+        accessToken &&
+        initializationFlag === "true" &&
+        !isInitialized
+      ) {
         setIsInitialized(true);
       }
     };
 
     // popstate 이벤트 리스너 추가
-    window.addEventListener('popstate', handleLocationChange);
-    
+    window.addEventListener("popstate", handleLocationChange);
+
     // 주기적으로 위치 변경 확인 (React Native WebView에서 popstate가 제대로 작동하지 않을 수 있음)
     const interval = setInterval(handleLocationChange, 2000); // 2초로 늘림
-    
+
     return () => {
-      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener("popstate", handleLocationChange);
       clearInterval(interval);
     };
   }, [isInitialized]); // isInitialized를 의존성으로 추가
@@ -109,22 +120,24 @@ const App: React.FC = () => {
   const handleInitialized = () => {
     // localStorage에 초기화 완료 플래그 설정
     localStorage.setItem("isInitialized", "true");
-    
+
     // 상태 업데이트
     setIsInitialized(true);
-    
+
     // 초기화 완료 후 현재 경로 확인 및 적절한 페이지로 리다이렉트
     const currentPath = window.location.pathname;
-    
+
     // React Native WebView 환경에서는 리다이렉트하지 않음
     // 페이지 이동 후 상태 동기화를 위해
-    if (!window.ReactNativeWebView && currentPath === "/" && !window.location.search.includes("redirecting")) {
+    if (
+      !window.ReactNativeWebView &&
+      currentPath === "/" &&
+      !window.location.search.includes("redirecting")
+    ) {
       // 리다이렉트 중임을 표시하는 플래그 추가
       window.location.href = "/dice-event?redirecting=true";
     }
   };
-
-
 
   // 초기화 상태 확인 중일 때 로딩 표시
   if (isCheckingInitialization) {
@@ -158,8 +171,6 @@ const App: React.FC = () => {
     );
   }
 
-
-
   return (
     <div
       style={{
@@ -168,7 +179,7 @@ const App: React.FC = () => {
       }}
     >
       <ScrollToTop />
-      {!isInitialized ? (
+      {showInitializer ? (
         <>
           <AppInitializer onInitialized={handleInitialized} />
         </>
@@ -306,6 +317,14 @@ const App: React.FC = () => {
                 element={
                   <DiceEventLayout hidden={true}>
                     <HallofFame />
+                  </DiceEventLayout>
+                }
+              />
+              <Route
+                path="/reward-info"
+                element={
+                  <DiceEventLayout hidden={true}>
+                    <RewardInfo />
                   </DiceEventLayout>
                 }
               />

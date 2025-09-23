@@ -5,6 +5,7 @@ import { tossLogin } from "@/entities/User/api/loginToss";
 import { useUserStore } from "@/entities/User/model/userModel";
 import Cookies from "js-cookie";
 import api from "@/shared/api/axiosInstance";
+import Images from "@/shared/assets/images";
 
 // ReactNativeWebView 타입 선언
 declare global {
@@ -38,6 +39,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     isInitial?: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDelayComplete, setIsDelayComplete] = useState(false);
   const { fetchUserData } = useUserStore();
 
   // 앱인토스 웹뷰 환경에서 세션 스토리지 정리 함수
@@ -58,74 +60,85 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // tossLogin 전에 모든 토큰 정리 함수 (Redis 충돌 방지)
   const clearAllTokensBeforeNewLogin = async () => {
     try {
-      
       // 1. 로컬스토리지의 액세스 토큰 삭제
       if (localStorage.getItem("accessToken")) {
         localStorage.removeItem("accessToken");
       }
-      
+
       // 2. 초기화 플래그 삭제
       if (localStorage.getItem("isInitialized")) {
         localStorage.removeItem("isInitialized");
       }
-      
+
       // 3.  중요: 서버에 명시적 로그아웃 요청으로 Redis 리프레시 토큰 정리
       try {
-        await api.post('/auth/logout', {}, {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true, // HttpOnly 쿠키 전송
-          timeout: 10000 // 로그아웃은 빠르게 처리
-        });
+        await api.post(
+          "/auth/logout",
+          {},
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true, // HttpOnly 쿠키 전송
+            timeout: 10000, // 로그아웃은 빠르게 처리
+          }
+        );
       } catch (logoutError: any) {
         console.warn("[AppInitializer] 서버 로그아웃 요청 실패:", {
           status: logoutError.response?.status,
           message: logoutError.message,
-          note: "무시하고 계속 진행"
+          note: "무시하고 계속 진행",
         });
       }
-      
+
       // 4. 모든 세션 스토리지 플래그 정리
       clearSessionStorageFlags();
-      
+
       // 5. ⭐ 서버 처리 완료를 위한 충분한 대기 시간
-      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5초 대기
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // 1.5초 대기
     } catch (error) {
       console.error("[AppInitializer] 토큰 정리 중 오류:", error);
       // 토큰 정리 실패해도 계속 진행
     }
   };
 
-
-
   // 토큰 충돌 시 재시도 로직 (개선)
-  const handleTokenConflictRetry = async (authCode?: string, refCode?: string) => {
+  const handleTokenConflictRetry = async (
+    authCode?: string,
+    refCode?: string
+  ) => {
     try {
-      
       // 1. 더 강력한 토큰 정리 (Redis 포함)
       await clearAllTokensBeforeNewLogin();
-      
+
       // 2. 새로운 appLogin으로 authorizationCode 재획득
       const newLoginResult = await appLogin();
-      const { authorizationCode: newAuthCode, referrer: newRefCode } = newLoginResult;
-      
+      const { authorizationCode: newAuthCode, referrer: newRefCode } =
+        newLoginResult;
+
       // 3. ⭐ 추가 대기 시간 (서버 Redis 상태 안정화)
-      await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 대기
+
       // 4. 새로운 authorizationCode로 tossLogin 재시도
       await handleServerLogin(newAuthCode, newRefCode);
-      
     } catch (retryError: any) {
       console.error("[AppInitializer] 토큰 충돌 재시도 실패:", retryError);
-      setError(`로그인 재시도 실패: ${retryError.message || "알 수 없는 오류"}`);
+      setError(
+        `로그인 재시도 실패: ${retryError.message || "알 수 없는 오류"}`
+      );
     }
   };
 
+  // 3초 지연 후 페이지 이동 처리
+  useEffect(() => {
+    if (isDelayComplete) {
+      // 3초 지연 완료 후 페이지 이동
+      handleNavigationAfterDelay();
+    }
+  }, [isDelayComplete]);
+
   // 페이지 최초 진입 시 자동 초기화 활성화
   useEffect(() => {
-
     // 앱인토스 웹뷰 환경에서 모든 세션 스토리지 플래그 정리
     clearSessionStorageFlags();
 
@@ -160,7 +173,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       const isInitialized = localStorage.getItem("isInitialized") === "true";
       const hasAccessToken = !!localStorage.getItem("accessToken");
 
-
       // 초기화되지 않은 상태에서 루트가 아닌 페이지에 있는 경우
       if (!isInitialized && currentPath !== "/" && currentPath !== "/login") {
         window.location.href = "/";
@@ -175,7 +187,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
     return () => clearInterval(interval);
   }, []);
-
 
   // 페이지 진입 시 바로 appLogin 실행
   const handleAppLoginOnEntry = async () => {
@@ -336,40 +347,49 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 액세스 토큰이 없는 경우의 처리 플로우 (개선)
   const handleNoTokenFlow = async (authCode?: string, refCode?: string) => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      
+      const accessToken = localStorage.getItem("accessToken");
+
       if (!accessToken) {
         // 액세스 토큰이 없으면 리프레시 토큰으로 시도
-        
+
         // 리프레시 시도 로깅
         const noTokenLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_no_token_refresh_attempt'
+          action: "app_no_token_refresh_attempt",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(noTokenLog));
-        
+        localStorage.setItem("refreshToken_logs", JSON.stringify(noTokenLog));
+
         try {
           // 리프레시 토큰으로 fetchUserData 시도
           await fetchUserData();
-          
+
           // 리프레시 성공 로깅
           const refreshSuccessLog = {
             time: new Date().toLocaleTimeString(),
-            action: 'app_no_token_refresh_success'
+            action: "app_no_token_refresh_success",
           };
-          localStorage.setItem('refreshToken_logs', JSON.stringify(refreshSuccessLog));
-          
-          await handleNavigationAfterLogin();
+          localStorage.setItem(
+            "refreshToken_logs",
+            JSON.stringify(refreshSuccessLog)
+          );
+
+          // 3초 지연 후 페이지 이동
+          setTimeout(() => {
+            setIsDelayComplete(true);
+          }, 3000);
           return;
         } catch (refreshError: any) {
           // 리프레시 실패 로깅
           const refreshFailLog = {
             time: new Date().toLocaleTimeString(),
-            action: 'app_no_token_refresh_failed',
-            error: refreshError.response?.status || 'No status'
+            action: "app_no_token_refresh_failed",
+            error: refreshError.response?.status || "No status",
           };
-          localStorage.setItem('refreshToken_logs', JSON.stringify(refreshFailLog));
-          
+          localStorage.setItem(
+            "refreshToken_logs",
+            JSON.stringify(refreshFailLog)
+          );
+
           // 리프레시 실패 시 tossLogin으로 진행
           const currentAuthCode = authCode || authorizationCode;
           const currentRefCode = refCode || referrer;
@@ -385,37 +405,43 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         }
         return;
       }
-      
+
       // 액세스 토큰이 있으면 fetchUserData 시도 (axiosInstance에서 리프레시 처리)
-      
+
       // 액세스 토큰 있음 로깅
       const hasTokenLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_has_token_fetch_user_data'
+        action: "app_has_token_fetch_user_data",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(hasTokenLog));
-      
+      localStorage.setItem("refreshToken_logs", JSON.stringify(hasTokenLog));
+
       try {
         await fetchUserData();
-        
+
         // fetchUserData 성공 로깅
         const fetchSuccessLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_fetch_user_data_success'
+          action: "app_fetch_user_data_success",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(fetchSuccessLog));
-        
-        await handleNavigationAfterLogin();
+        localStorage.setItem(
+          "refreshToken_logs",
+          JSON.stringify(fetchSuccessLog)
+        );
+
+        // 3초 지연 후 페이지 이동
+        setTimeout(() => {
+          setIsDelayComplete(true);
+        }, 3000);
         return;
       } catch (fetchError: any) {
         // fetchUserData 실패 로깅
         const fetchFailLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_fetch_user_data_failed',
-          error: fetchError.response?.status || 'No status'
+          action: "app_fetch_user_data_failed",
+          error: fetchError.response?.status || "No status",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(fetchFailLog));
-        
+        localStorage.setItem("refreshToken_logs", JSON.stringify(fetchFailLog));
+
         // fetchUserData 실패 시 tossLogin으로 새 토큰 발급
         const currentAuthCode = authCode || authorizationCode;
         const currentRefCode = refCode || referrer;
@@ -433,42 +459,43 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 전체 에러 로깅
       const generalErrorLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_handle_no_token_flow_error',
-        error: error.response?.status || 'No status'
+        action: "app_handle_no_token_flow_error",
+        error: error.response?.status || "No status",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(generalErrorLog));
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(generalErrorLog)
+      );
       console.error("[AppInitializer] 액세스 토큰 없는 경우 처리 실패:", error);
       setError("로그인 처리 중 오류가 발생했습니다.");
     }
   };
 
-
-
   // tossLogin 플로우 처리
   const handleTossLoginFlow = async (authCode?: string, refCode?: string) => {
     try {
-      
       // tossLogin 시작 로깅
       const tossLoginStartLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_toss_login_start'
+        action: "app_toss_login_start",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginStartLog));
-      
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(tossLoginStartLog)
+      );
 
       // authorizationCode와 referrer 확인 (매개변수 우선, 없으면 상태값 사용)
       const currentAuthCode = authCode || authorizationCode;
       const currentRefCode = refCode || referrer;
 
-
       if (!currentAuthCode || !currentRefCode) {
         // 매개변수 없음 에러 로깅
         const noParamsLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_toss_login_no_params'
+          action: "app_toss_login_no_params",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(noParamsLog));
-        
+        localStorage.setItem("refreshToken_logs", JSON.stringify(noParamsLog));
+
         console.error(
           "[AppInitializer] authorizationCode 또는 referrer가 설정되지 않음"
         );
@@ -485,22 +512,28 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // tossLogin 실패 로깅
       const tossLoginFailLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_toss_login_failed',
-        error: error.response?.status || 'No status'
+        action: "app_toss_login_failed",
+        error: error.response?.status || "No status",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginFailLog));
-      
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(tossLoginFailLog)
+      );
+
       console.error("[AppInitializer] tossLogin 실패:", error);
-      
+
       // 특정 에러 타입에 따른 처리
-      if (error.response?.status === 409 || error.message?.includes('conflict')) {
+      if (
+        error.response?.status === 409 ||
+        error.message?.includes("conflict")
+      ) {
         // 토큰 충돌 로깅
         const conflictLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_token_conflict_detected'
+          action: "app_token_conflict_detected",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(conflictLog));
-        
+        localStorage.setItem("refreshToken_logs", JSON.stringify(conflictLog));
+
         await handleTokenConflictRetry(authCode, refCode);
       } else {
         setError(`토스 로그인 실패: ${error.message || "알 수 없는 오류"}`);
@@ -516,6 +549,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // fetchUserData 호출하여 사용자 데이터 확인
       await handleFetchUserDataWithRetry();
+
+      // 3초 지연 후 페이지 이동
+      setTimeout(() => {
+        setIsDelayComplete(true);
+      }, 3000);
     } catch (error: any) {
       console.error("[AppInitializer] 기존 토큰 로그인 실패:", error);
 
@@ -543,18 +581,28 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const handleFetchUserDataWithRetry = async (isRetry: boolean = false) => {
     try {
       await fetchUserData();
-      await handleNavigationAfterLogin();
+      // fetchUserData 성공 시 3초 지연은 handleExistingTokenLogin에서 처리됨
     } catch (error: any) {
       // "Please choose your character first." 메시지 처리
-      if (error.message && error.message.includes("Please choose your character first")) {
-        safeNavigate("/choose-character");
-        onInitialized();
+      if (
+        error.message &&
+        error.message.includes("Please choose your character first")
+      ) {
+        // 3초 지연 후 캐릭터 선택 페이지로 이동
+        setTimeout(() => {
+          safeNavigate("/choose-character");
+          onInitialized();
+        }, 3000);
         return;
       }
 
       // 인증 관련 에러 처리
-      if (error.message && error.message.includes("Full authentication is required to access this resource")) {
-        
+      if (
+        error.message &&
+        error.message.includes(
+          "Full authentication is required to access this resource"
+        )
+      ) {
         // ⭐ 토큰 정리 후 새 로그인 시도
         await clearAllTokensBeforeNewLogin();
         await handleNewTokenLogin();
@@ -573,7 +621,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 리프레시 토큰으로 액세스 토큰 재발급 및 재시도
   const handleRefreshTokenAndRetry = async () => {
     try {
-
       // 재발급된 토큰으로 fetchUserData 재시도
       await handleFetchUserDataWithRetry();
     } catch (error: any) {
@@ -590,8 +637,8 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 로그인 후 적절한 페이지로 이동하는 로직
-  const handleNavigationAfterLogin = async () => {
+  // 3초 지연 후 페이지 이동 처리
+  const handleNavigationAfterDelay = async () => {
     try {
       const { characterType } = useUserStore.getState();
 
@@ -605,6 +652,19 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // 초기화 완료 처리
       onInitialized();
+    } catch (error) {
+      console.error("[AppInitializer] 페이지 이동 중 오류:", error);
+      setError("페이지 이동 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 로그인 후 적절한 페이지로 이동하는 로직 (3초 지연 적용)
+  const handleNavigationAfterLogin = async () => {
+    try {
+      // 3초 지연 시작
+      setTimeout(() => {
+        setIsDelayComplete(true);
+      }, 3000);
     } catch (error) {
       console.error("[AppInitializer] 페이지 이동 중 오류:", error);
       setError("페이지 이동 중 오류가 발생했습니다.");
@@ -709,11 +769,13 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         // 서버 로그인 매개변수 없음 로깅
         const noParamsLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_server_login_no_params'
+          action: "app_server_login_no_params",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(noParamsLog));
-        
-        console.error("[AppInitializer] handleServerLogin: authorizationCode 또는 referrer가 없음");
+        localStorage.setItem("refreshToken_logs", JSON.stringify(noParamsLog));
+
+        console.error(
+          "[AppInitializer] handleServerLogin: authorizationCode 또는 referrer가 없음"
+        );
         setError("로그인 정보가 올바르지 않습니다.");
         return;
       }
@@ -721,9 +783,12 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 서버 로그인 시작 로깅
       const serverLoginStartLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_server_login_start'
+        action: "app_server_login_start",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(serverLoginStartLog));
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(serverLoginStartLog)
+      );
 
       // tossLogin 전 토큰 정리 (Redis 동기화)
       await clearAllTokensBeforeNewLogin();
@@ -735,22 +800,26 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
         // tossLogin 결과 없음 로깅
         const noResultLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_toss_login_no_result'
+          action: "app_toss_login_no_result",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(noResultLog));
-        
-        console.error("[AppInitializer] handleServerLogin: tossLogin 결과가 없음");
+        localStorage.setItem("refreshToken_logs", JSON.stringify(noResultLog));
+
+        console.error(
+          "[AppInitializer] handleServerLogin: tossLogin 결과가 없음"
+        );
         setError("로그인 응답이 올바르지 않습니다.");
         return;
       }
 
-
       // tossLogin 성공 로깅
       const tossLoginSuccessLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_toss_login_success'
+        action: "app_toss_login_success",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(tossLoginSuccessLog));
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(tossLoginSuccessLog)
+      );
 
       // tossLogin 응답에서 사용자 정보 가져오기
       const { userId, userName, referrerId, isInitial } = result;
@@ -759,22 +828,27 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 토큰 및 사용자 정보 로깅
       const tokenInfoLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_token_user_info',
+        action: "app_token_user_info",
         hasAccessToken: !!accessToken,
-        isInitial: isInitial
+        isInitial: isInitial,
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(tokenInfoLog));
+      localStorage.setItem("refreshToken_logs", JSON.stringify(tokenInfoLog));
 
       if (!accessToken) {
         // 액세스 토큰 없음 로깅
         const noAccessTokenLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_no_access_token_after_toss_login'
+          action: "app_no_access_token_after_toss_login",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(noAccessTokenLog));
-        
+        localStorage.setItem(
+          "refreshToken_logs",
+          JSON.stringify(noAccessTokenLog)
+        );
+
         console.error("[AppInitializer] accessToken이 없음");
-        setError("로그인은 성공했지만 인증 토큰을 받지 못했습니다. 다시 시도해주세요.");
+        setError(
+          "로그인은 성공했지만 인증 토큰을 받지 못했습니다. 다시 시도해주세요."
+        );
         return;
       }
 
@@ -791,82 +865,112 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
       // 초기화 플래그 설정 로깅
       const initFlagLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_init_flag_set'
+        action: "app_init_flag_set",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(initFlagLog));
+      localStorage.setItem("refreshToken_logs", JSON.stringify(initFlagLog));
 
       // 새로운 토큰 발급 완료 후 잠시 대기 (토큰 동기화)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // 사용자 타입에 따른 페이지 이동
       if (isInitial === true) {
-        
         // 신규 사용자 로깅
         const newUserLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_new_user_fetch_user_data'
+          action: "app_new_user_fetch_user_data",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(newUserLog));
-        
+        localStorage.setItem("refreshToken_logs", JSON.stringify(newUserLog));
+
         try {
           await fetchUserData();
-          await handleNavigationAfterLogin();
+          // 3초 지연 후 페이지 이동
+          setTimeout(() => {
+            setIsDelayComplete(true);
+          }, 3000);
         } catch (error: any) {
-          if (error.message && error.message.includes("Please choose your character first")) {
-            safeNavigate("/choose-character");
-            onInitialized();
+          if (
+            error.message &&
+            error.message.includes("Please choose your character first")
+          ) {
+            // 3초 지연 후 캐릭터 선택 페이지로 이동
+            setTimeout(() => {
+              safeNavigate("/choose-character");
+              onInitialized();
+            }, 3000);
           } else {
-            setError(`fetchUserData 에러: ${error.message || "알 수 없는 오류"}`);
+            setError(
+              `fetchUserData 에러: ${error.message || "알 수 없는 오류"}`
+            );
           }
         }
       } else {
-        
         // 기존 사용자 로깅
         const existingUserLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_existing_user_fetch_user_data'
+          action: "app_existing_user_fetch_user_data",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(existingUserLog));
-        
+        localStorage.setItem(
+          "refreshToken_logs",
+          JSON.stringify(existingUserLog)
+        );
+
         try {
           await fetchUserData();
-          await handleNavigationAfterLogin();
+          // 3초 지연 후 페이지 이동
+          setTimeout(() => {
+            setIsDelayComplete(true);
+          }, 3000);
         } catch (error: any) {
-          if (error.message && error.message.includes("Please choose your character first")) {
-            safeNavigate("/choose-character");
-            onInitialized();
+          if (
+            error.message &&
+            error.message.includes("Please choose your character first")
+          ) {
+            // 3초 지연 후 캐릭터 선택 페이지로 이동
+            setTimeout(() => {
+              safeNavigate("/choose-character");
+              onInitialized();
+            }, 3000);
           } else {
-            setError(`기존 사용자 fetchUserData 에러: ${error.message || "알 수 없는 오류"}`);
+            setError(
+              `기존 사용자 fetchUserData 에러: ${
+                error.message || "알 수 없는 오류"
+              }`
+            );
           }
         }
       }
-
     } catch (error: any) {
       // 서버 로그인 실패 로깅
       const serverLoginFailLog = {
         time: new Date().toLocaleTimeString(),
-        action: 'app_server_login_failed',
-        error: error.response?.status || 'No status'
+        action: "app_server_login_failed",
+        error: error.response?.status || "No status",
       };
-      localStorage.setItem('refreshToken_logs', JSON.stringify(serverLoginFailLog));
-      
+      localStorage.setItem(
+        "refreshToken_logs",
+        JSON.stringify(serverLoginFailLog)
+      );
+
       console.error("[AppInitializer] 서버 로그인 실패:", error);
-      
+
       // ⭐ 토큰 충돌 에러 감지 및 처리
       if (
-        error.response?.status === 409 || 
-        error.message?.includes('conflict') ||
-        error.message?.includes('already exists') ||
-        error.response?.data?.message?.includes('Redis')
+        error.response?.status === 409 ||
+        error.message?.includes("conflict") ||
+        error.message?.includes("already exists") ||
+        error.response?.data?.message?.includes("Redis")
       ) {
         // 토큰 충돌 감지 로깅
         const conflictDetectedLog = {
           time: new Date().toLocaleTimeString(),
-          action: 'app_token_conflict_redis_sync_issue',
-          error: error.response?.status || 'No status'
+          action: "app_token_conflict_redis_sync_issue",
+          error: error.response?.status || "No status",
         };
-        localStorage.setItem('refreshToken_logs', JSON.stringify(conflictDetectedLog));
-        
+        localStorage.setItem(
+          "refreshToken_logs",
+          JSON.stringify(conflictDetectedLog)
+        );
+
         await handleTokenConflictRetry(authCode, refCode);
       } else {
         setError(`서버 로그인 실패: ${error.message || "알 수 없는 오류"}`);
@@ -879,22 +983,59 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 로딩 중 표시
   if (isInitializing) {
     return (
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          maxWidth: "400px",
-          margin: "20px auto",
-          textAlign: "center",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px", color: "#333" }}>
-          🔄 토스 로그인 진행 중...
-        </h2>
-        <div style={{ color: "#666" }}>
-          자동으로 로그인을 진행하고 있습니다.
+      <div className="relative">
+        {/* 블러된 배경 레이어 */}
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundImage: `url(${Images.BackgroundTopview})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(15px)",
+          }}
+        />
+        {/* 색상 오버레이 */}
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundColor: "#42617D",
+            opacity: 0.6,
+          }}
+        />
+
+        {/* GameRating 우측 상단 */}
+        <div className="fixed top-4 right-4 z-20">
+          <img
+            src={Images.GameRating}
+            alt="Game Rating"
+            style={{
+              width: "60px",
+              height: "70px",
+            }}
+          />
+        </div>
+
+        {/* 메인 컨텐츠 */}
+        <div
+          className="flex flex-col bg-[#0D1226] items-center justify-center"
+          style={{
+            minHeight: "100vh",
+          }}
+        >
+          <div className="relative z-10 flex flex-col items-center">
+            {/* SplashTitle 중앙 */}
+            <img
+              src={Images.SplashTitle}
+              alt="Lucky Dice Logo"
+              className="w-[272px] mb-[20px]"
+            />
+            {/* 로딩 중 텍스트 */}
+            <div
+              style={{ color: "white", fontSize: "16px", fontWeight: "500" }}
+            >
+              로딩 중...
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -903,62 +1044,117 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   // 에러 상태 표시
   if (error) {
     return (
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          maxWidth: "400px",
-          margin: "20px auto",
-          textAlign: "center",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px", color: "#e74c3c" }}>
-          ❌ 로그인 오류
-        </h2>
-        <div style={{ color: "#666", marginBottom: "20px" }}>{error}</div>
-        <div style={{ fontSize: "14px", color: "#999", marginBottom: "20px" }}>
-          <p>• 토스 앱이 최신 버전인지 확인해주세요</p>
-          <p>• 네트워크 연결을 확인해주세요</p>
-          <p>• 토스 앱에서 다시 시도해주세요</p>
-        </div>
-        <button
-          onClick={() => {
-            setError(null);
-            handleAppLoginOnEntry();
-          }}
+      <div className="relative">
+        {/* 블러된 배경 레이어 */}
+        <div
+          className="fixed inset-0 z-0"
           style={{
-            padding: "10px 20px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
+            backgroundImage: `url(${Images.BackgroundTopview})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(15px)",
+          }}
+        />
+        {/* 색상 오버레이 */}
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundColor: "#42617D",
+            opacity: 0.6,
+          }}
+        />
+
+        {/* GameRating 우측 상단 */}
+        <div className="fixed top-4 right-4 z-20">
+          <img
+            src={Images.GameRating}
+            alt="Game Rating"
+            style={{
+              width: "60px",
+              height: "70px",
+            }}
+          />
+        </div>
+
+        {/* 메인 컨텐츠 */}
+        <div
+          className="flex flex-col bg-[#0D1226] items-center justify-center"
+          style={{
+            minHeight: "100vh",
           }}
         >
-          다시 시도
-        </button>
+          <div className="relative z-10 flex flex-col items-center">
+            {/* SplashTitle 중앙 */}
+            <img
+              src={Images.SplashTitle}
+              alt="Lucky Dice Logo"
+              className="w-[272px] mb-[20px]"
+            />
+            {/* 로딩 중 텍스트 */}
+            <div
+              style={{ color: "white", fontSize: "16px", fontWeight: "500" }}
+            >
+              로딩 중...
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        backgroundColor: "white",
-        borderRadius: "8px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        maxWidth: "400px",
-        margin: "20px auto",
-        textAlign: "center",
-      }}
-    >
-      <h2 style={{ marginBottom: "20px", color: "#333" }}>
-        🔄 토스 로그인 진행 중...
-      </h2>
-      <div style={{ color: "#666" }}>자동으로 로그인을 진행하고 있습니다.</div>
+    <div className="relative">
+      {/* 블러된 배경 레이어 */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${Images.BackgroundTopview})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "blur(15px)",
+        }}
+      />
+      {/* 색상 오버레이 */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundColor: "#42617D",
+          opacity: 0.6,
+        }}
+      />
+
+      {/* GameRating 우측 상단 */}
+      <div className="fixed top-4 right-4 z-20">
+        <img
+          src={Images.GameRating}
+          alt="Game Rating"
+          style={{
+            width: "60px",
+            height: "70px",
+          }}
+        />
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <div
+        className="flex flex-col bg-[#0D1226] items-center justify-center"
+        style={{
+          minHeight: "100vh",
+        }}
+      >
+        <div className="relative z-10 flex flex-col items-center">
+          {/* SplashTitle 중앙 */}
+          <img
+            src={Images.SplashTitle}
+            alt="Lucky Dice Logo"
+            className="w-[272px] mb-[20px]"
+          />
+          {/* 로딩 중 텍스트 */}
+          <div style={{ color: "white", fontSize: "16px", fontWeight: "500" }}>
+            로딩 중...
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

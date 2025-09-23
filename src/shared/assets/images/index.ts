@@ -342,6 +342,9 @@ import Crown3 from "./crown-3.png";
 import Crown4 from "./crown-4.png";
 import Crown5 from "./crown-5.png";
 
+import RewardBox from "./reward-box.png"
+import GameRating from "./game-rating.png"
+
 
 const Images = {
   HorizontalLogo,
@@ -676,6 +679,8 @@ const Images = {
   Crown4,
   Crown5,
   JamIcon,
+  RewardBox,
+  GameRating,
 };
 
 export default Images;
