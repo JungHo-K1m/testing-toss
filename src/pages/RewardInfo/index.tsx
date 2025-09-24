@@ -15,7 +15,7 @@ const RewardInfo: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen mb-20 flex-col items-center mx-2 relative">
+    <div className="min-h-screen mb-20 flex-col items-center mx-2 relative pt-20">
       <TopTitle title="보상 지급 안내" back={true} />
 
       {/* 메인 카드 */}

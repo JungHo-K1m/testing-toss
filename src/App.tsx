@@ -31,21 +31,11 @@ const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCheckingInitialization, setIsCheckingInitialization] =
     useState(true);
-  const [showInitializer, setShowInitializer] = useState(true);
 
   // isInitialized 상태 변화 모니터링
   useEffect(() => {
     // 상태 변화 모니터링 (로그 제거)
   }, [isInitialized]);
-
-  // 3초 후 AppInitializer 숨기기
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowInitializer(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     // 컨텍스트 메뉴 방지
@@ -179,7 +169,7 @@ const App: React.FC = () => {
       }}
     >
       <ScrollToTop />
-      {showInitializer ? (
+      {!isInitialized ? (
         <>
           <AppInitializer onInitialized={handleInitialized} />
         </>

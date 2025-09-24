@@ -1221,7 +1221,7 @@ const Inventory: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center relative min-h-screen">
+    <div className="flex flex-col items-center relative min-h-screen pt-20">
       <div
         style={{
           backgroundImage: `url(${Images.BackgroundHome})`,

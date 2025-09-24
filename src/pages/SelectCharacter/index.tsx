@@ -27,7 +27,7 @@ const SelectCharacterPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen pt-20">
       <SelectCharacter selectedPet={selectedPet} setSelectedPet={setSelectedPet} />
       <div className="bottom-10 left-0 right-0 absolute flex w-full self-center px-6">
           <button

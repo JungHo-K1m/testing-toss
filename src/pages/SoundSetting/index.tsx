@@ -67,7 +67,7 @@ const SoundSetting: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center text-white px-6 min-h-screen">
+    <div className="flex flex-col items-center text-white px-6 min-h-screen pt-20">
       <TopTitle title="사운드 설정" back={true} />
 
       {/* 광고 시청 중 알림 */}

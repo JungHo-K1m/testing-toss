@@ -39,7 +39,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     isInitial?: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDelayComplete, setIsDelayComplete] = useState(false);
+  const [isMinimumTimeElapsed, setIsMinimumTimeElapsed] = useState(false);
   const { fetchUserData } = useUserStore();
 
   // 앱인토스 웹뷰 환경에서 세션 스토리지 정리 함수
@@ -129,13 +129,15 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 3초 지연 후 페이지 이동 처리
+
+  // 최소 3초간 스플래시 UI 표시를 위한 타이머
   useEffect(() => {
-    if (isDelayComplete) {
-      // 3초 지연 완료 후 페이지 이동
-      handleNavigationAfterDelay();
-    }
-  }, [isDelayComplete]);
+    const timer = setTimeout(() => {
+      setIsMinimumTimeElapsed(true);
+    }, 3000); // 3초
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // 페이지 최초 진입 시 자동 초기화 활성화
   useEffect(() => {
@@ -373,10 +375,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             JSON.stringify(refreshSuccessLog)
           );
 
-          // 3초 지연 후 페이지 이동
-          setTimeout(() => {
-            setIsDelayComplete(true);
-          }, 3000);
+          await handleNavigationAfterLogin();
           return;
         } catch (refreshError: any) {
           // 리프레시 실패 로깅
@@ -428,10 +427,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           JSON.stringify(fetchSuccessLog)
         );
 
-        // 3초 지연 후 페이지 이동
-        setTimeout(() => {
-          setIsDelayComplete(true);
-        }, 3000);
+        await handleNavigationAfterLogin();
         return;
       } catch (fetchError: any) {
         // fetchUserData 실패 로깅
@@ -549,11 +545,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // fetchUserData 호출하여 사용자 데이터 확인
       await handleFetchUserDataWithRetry();
-
-      // 3초 지연 후 페이지 이동
-      setTimeout(() => {
-        setIsDelayComplete(true);
-      }, 3000);
     } catch (error: any) {
       console.error("[AppInitializer] 기존 토큰 로그인 실패:", error);
 
@@ -581,18 +572,15 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   const handleFetchUserDataWithRetry = async (isRetry: boolean = false) => {
     try {
       await fetchUserData();
-      // fetchUserData 성공 시 3초 지연은 handleExistingTokenLogin에서 처리됨
+      await handleNavigationAfterLogin();
     } catch (error: any) {
       // "Please choose your character first." 메시지 처리
       if (
         error.message &&
         error.message.includes("Please choose your character first")
       ) {
-        // 3초 지연 후 캐릭터 선택 페이지로 이동
-        setTimeout(() => {
-          safeNavigate("/choose-character");
-          onInitialized();
-        }, 3000);
+        await safeNavigate("/choose-character");
+        onInitialized();
         return;
       }
 
@@ -637,9 +625,23 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
     }
   };
 
-  // 3초 지연 후 페이지 이동 처리
-  const handleNavigationAfterDelay = async () => {
+  // 로그인 후 적절한 페이지로 이동하는 로직
+  const handleNavigationAfterLogin = async () => {
     try {
+      // 최소 3초가 지날 때까지 대기
+      const waitForMinimumTime = () => {
+        return new Promise<void>((resolve) => {
+          const checkInterval = setInterval(() => {
+            if (isMinimumTimeElapsed) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100); // 100ms마다 체크
+        });
+      };
+
+      await waitForMinimumTime();
+
       const { characterType } = useUserStore.getState();
 
       if (!characterType) {
@@ -652,19 +654,6 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
       // 초기화 완료 처리
       onInitialized();
-    } catch (error) {
-      console.error("[AppInitializer] 페이지 이동 중 오류:", error);
-      setError("페이지 이동 중 오류가 발생했습니다.");
-    }
-  };
-
-  // 로그인 후 적절한 페이지로 이동하는 로직 (3초 지연 적용)
-  const handleNavigationAfterLogin = async () => {
-    try {
-      // 3초 지연 시작
-      setTimeout(() => {
-        setIsDelayComplete(true);
-      }, 3000);
     } catch (error) {
       console.error("[AppInitializer] 페이지 이동 중 오류:", error);
       setError("페이지 이동 중 오류가 발생했습니다.");
@@ -700,11 +689,25 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
   };
 
   // 안전한 페이지 이동 함수
-  const safeNavigate = (
+  const safeNavigate = async (
     path: string,
     fallbackToWindowLocation: boolean = true
   ) => {
     try {
+      // 최소 3초가 지날 때까지 대기
+      const waitForMinimumTime = () => {
+        return new Promise<void>((resolve) => {
+          const checkInterval = setInterval(() => {
+            if (isMinimumTimeElapsed) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100); // 100ms마다 체크
+        });
+      };
+
+      await waitForMinimumTime();
+
       // React Native WebView 환경에서는 window.location을 직접 사용
       if (window.ReactNativeWebView) {
         // localStorage 상태 확인
@@ -883,20 +886,14 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
         try {
           await fetchUserData();
-          // 3초 지연 후 페이지 이동
-          setTimeout(() => {
-            setIsDelayComplete(true);
-          }, 3000);
+          await handleNavigationAfterLogin();
         } catch (error: any) {
           if (
             error.message &&
             error.message.includes("Please choose your character first")
           ) {
-            // 3초 지연 후 캐릭터 선택 페이지로 이동
-            setTimeout(() => {
-              safeNavigate("/choose-character");
-              onInitialized();
-            }, 3000);
+            await safeNavigate("/choose-character");
+            onInitialized();
           } else {
             setError(
               `fetchUserData 에러: ${error.message || "알 수 없는 오류"}`
@@ -916,20 +913,14 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
 
         try {
           await fetchUserData();
-          // 3초 지연 후 페이지 이동
-          setTimeout(() => {
-            setIsDelayComplete(true);
-          }, 3000);
+          await handleNavigationAfterLogin();
         } catch (error: any) {
           if (
             error.message &&
             error.message.includes("Please choose your character first")
           ) {
-            // 3초 지연 후 캐릭터 선택 페이지로 이동
-            setTimeout(() => {
-              safeNavigate("/choose-character");
-              onInitialized();
-            }, 3000);
+            await safeNavigate("/choose-character");
+            onInitialized();
           } else {
             setError(
               `기존 사용자 fetchUserData 에러: ${
@@ -1033,7 +1024,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
             <div
               style={{ color: "white", fontSize: "16px", fontWeight: "500" }}
             >
-              로딩 중...
+              토스 로그인 진행 중...
             </div>
           </div>
         </div>
@@ -1090,11 +1081,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
               alt="Lucky Dice Logo"
               className="w-[272px] mb-[20px]"
             />
-            {/* 로딩 중 텍스트 */}
+            {/* 에러 텍스트 */}
             <div
               style={{ color: "white", fontSize: "16px", fontWeight: "500" }}
             >
-              로딩 중...
+              로그인 오류가 발생했습니다.
             </div>
           </div>
         </div>
@@ -1151,7 +1142,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ onInitialized }) => {
           />
           {/* 로딩 중 텍스트 */}
           <div style={{ color: "white", fontSize: "16px", fontWeight: "500" }}>
-            로딩 중...
+            토스 로그인 진행 중...
           </div>
         </div>
       </div>

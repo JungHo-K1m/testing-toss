@@ -1130,7 +1130,7 @@ const DiceEventPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
+    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen pt-20">
       {/* 배경화면 추가 */}
       <div
         className="fixed inset-0 z-0"
@@ -1318,7 +1318,7 @@ const DiceEventPage: React.FC = () => {
             )}
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
-              <div className="absolute md:top-0 top-20 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
+              <div className="absolute md:top-0 top-20 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none pt-20">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div
                   className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl"

@@ -157,7 +157,7 @@ const FriendRewards: React.FC = () => {
   CustomDateInput.displayName = "CustomDateInput";
 
   return (
-    <div className="flex flex-col text-white mb-32 px-6 min-h-screen">
+    <div className="flex flex-col text-white mb-32 px-6 min-h-screen pt-20">
       <TopTitle title="친구 초대 리워드" back={true} />
 
       {/* 드롭다운 필터 */}

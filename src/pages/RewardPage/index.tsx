@@ -111,7 +111,7 @@ const Reward: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col text-white mb-44 w-full min-h-screen">
+    <div className="flex flex-col text-white mb-44 w-full min-h-screen pt-20">
       {/* my-rank 위젯 표시 */}
       <Dialog>
         <DialogTrigger
@@ -126,7 +126,7 @@ const Reward: React.FC = () => {
           <InlineRanking />
         </DialogTrigger>
         <DialogContent
-          className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto"
+          className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto pt-20"
           style={{
             background: `url(${Images.BackgroundLobby})`,
             backgroundSize: "cover",

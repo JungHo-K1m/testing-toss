@@ -32,7 +32,7 @@ const HallofFame: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen mb-20 flex-col items-center mx-2 relative">
+    <div className="min-h-screen mb-20 flex-col items-center mx-2 relative pt-20">
       <TopTitle title="명예의 전당" back={true} />
       {/* 메인 컨텐츠 */}
       <div className="px-4 py-6">
