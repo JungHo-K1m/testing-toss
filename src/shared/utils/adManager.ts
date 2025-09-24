@@ -1,4 +1,4 @@
-import { AdType, getAdUnitId } from '@/types/adMob';
+import { AdType, getAdUnitId, getAdGroupId } from '@/types/adMob';
 
 // 광고 상태 타입
 export type AdLoadStatus = 'not_loaded' | 'loading' | 'loaded' | 'failed';
@@ -76,6 +76,11 @@ export class AdManager {
   // 광고 ID 가져오기
   public getAdUnitId(adType: AdType): string {
     return getAdUnitId(adType);
+  }
+
+  // 광고 그룹 ID 가져오기 (새로운 API용)
+  public getAdGroupId(adType: AdType): string {
+    return getAdGroupId(adType);
   }
 
   // 모든 광고 상태 가져오기

@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getAdUnitId, AdType } from '@/types/adMob';
-import { AdMobRewardedAdEvent, ShowAdMobRewardedAdEvent } from '@/types/adMob';
+import { getAdUnitId, getAdGroupId, AdType, LoadAdMobEvent, ShowAdMobEvent } from '@/types/adMob';
 import { getRandomBoxAdReward } from '@/entities/User/api/randomBoxAdReward';
 import { getDiceRefillAdReward } from '@/entities/User/api/AdRefilDice';
 import { getRPSRetryAdReward } from '@/entities/User/api/RetryRPS';
@@ -50,41 +49,41 @@ export interface UseAdMobReturn {
 const checkAdSupport = async (): Promise<boolean> => {
   try {
     const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
-    return GoogleAdMob.loadAdMobRewardedAd.isSupported();
+    return GoogleAdMob.loadAppsInTossAdMob.isSupported();
   } catch (error) {
     console.warn('GoogleAdMob을 불러올 수 없습니다:', error);
     return false;
   }
 };
 
-// 광고 로딩 함수
-const loadAdMobRewardedAd = async (
+// 새로운 광고 로딩 함수
+const loadAppsInTossAdMob = async (
   params: {
-    options: { adUnitId: string };
-    onEvent: (event: AdMobRewardedAdEvent) => void;
+    options: { adGroupId: string };
+    onEvent: (event: LoadAdMobEvent) => void;
     onError: (reason: unknown) => void;
   }
 ): Promise<() => void> => {
   try {
     const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
-    return GoogleAdMob.loadAdMobRewardedAd(params);
+    return GoogleAdMob.loadAppsInTossAdMob(params);
   } catch (error) {
     console.error('GoogleAdMob 로딩 실패:', error);
     throw error;
   }
 };
 
-// 광고 표시 함수
-const showAdMobRewardedAd = async (
+// 새로운 광고 표시 함수
+const showAppsInTossAdMob = async (
   params: {
-    options: { adUnitId: string };
-    onEvent: (event: ShowAdMobRewardedAdEvent) => void;
+    options: { adGroupId: string };
+    onEvent: (event: ShowAdMobEvent) => void;
     onError: (reason: unknown) => void;
   }
 ): Promise<void> => {
   try {
     const { GoogleAdMob } = await import('@apps-in-toss/web-framework');
-    await GoogleAdMob.showAdMobRewardedAd(params);
+    await GoogleAdMob.showAppsInTossAdMob(params);
   } catch (error) {
     console.error('GoogleAdMob 표시 실패:', error);
     throw error;
@@ -98,7 +97,7 @@ export const useAdMob = (): UseAdMobReturn => {
   // 사운드 제어 상태 추적 (중복 호출 방지)
   const soundControlRef = useRef<{
     isAdPlaying: boolean;
-    soundRestartTimeout: NodeJS.Timeout | null;
+    soundRestartTimeout: ReturnType<typeof setTimeout> | null;
   }>({
     isAdPlaying: false,
     soundRestartTimeout: null,
@@ -243,7 +242,7 @@ export const useAdMob = (): UseAdMobReturn => {
         [adType]: 'loading'
       }));
       
-      const adUnitId = getAdUnitId(adType);
+      const adGroupId = getAdGroupId(adType);
       
       // 기존 광고 인스턴스 정리
       const instance = adInstancesRef.current[adType];
@@ -251,10 +250,10 @@ export const useAdMob = (): UseAdMobReturn => {
         instance.cleanup();
       }
       
-      // Bedrock 광고 API를 사용하여 광고 로드
-      const cleanup = await loadAdMobRewardedAd({
-        options: { adUnitId },
-        onEvent: async (event: AdMobRewardedAdEvent) => {
+      // 새로운 광고 API를 사용하여 광고 로드
+      const cleanup = await loadAppsInTossAdMob({
+        options: { adGroupId },
+        onEvent: async (event: LoadAdMobEvent) => {
           
           switch (event.type) {
             case 'loaded':
@@ -263,82 +262,6 @@ export const useAdMob = (): UseAdMobReturn => {
                 [adType]: 'loaded'
               }));
               instance.isReady = true;
-              break;
-            case 'clicked':
-              break;
-            case 'dismissed':
-              // 광고 종료 시 사운드 재생
-              controlAdSound(false);
-              resetAdInstance(adType);
-              break;
-            case 'failedToShow':
-              // 광고 실패 시 사운드 재생
-              controlAdSound(false);
-              resetAdInstance(adType);
-              break;
-            case 'impression':
-              break;
-            case 'show':
-              // 광고 표시 시작 시 사운드 정지
-              controlAdSound(true);
-              break;
-            case 'userEarnedReward':
-              if (instance.pendingPromise) {
-                
-                // RPS_RETRY와 CARD_FLIP_RETRY는 즉시 API 호출하지 않음
-                if (adType === 'CARD_FLIP_RETRY' || adType === 'RPS_RETRY') {
-                  
-                  // Promise resolve (requestData 포함하여 전달)
-                  if (instance.pendingPromise) {
-                    const rewardResponse = {
-                      type: adType,
-                      message: '게임 재시도 기회를 획득했습니다',
-                      requestData: instance.pendingPromise.requestData,
-                      success: true
-                    };
-                    
-                    instance.pendingPromise.resolve(rewardResponse);
-                    instance.pendingPromise = null;
-                  }
-                  
-                  // 광고 시청 완료 후 자동으로 인스턴스 정리 (지연)
-                  setTimeout(() => {
-                    controlAdSound(false); // 사운드 재생
-                    resetAdInstance(adType);
-                  }, 2000);
-                  return; // 여기서 함수 종료하여 아래 API 호출 방지
-                }
-
-                // 다른 광고 타입들만 API 호출
-                (async () => {
-                  try {
-                    
-                    // 광고 보상 API 호출
-                    const rewardData = await callAdRewardAPI(
-                      adType,
-                      instance.pendingPromise?.requestData
-                    );
-                    
-                    // Promise resolve
-                    if (instance.pendingPromise) {
-                      instance.pendingPromise.resolve(rewardData);
-                      instance.pendingPromise = null;
-                    }
-                  } catch (error) {
-                    console.error(`❌ ${adType} loadAd: 광고 보상 API 호출 실패:`, error);
-                    if (instance.pendingPromise) {
-                      instance.pendingPromise.reject(error);
-                      instance.pendingPromise = null;
-                    }
-                  }
-                })();
-                
-                // 광고 인스턴스 리셋을 지연시켜 호출 (모달 표시 후)
-                setTimeout(() => {
-                  controlAdSound(false); // 사운드 재생
-                  resetAdInstance(adType);
-                }, 2000);
-              }
               break;
           }
         },
@@ -354,7 +277,7 @@ export const useAdMob = (): UseAdMobReturn => {
       
       // 인스턴스 정보 업데이트
       instance.cleanup = cleanup;
-      instance.adUnitId = adUnitId;
+      instance.adUnitId = adGroupId;
       
     } catch (error) {
       console.error(`${adType} 광고 로딩 중 오류:`, error);
@@ -443,9 +366,88 @@ export const useAdMob = (): UseAdMobReturn => {
         instance.lastAdTime = now;
         
         // 광고 표시
-        showAdMobRewardedAd({
-          options: { adUnitId: getAdUnitId(adType) },
-          onEvent: (event: ShowAdMobRewardedAdEvent) => {
+        showAppsInTossAdMob({
+          options: { adGroupId: getAdGroupId(adType) },
+          onEvent: (event: ShowAdMobEvent) => {
+            switch (event.type) {
+              case 'requested':
+                console.log(`${adType} 광고 표시 요청 완료`);
+                break;
+              case 'clicked':
+                console.log(`${adType} 광고 클릭`);
+                break;
+              case 'dismissed':
+                console.log(`${adType} 광고 닫힘`);
+                controlAdSound(false);
+                resetAdInstance(adType);
+                break;
+              case 'failedToShow':
+                console.log(`${adType} 광고 표시 실패`);
+                controlAdSound(false);
+                resetAdInstance(adType);
+                break;
+              case 'impression':
+                console.log(`${adType} 광고 노출`);
+                break;
+              case 'show':
+                console.log(`${adType} 광고 컨텐츠 표시`);
+                controlAdSound(true);
+                break;
+              case 'userEarnedReward':
+                console.log(`${adType} 광고 보상 획득:`, event.data);
+                if (instance.pendingPromise) {
+                  // RPS_RETRY와 CARD_FLIP_RETRY는 즉시 API 호출하지 않음
+                  if (adType === 'CARD_FLIP_RETRY' || adType === 'RPS_RETRY') {
+                    // Promise resolve (requestData 포함하여 전달)
+                    const rewardResponse = {
+                      type: adType,
+                      message: '게임 재시도 기회를 획득했습니다',
+                      requestData: instance.pendingPromise.requestData,
+                      success: true
+                    };
+                    
+                    instance.pendingPromise.resolve(rewardResponse);
+                    instance.pendingPromise = null;
+                    
+                    // 광고 시청 완료 후 자동으로 인스턴스 정리 (지연)
+                    setTimeout(() => {
+                      controlAdSound(false);
+                      resetAdInstance(adType);
+                    }, 2000);
+                    return;
+                  }
+
+                  // 다른 광고 타입들만 API 호출
+                  (async () => {
+                    try {
+                      // 광고 보상 API 호출
+                      const rewardData = await callAdRewardAPI(
+                        adType,
+                        instance.pendingPromise?.requestData
+                      );
+                      
+                      // Promise resolve
+                      if (instance.pendingPromise) {
+                        instance.pendingPromise.resolve(rewardData);
+                        instance.pendingPromise = null;
+                      }
+                    } catch (error) {
+                      console.error(`❌ ${adType} showAd: 광고 보상 API 호출 실패:`, error);
+                      if (instance.pendingPromise) {
+                        instance.pendingPromise.reject(error);
+                        instance.pendingPromise = null;
+                      }
+                    }
+                  })();
+                  
+                  // 광고 인스턴스 리셋을 지연시켜 호출 (모달 표시 후)
+                  setTimeout(() => {
+                    controlAdSound(false);
+                    resetAdInstance(adType);
+                  }, 2000);
+                }
+                break;
+            }
           },
           onError: (error: unknown) => {
             console.error(`${adType} showAd: 광고 표시 중 오류:`, error);

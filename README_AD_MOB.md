@@ -1,8 +1,20 @@
-# AdMob 보상형 광고 구현 가이드
+# Toss Ad 2.0 보상형 광고 구현 가이드
 
 ## 개요
 
-이 프로젝트는 Google AdMob 보상형 광고를 React Native 앱에 통합하는 방법을 보여줍니다. 사용자가 광고를 끝까지 시청하면 주사위를 리필할 수 있는 보상을 제공합니다.
+이 프로젝트는 Toss Ad 2.0의 새로운 광고 API를 사용하여 보상형 광고를 React Native 앱에 통합하는 방법을 보여줍니다. 사용자가 광고를 끝까지 시청하면 주사위를 리필할 수 있는 보상을 제공합니다.
+
+## Toss Ad 2.0 주요 변경사항
+
+### 1. 새로운 API 함수
+- `loadAdMobRewardedAd` → `loadAppsInTossAdMob`
+- `showAdMobRewardedAd` → `showAppsInTossAdMob`
+
+### 2. 광고 ID 체계 변경
+- 기존: `adUnitId` 사용
+- 신규: `adGroupId` 사용 (모든 함수에서 통일)
+
+### 3. 환경변수 구조 업데이트
 
 ## 구현된 기능
 
@@ -110,12 +122,35 @@ const showAdMobRewardedAd = async (params) => {
 
 ### 3. 환경 설정
 
-`.env` 파일에 광고 ID 설정:
+`.env` 파일에 새로운 광고 그룹 ID 설정:
 
 ```env
-REACT_APP_ADMOB_ANDROID_ID=ca-app-pub-8316376994464037/9670672503
-REACT_APP_ADMOB_IOS_ID=ca-app-pub-8316376994464037/9774614282
+# Toss Ad 2.0 - 새로운 광고 그룹 ID 체계 (플랫폼 구분 없음)
+# 실제 발급받은 광고 그룹 ID로 교체해주세요
+VITE_AD_GROUP_RANDOM_BOX=ait.live.eb3bfcaaa7a74e02
+VITE_AD_GROUP_DICE_REFILL=ait.live.e96cc8f4ad184fc4
+VITE_AD_GROUP_CARD_FLIP_RETRY=ait.live.31a2431a6dec4886
+VITE_AD_GROUP_RPS_RETRY=ait.live.0acb63d15f8c45d4
+
+# 기존 환경변수 (하위 호환성을 위해 유지)
+VITE_AD_ANDROID_RANDOM_BOX=ca-app-pub-8316376994464037/3096004724
+VITE_AD_ANDROID_DICE_REFILL=ca-app-pub-8316376994464037/2030883800
+VITE_AD_ANDROID_CARD_FLIP_RETRY=ca-app-pub-8316376994464037/7502702330
+VITE_AD_ANDROID_RPS_RETRY=ca-app-pub-8316376994464037/3884404413
+
+VITE_AD_IOS_RANDOM_BOX=ca-app-pub-8316376994464037/4409086390
+VITE_AD_IOS_DICE_REFILL=ca-app-pub-8316376994464037/6670349857
+VITE_AD_IOS_CARD_FLIP_RETRY=ca-app-pub-8316376994464037/1711319609
+VITE_AD_IOS_RPS_RETRY=ca-app-pub-8316376994464037/8676183201
 ```
+
+### ⚠️ 중요: 환경변수 필수 설정
+
+**모든 광고 ID는 `.env` 파일에서 반드시 설정해야 합니다.** 환경변수가 설정되지 않으면 런타임 에러가 발생합니다.
+
+- `VITE_AD_GROUP_*`: 새로운 Toss Ad 2.0 광고 그룹 ID (권장)
+- `VITE_AD_ANDROID_*`: 기존 Android 광고 ID (하위 호환성)
+- `VITE_AD_IOS_*`: 기존 iOS 광고 ID (하위 호환성)
 
 ## 주의사항
 
