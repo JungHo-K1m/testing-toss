@@ -41,7 +41,7 @@ const AnimatedCard = () => {
     <img
       src={CARD_IMAGES[index].url}
       alt={CARD_IMAGES[index].suit}
-      className="w-[200px] h-[280px] rounded-xl shadow-lg bg-transparent mb-6 object-cover border-none"
+      className="w-[200px] h-[280px] rounded-xl shadow-lg bg-transparent mb-2 object-cover border-none"
     />
   );
 };
@@ -121,7 +121,7 @@ const CardBettingModal = ({ myPoint, allowedBetting, onStart, onCancel }: any) =
     <div className="h-screen w-full flex flex-col items-center justify-center px-12">
       {/* 1. 상단 타이틀 */}
       <div
-        className="text-center mt-4"
+        className="text-center mt-4 pt-20"
         style={{
           fontFamily: "'ONE Mobile POP', sans-serif",
           fontSize: "30px",

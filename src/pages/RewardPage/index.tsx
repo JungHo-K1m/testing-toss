@@ -111,7 +111,7 @@ const Reward: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col text-white mb-44 w-full min-h-screen pt-20">
+    <div className="flex flex-col text-white mb-44 w-full min-h-screen">
       {/* my-rank 위젯 표시 */}
       <Dialog>
         <DialogTrigger
@@ -146,7 +146,7 @@ const Reward: React.FC = () => {
             <DialogHeader className="flex w-full items-end">
               <DialogClose>
                 <HiX
-                  className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer"
+                  className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer pt-5"
                   style={{
                     backgroundColor: "transparent",
                     outline: "none",

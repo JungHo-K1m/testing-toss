@@ -1130,7 +1130,7 @@ const DiceEventPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen pt-20">
+    <div className="flex flex-col items-center relative w-full h-full overflow-x-hidden min-h-screen">
       {/* 배경화면 추가 */}
       <div
         className="fixed inset-0 z-0"
@@ -1152,7 +1152,7 @@ const DiceEventPage: React.FC = () => {
         ) : (
           <>
             {/* 상단 캐릭터 정보 영역 */}
-            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4">
+            <div className="w-full flex justify-between items-center px-6 mt-6 mb-4 pt-20">
               {/* 왼쪽: 캐릭터 정보 */}
               <div className="flex items-center">
                 <div className="flex items-center">
@@ -1318,11 +1318,11 @@ const DiceEventPage: React.FC = () => {
             )}
             {/* anywhere 시 표시되는 비행기 */}
             {game.selectingTile && !isAuto && (
-              <div className="absolute md:top-0 top-20 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none pt-20">
+              <div className="absolute md:top-0 top-20 left-0 w-full h-full flex justify-center items-center z-10 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-black opacity-75 z-10"></div>
                 <div
                   className="text-white text-lg z-30 flex flex-col items-center justify-center mb-[200px] md:mb-[220px] font-semibold md:text-xl"
-                  style={{ marginTop: "0px" }}
+                  style={{ marginTop: "40px" }}
                 >
                   <img
                     src={Images.AirplaneIcon}
