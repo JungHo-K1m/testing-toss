@@ -1272,7 +1272,7 @@ const Inventory: React.FC = () => {
               <img
                 src={getEquipmentIcon("BACK", getEquippedItem("BACK")!.rarity)}
                 alt="BACK"
-                className="absolute -top-24 left-1/2 transform -translate-x-[60%] w-20 h-20 min-[376px]:w-24 min-[376px]:h-24 opacity-90"
+                className="absolute -top-18 left-1/2 transform -translate-x-[60%] w-20 h-20 min-[376px]:w-24 min-[376px]:h-24 opacity-90"
                 style={{ zIndex: 5 }}
               />
             )}

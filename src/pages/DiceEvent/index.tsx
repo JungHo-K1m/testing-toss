@@ -104,7 +104,7 @@ const DiceEventPage: React.FC = () => {
   const { playSfx } = useSound();
   const { initializeSoundSettings } = useSoundStore();
   const [initialX, setInitialX] = useState<number>(140);
-  const [initialY, setInitialY] = useState<number>(474);
+  const [initialY, setInitialY] = useState<number>(554);
   const [delta, setDelta] = useState<number>(56);
   const navigate = useNavigate();
   const { walletAddress } = useWalletStore();
@@ -1418,7 +1418,7 @@ const DiceEventPage: React.FC = () => {
                 <InlineRanking />
               </DialogTrigger>
               <DialogContent
-                className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto"
+                className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto pt-[88px]"
                 style={{
                   background: `url(${Images.BackgroundLobby})`,
                   backgroundSize: "cover",

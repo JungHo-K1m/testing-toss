@@ -126,7 +126,7 @@ const Reward: React.FC = () => {
           <InlineRanking />
         </DialogTrigger>
         <DialogContent
-          className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto pt-20"
+          className="flex flex-col border-none text-white h-screen w-screen max-w-none max-h-none overflow-x-hidden font-semibold overflow-y-auto pt-[88px]"
           style={{
             background: `url(${Images.BackgroundLobby})`,
             backgroundSize: "cover",
@@ -146,7 +146,7 @@ const Reward: React.FC = () => {
             <DialogHeader className="flex w-full items-end">
               <DialogClose>
                 <HiX
-                  className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer pt-5"
+                  className="w-6 h-6 text-white hover:text-gray-300 transition-colors cursor-pointer"
                   style={{
                     backgroundColor: "transparent",
                     outline: "none",
